@@ -10,4 +10,4 @@ keywords = ["slides", "presentation", "academic", "touying", "theme"]
 categories = ["presentation", "components"]
 disciplines = ["computer-science"]
 compiler = "0.14.0"
-exclude = ["examples/", "assets/", "docs/", "AGENTS.md", "CHANGELOG.md", "README-EN.md"]
+exclude = ["examples/", "assets/", "docs/", "AGENTS.md", "CHANGELOG.md", "README-zh.md"]
