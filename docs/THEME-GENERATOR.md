@@ -1,6 +1,6 @@
 # AI 配色生成器
 
-将下方提示词复制到任意多模态 AI（Claude、ChatGPT、Gemini 等），附上你的参考材料，即可生成可直接粘贴到 `xwysyy.typ` 的主题配置。
+将下方提示词复制到任意多模态 AI（Claude、ChatGPT、Gemini 等），附上你的参考材料，即可生成可直接粘贴到 `src/themes.typ` 的主题配置。
 
 ## 支持的输入
 
@@ -21,7 +21,7 @@
 
 ## 输出格式
 
-请严格按以下 Typst 代码格式输出主题配置，可直接粘贴到 xwysyy.typ 的 themes 字典中：
+请严格按以下 Typst 代码格式输出主题配置，可直接粘贴到 src/themes.typ 的 themes 字典中：
 
 ```typst
 my-theme: (
@@ -109,7 +109,7 @@ paper: #f5f6f8, header-fill: #F7EEE7, header-text: #970014, page-fill: #fffefd
 
 ## 使用生成的主题
 
-1. 打开 `xwysyy.typ`，找到顶部的 `themes` 字典（约第 8 行）
+1. 打开 `src/themes.typ`，找到顶部的 `themes` 字典
 2. 在最后一个主题条目后追加新主题：
 
 ```typst
@@ -138,7 +138,7 @@ paper: #f5f6f8, header-fill: #F7EEE7, header-text: #970014, page-fill: #fffefd
 )
 ```
 
-4. 编译验证：`typst compile your-deck.typ`
+4. 编译验证：`typst compile --root . your-deck.typ`
 
 ## 从现有主题微调
 

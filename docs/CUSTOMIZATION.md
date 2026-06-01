@@ -2,7 +2,7 @@
 
 本文档讲两件事：
 
-1. **改主题本身**——颜色 / 字体 / 字号 / 版式 / show 规则。所有改动都在 `xwysyy.typ` 内进行，不要在 deck（`examples/slides-sky.typ` 等）里 hack。
+1. **改主题本身**——颜色 / 字体 / 字号 / 版式 / show 规则。所有改动都在 `src/*.typ` 内进行（按职责拆分见 [USAGE.md §1](./USAGE.md#1-安装与引入)），不要在 deck（`examples/slides-sky.typ` 等）里 hack。
 2. **配合 touying 0.7.x 高级特性**——动画、双产物、演讲备注、数学环境等，这些写在 deck 里。
 
 API 速查见 [USAGE.md](./USAGE.md)；快速上手见 [../README.md](../README.md)。
@@ -75,7 +75,7 @@ forest: (
 | `header-text` | header 文字色（`none` 时回退 `paper`） |
 | `page-fill` | 页面背景色 |
 
-如果你给主题改了根本不同的色调，建议保持"`sea` 是最深的、`paper` 是最浅的"这条单调性——`xwysyy.typ` 内多处 show 规则（如 strong 描边、表格首行）都假设 `sea` 是深色。
+如果你给主题改了根本不同的色调，建议保持"`sea` 是最深的、`paper` 是最浅的"这条单调性——`src/elements.typ` 内多处 show 规则（如 strong 描边、表格首行）都假设 `sea` 是深色。
 
 ### 动态组件颜色
 
@@ -269,7 +269,7 @@ deck 里调用：
 #warning-slide[这是一个非常重要的提醒！]
 ```
 
-> **重要**：所有自定义版式必须用 `utils.merge-dicts(self, config-page(...))` 而非 `show: touying-slides.with(config-page(...))`——后者在 touying 0.7.x 会产生 ghost slide。`xwysyy.typ` 主题里的所有版式都是前者写法，照抄即可。
+> **重要**：所有自定义版式必须用 `utils.merge-dicts(self, config-page(...))` 而非 `show: touying-slides.with(config-page(...))`——后者在 touying 0.7.x 会产生 ghost slide。`src/slides.typ` 里的所有版式都是前者写法，照抄即可。
 
 ---
 
@@ -279,7 +279,7 @@ deck 里调用：
 
 | 规则 | 改什么 | 默认行为 |
 |------|--------|----------|
-| `show strong` | strong（粗体） | `size: 1.1em, stroke: 0.02em`（使用当前文字色描边，非默认 bold） |
+| `show strong` | strong（粗体） | `stroke: 0.04em`（使用当前文字色描边，不改变字号，非默认 bold） |
 | `set list` / `set enum` | list（列表） | 自定义标记 (❖)/⬦/--，sea/sky 主题色，spacing 1.2em，body-indent 0.8em |
 | `show emph` | emph（斜体） | 纯文本时逐字符 synthetic skew（-8deg）适配 CJK；非文本 content 整体 skew（兼容 theorion 等） |
 | `show figure.caption` | figure caption | 0.78em + 灰色 |
@@ -412,8 +412,8 @@ deck 里调用：
 编译时通过 `--input` 切换：
 
 ```bash
-typst compile examples/slides-sky.typ                                      # 演讲版
-typst compile --input handout=true examples/slides-sky.typ slides-handout.pdf  # 讲义版
+typst compile --root . examples/slides-sky.typ                             # 演讲版
+typst compile --root . --input handout=true examples/slides-sky.typ slides-handout.pdf  # 讲义版
 ```
 
 > 需要在 `xwysyy-pre` 内加 `config-common(handout: sys.inputs.at("handout", default: "false") == "true")`，否则 `#handout-only` 始终隐藏。本主题默认未加，按需自行扩展。
@@ -446,7 +446,7 @@ pdfpc examples/slides-sky.pdf  # 双屏：当前页 + 备注 + 计时
 
 ### 8.1 physica（已内置）
 
-`xwysyy.typ` 已经 `import "@preview/physica:0.9.5": *`，所有 physica 提供的数学命令在你的 deck 里直接可用：
+`xwysyy.typ` 已经 `import "@preview/physica:0.9.8": *`，所有 physica 提供的数学命令在你的 deck 里直接可用：
 
 ```typst
 $ A^TT $    // 转置：A^T，已通过 super-T-as-transpose show 规则启用

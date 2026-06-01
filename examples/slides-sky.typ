@@ -1,4 +1,4 @@
-#import "xwysyy.typ": *
+#import "../xwysyy.typ": *
 
 #show: xwysyy-pre.with(
   config-info(

@@ -29,9 +29,9 @@
 > 示例 deck 位于 `examples/` 目录，编译查看效果：
 
 ```bash
-typst compile examples/slides-sky.typ           # sky 主题 slide
-typst compile examples/slides-sunset.typ        # sunset 主题 slide
-typst compile examples/note.typ                  # 学术笔记
+typst compile --root . examples/slides-sky.typ     # sky 主题 slide
+typst compile --root . examples/slides-sunset.typ  # sunset 主题 slide
+typst compile --root . examples/note.typ           # 学术笔记
 ```
 
 ### 🌤️ Sky 主题
@@ -58,7 +58,7 @@ typst compile examples/note.typ                  # 学术笔记
 
 ## 🚀 快速开始
 
-将 `xwysyy.typ` 复制到你的项目目录，然后：
+将 `xwysyy.typ` 和 `src/` 目录一起复制到你的项目目录，然后：
 
 ```typst
 #import "xwysyy.typ": *
@@ -134,7 +134,7 @@ typst compile examples/note.typ                  # 学术笔记
 
 - Typst >= 0.14
 - touying 0.7.3（首次编译自动下载）
-- physica 0.9.5（首次编译自动下载）
+- physica 0.9.8（首次编译自动下载）
 - 字体：Times New Roman + Noto Serif CJK SC（中文）+ Maple Mono（代码）
 
 ## 📖 文档

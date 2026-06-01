@@ -29,9 +29,9 @@
 > Example decks are in the `examples/` directory:
 
 ```bash
-typst compile examples/slides-sky.typ           # sky theme slides
-typst compile examples/slides-sunset.typ        # sunset theme slides
-typst compile examples/note.typ                  # academic notes
+typst compile --root . examples/slides-sky.typ     # sky theme slides
+typst compile --root . examples/slides-sunset.typ  # sunset theme slides
+typst compile --root . examples/note.typ           # academic notes
 ```
 
 ### 🌤️ Sky Theme
@@ -58,7 +58,7 @@ typst compile examples/note.typ                  # academic notes
 
 ## 🚀 Quick Start
 
-Copy `xwysyy.typ` to your project directory, then:
+Copy `xwysyy.typ` and the `src/` directory to your project directory, then:
 
 ```typst
 #import "xwysyy.typ": *

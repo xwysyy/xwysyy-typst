@@ -8,7 +8,7 @@
 
 ## 1. 安装与引入
 
-`xwysyy.typ` 是单文件主题，直接放在你的项目根目录或子目录下，用相对路径引入：
+`xwysyy.typ` 是 facade entry，实际实现拆分到 `src/` 子目录。复制 `xwysyy.typ` 和 `src/` 整个目录一起到你的项目目录，然后用相对路径引入：
 
 ```typst
 #import "xwysyy.typ": *
@@ -17,7 +17,7 @@
 依赖（首次编译会从 typst universe 自动下载）：
 
 - `@preview/touying:0.7.3`
-- `@preview/physica:0.9.5`
+- `@preview/physica:0.9.8`
 
 可选扩展（需要绘图或定理环境时）：
 
@@ -25,21 +25,25 @@
 #import "xwysyy-extras.typ": *
 ```
 
-额外下载 `cetz:0.5.0`、`fletcher:0.5.8`、`theorion:0.6.0` 及其依赖（版本由 `xwysyy-extras.typ` 管理）。
+额外下载 `cetz:0.5.2`、`fletcher:0.5.8`、`theorion:0.6.0` 及其依赖（版本由 `src/extras.typ` 管理）。
 
 ### 文件结构
 
 ```
-xwysyy.typ                          # 主题文件
-xwysyy-extras.typ                   # 可选扩展（cetz/fletcher/theorion）
+xwysyy.typ                          # facade entry，re-export src/*.typ
+xwysyy-extras.typ                   # shim，re-export src/extras.typ
+src/
+  themes.typ                        # 主题字典 + 顶层色变量 + _theme-state + 颜色宏
+  elements.typ                      # 共享 show-chain xwysyy-elements + info + textbox
+  note.typ                          # 笔记入口 xwysyy-note
+  slides.typ                        # slide 入口 xwysyy-pre + 7 种版式
+  extras.typ                        # cetz / fletcher / theorion 集成
 examples/
-  xwysyy.typ -> ../xwysyy.typ       # 符号链接
-  xwysyy-extras.typ -> ../xwysyy-extras.typ
   slides-sky.typ                     # sky 主题示例
   slides-sunset.typ                  # sunset 主题示例
 ```
 
-编译示例：`typst compile examples/slides-sky.typ`
+编译示例：`typst compile --root . examples/slides-sky.typ`
 
 ---
 
@@ -179,7 +183,7 @@ header 颜色由 `config-store` 中的 `header-fill` / `header-text` 控制。�
 = 章节标题
 ```
 
-渲染为全屏居中的"章节名"页，不显示 body 内容（body 由 touying 在后续 slide 独立渲染）。`xwysyy.typ` 内已通过 `config-common(new-section-slide-fn: new-section-slide)` 接好钩子。
+渲染为全屏居中的"章节名"页，不显示 body 内容（body 由 touying 在后续 slide 独立渲染）。`src/slides.typ` 中的 `xwysyy-pre` 已通过 `config-common(new-section-slide-fn: new-section-slide)` 接好钩子。
 
 ### 3.5 `focus-slide` -- 全屏强调页
 
@@ -378,7 +382,7 @@ header 颜色由 `config-store` 中的 `header-fill` / `header-text` 控制。�
 
 | 规则 | 改什么 | 默认行为 |
 |------|--------|----------|
-| `show strong` | strong（粗体） | `size: 1.1em, stroke: 0.02em`（使用当前文字色描边） |
+| `show strong` | strong（粗体） | `stroke: 0.04em`（使用当前文字色描边，不改变字号） |
 | `set list` / `set enum` | list（列表） | 自定义标记 (❖)/⬦/-- + 主题色，spacing 1.2em，body-indent 0.8em |
 | `show emph` | emph（斜体） | 纯文本时逐字符 synthetic skew（-8deg）适配 CJK；非文本 content 整体 skew（兼容 theorion 等） |
 | `show figure.caption` | figure caption | 0.78em + 灰色 |

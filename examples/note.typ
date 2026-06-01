@@ -1,4 +1,4 @@
-#import "xwysyy.typ": *
+#import "../xwysyy.typ": *
 #show: xwysyy-note.with(
   title: "笔记模式样式演示",
   subtitle: "xwysyy-typst · 2026年5月",
