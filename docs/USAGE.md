@@ -26,7 +26,7 @@ Local development examples in this repository use a relative import:
 
 Core dependencies are downloaded by Typst:
 
-- `@preview/touying:0.7.3`
+- `@preview/touying:0.7.4`
 - `@preview/physica:0.9.8`
 
 Optional drawing and theorem integrations live in `xwysyy-extras.typ`:

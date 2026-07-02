@@ -1,6 +1,6 @@
 // Shared show-chain (xwysyy-elements) and reusable components (info, textbox).
 
-#import "@preview/touying:0.7.3": components
+#import "@preview/touying:0.7.4": components
 #import "themes.typ": *
 
 #let xwysyy-elements(

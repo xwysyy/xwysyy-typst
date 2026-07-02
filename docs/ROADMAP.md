@@ -35,7 +35,7 @@ xwysyy-typst 当前版本 0.1.0，已上架 Typst Universe，形态是"作者自
 | 笔记模式 `xwysyy-note` 有 `font` / `code-font` / `lang` 参数（slides 应对齐） | `src/note.typ` |
 | `typst.toml` 无 `[template]` 段，`exclude` 列表含 `examples/`、`assets/`、`docs/` | `typst.toml` |
 | README 快速开始教用户手动复制 `xwysyy.typ` 和 `src/` | `README.md` §Quick Start |
-| `xwysyy.typ` 对 touying 做了星号 re-export（`#import "@preview/touying:0.7.3": *`） | `xwysyy.typ` |
+| `xwysyy.typ` 对 touying 做了星号 re-export（`#import "@preview/touying:0.7.4": *`） | `xwysyy.typ` |
 | `xwysyy-pre` 的 `..args` 透传给 `touying-slides.with(...)` | `src/slides.typ` |
 
 ### 2.2 Typst Universe 模板包规范（来源：typst/packages 官方 docs/manifest.md）

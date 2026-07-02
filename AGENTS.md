@@ -70,8 +70,8 @@
 - **主题色变量是契约**：`themes` 字典中每套主题的 `sea` / `sky` / `skyl` / `skyll` / `paper` 以及 `header-fill` / `header-text` / `page-fill` 既是颜色定义，也通过 `config-colors` 映射到 touying 的语义槽（`neutral-dark = sea` 等）。改名要同步改 `xwysyy-pre` 内 `config-colors(...)` 调用，否则下游 slide 组件会拿到错误颜色。运行时通过 `_theme-state`（state）向 `textbox` 等组件传播主题色。
 - **函数命名前缀**：当前所有公开主题函数前缀为 `xwysyy-`（`xwysyy-pre`、`xwysyy-doc`、`xwysyy-slide`、`xwysyy-elements`、`xwysyy-note`）。新增函数沿用此前缀；`title-slide` / `outline-slide` / `textbox` / `end-slide` 等通用 helper 不带前缀。
 - **笔记模式是主题无关的**：`xwysyy-note` 不使用 `themes` 字典或 `_theme-state`，所有颜色为灰度 + 固定蓝色链接。改笔记样式不需要关心 slide 主题系统。
-- **typst + touying 边界 bug**：`config-info(author: [])`（空 content）在 typst 0.14 + touying 0.7.3 组合下仍会触发 touying `markup-text` 把空 content 处理成 none，失败于内部类型检查（`@preview/touying:0.7.3/src/slides.typ:37`）。空作者用 `author: " "` 绕开，不要回退到 `[]`。
-- **不要随便引入 typst package**：核心依赖只有 `@preview/touying:0.7.3` 与 `@preview/physica:0.9.8`。`xwysyy-extras.typ` 额外依赖 `cetz`/`fletcher`/`theorion`，但它是可选文件不影响核心模板。新增核心依赖前先评估是否可在 `src/` 子模块内手写实现。
+- **typst + touying 边界 bug**：不要使用 `config-info(author: [])`（空 content），touying 会把空 content 处理成 none，并触发内部类型检查失败。空作者用 `author: " "` 绕开，不要回退到 `[]`。
+- **不要随便引入 typst package**：核心依赖只有 `@preview/touying:0.7.4` 与 `@preview/physica:0.9.8`。`xwysyy-extras.typ` 额外依赖 `cetz`/`fletcher`/`theorion`，但它是可选文件不影响核心模板。新增核心依赖前先评估是否可在 `src/` 子模块内手写实现。
 - **inline code 与 block code 分开处理**：`xwysyy-elements` 中 `raw.where(block: true)` 用 `block(width: 100%)` 全宽显示，`raw.where(block: false)` 用 `box(baseline: 0.2em)` 内联显示。修改代码样式时需同步改两处。
 - **箭头 show rule 用 math 模式**：箭头替换（`->` -> `$->$` 等）必须用 `$...$` 进入 math 模式才能渲染为箭头符号。不要用 `math.limits(it)`（只管上下标位置，不做符号转换）。长箭头（`-->`、`==>`）的 show rule 必须定义在短箭头（`->`、`=>`）之前，否则短规则会先截取。
 

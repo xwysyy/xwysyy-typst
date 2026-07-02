@@ -3,7 +3,7 @@
 // Optional cetz / fletcher / theorion integrations live in `xwysyy-extras.typ`.
 
 #import "@preview/physica:0.9.8": *
-#import "@preview/touying:0.7.3": *
+#import "@preview/touying:0.7.4": *
 
 #import "src/themes.typ": *
 #import "src/elements.typ": *

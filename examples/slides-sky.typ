@@ -258,7 +258,7 @@ $ sum_(k=0)^n binom(n, k) x^k y^(n-k) = (x + y)^n $
 #v(0.4em)
 
 #info[项目名称][xwysyy-typst]
-#info[技术栈][Typst + touying 0.7.3]
+#info[技术栈][Typst + touying 0.7.4]
 #info[字体][Libertinus Sans + LXGW WenKai]
 #info[许可证][MIT]
 

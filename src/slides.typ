@@ -1,6 +1,6 @@
 // Slides mode: touying-based slide variants, xwysyy-pre, and xwysyy-doc.
 
-#import "@preview/touying:0.7.3": *
+#import "@preview/touying:0.7.4": *
 #import "themes.typ": *
 #import "elements.typ": *
 #import "note.typ": *

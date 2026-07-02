@@ -4,7 +4,7 @@
   <a href="https://typst.app/universe/package/xwysyy"><img src="https://img.shields.io/badge/Typst%20Universe-available-239dad.svg" alt="Typst Universe"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://typst.app"><img src="https://img.shields.io/badge/Typst-%E2%89%A5%200.14.2-239dad.svg" alt="Typst"></a>
-  <a href="https://github.com/touying-typ/touying"><img src="https://img.shields.io/badge/touying-0.7.3-blueviolet.svg" alt="touying"></a>
+  <a href="https://github.com/touying-typ/touying"><img src="https://img.shields.io/badge/touying-0.7.4-blueviolet.svg" alt="touying"></a>
   <a href="#-主题"><img src="https://img.shields.io/badge/Themes-6%20built--in-ff69b4.svg" alt="Themes"></a>
 </p>
 
@@ -221,7 +221,7 @@ typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 ## 环境要求
 
 - Typst 0.14.2
-- touying 0.7.3，首次编译自动下载
+- touying 0.7.4，首次编译自动下载
 - physica 0.9.8，首次编译自动下载
 - 默认本地字体：Times New Roman、Noto Serif CJK SC、Maple Mono
 - Typst 网页端可通过 `font:` 和 `code-font:` 传入网页端可用字体
