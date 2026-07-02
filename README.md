@@ -111,7 +111,10 @@ Body text with *bold* and #red[red highlight].
 Select a built-in theme by name:
 
 ```typst
-#show: xwysyy-pre.with(theme: "forest", ...)
+#show: xwysyy-pre.with(
+  theme: "forest",
+  config-info(title: [My Presentation]),
+)
 ```
 
 Pass a custom dictionary directly:
@@ -128,7 +131,10 @@ Pass a custom dictionary directly:
   page-fill: white,
 )
 
-#show: xwysyy-pre.with(theme: my-theme, ...)
+#show: xwysyy-pre.with(
+  theme: my-theme,
+  config-info(title: [My Presentation]),
+)
 ```
 
 Each theme has the same eight fields:

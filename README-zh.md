@@ -111,7 +111,10 @@ typst compile main.typ
 按名称选择内置主题：
 
 ```typst
-#show: xwysyy-pre.with(theme: "forest", ...)
+#show: xwysyy-pre.with(
+  theme: "forest",
+  config-info(title: [我的演示]),
+)
 ```
 
 直接传入自定义字典：
@@ -128,7 +131,10 @@ typst compile main.typ
   page-fill: white,
 )
 
-#show: xwysyy-pre.with(theme: my-theme, ...)
+#show: xwysyy-pre.with(
+  theme: my-theme,
+  config-info(title: [我的演示]),
+)
 ```
 
 每套主题包含 8 个字段：
