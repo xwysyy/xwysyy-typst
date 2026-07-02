@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+import argparse
+import pathlib
+import struct
+import sys
+import zlib
+
+
+PNG_SIG = b"\x89PNG\r\n\x1a\n"
+
+
+def paeth(a, b, c):
+    p = a + b - c
+    pa = abs(p - a)
+    pb = abs(p - b)
+    pc = abs(p - c)
+    if pa <= pb and pa <= pc:
+        return a
+    if pb <= pc:
+        return b
+    return c
+
+
+def read_png(path):
+    data = pathlib.Path(path).read_bytes()
+    if not data.startswith(PNG_SIG):
+        raise ValueError(f"{path}: not a PNG file")
+    pos = len(PNG_SIG)
+    width = height = bit_depth = color_type = interlace = None
+    idat = []
+    while pos < len(data):
+        length = struct.unpack(">I", data[pos:pos + 4])[0]
+        pos += 4
+        chunk_type = data[pos:pos + 4]
+        pos += 4
+        chunk = data[pos:pos + length]
+        pos += length + 4
+        if chunk_type == b"IHDR":
+            width, height, bit_depth, color_type, _compression, _filter, interlace = struct.unpack(">IIBBBBB", chunk)
+        elif chunk_type == b"IDAT":
+            idat.append(chunk)
+        elif chunk_type == b"IEND":
+            break
+
+    if bit_depth != 8 or interlace != 0:
+        raise ValueError(f"{path}: only 8-bit non-interlaced PNGs are supported")
+    channels_by_type = {0: 1, 2: 3, 6: 4}
+    if color_type not in channels_by_type:
+        raise ValueError(f"{path}: unsupported PNG color type {color_type}")
+
+    channels = channels_by_type[color_type]
+    stride = width * channels
+    raw = zlib.decompress(b"".join(idat))
+    rows = []
+    prev = [0] * stride
+    i = 0
+    for _y in range(height):
+        filt = raw[i]
+        i += 1
+        row = list(raw[i:i + stride])
+        i += stride
+        recon = [0] * stride
+        for x, value in enumerate(row):
+            left = recon[x - channels] if x >= channels else 0
+            up = prev[x]
+            up_left = prev[x - channels] if x >= channels else 0
+            if filt == 0:
+                recon[x] = value
+            elif filt == 1:
+                recon[x] = (value + left) & 0xff
+            elif filt == 2:
+                recon[x] = (value + up) & 0xff
+            elif filt == 3:
+                recon[x] = (value + ((left + up) // 2)) & 0xff
+            elif filt == 4:
+                recon[x] = (value + paeth(left, up, up_left)) & 0xff
+            else:
+                raise ValueError(f"{path}: unsupported PNG filter {filt}")
+        rows.append(recon)
+        prev = recon
+
+    rgba = bytearray()
+    for row in rows:
+        if color_type == 6:
+            rgba.extend(row)
+        elif color_type == 2:
+            for j in range(0, len(row), 3):
+                rgba.extend((row[j], row[j + 1], row[j + 2], 255))
+        elif color_type == 0:
+            for value in row:
+                rgba.extend((value, value, value, 255))
+    return width, height, bytes(rgba)
+
+
+def write_rgba_png(path, width, height, rgba):
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    def chunk(kind, payload):
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xffffffff)
+        )
+
+    scanlines = bytearray()
+    stride = width * 4
+    for y in range(height):
+        scanlines.append(0)
+        start = y * stride
+        scanlines.extend(rgba[start:start + stride])
+
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    data = PNG_SIG + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(bytes(scanlines))) + chunk(b"IEND", b"")
+    path.write_bytes(data)
+
+
+def png_files(root):
+    return {p.relative_to(root): p for p in root.rglob("*.png")}
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Compare two PNG trees with an absolute-error pixel threshold.")
+    parser.add_argument("expected", type=pathlib.Path)
+    parser.add_argument("actual", type=pathlib.Path)
+    parser.add_argument("--threshold", type=int, default=0)
+    parser.add_argument("--diff-dir", type=pathlib.Path)
+    args = parser.parse_args()
+
+    expected = png_files(args.expected)
+    actual = png_files(args.actual)
+    ok = True
+
+    for rel in sorted(set(expected) - set(actual)):
+        print(f"missing actual: {rel}", file=sys.stderr)
+        ok = False
+    for rel in sorted(set(actual) - set(expected)):
+        print(f"unexpected actual: {rel}", file=sys.stderr)
+        ok = False
+
+    for rel in sorted(set(expected) & set(actual)):
+        if expected[rel].read_bytes() == actual[rel].read_bytes():
+            continue
+        ew, eh, ep = read_png(expected[rel])
+        aw, ah, ap = read_png(actual[rel])
+        if (ew, eh) != (aw, ah):
+            print(f"{rel}: dimension mismatch {ew}x{eh} != {aw}x{ah}", file=sys.stderr)
+            ok = False
+            continue
+        if ep == ap:
+            continue
+        diff = 0
+        diff_rgba = bytearray(len(ep)) if args.diff_dir else None
+        for i in range(0, len(ep), 4):
+            if ep[i] != ap[i] or ep[i + 1] != ap[i + 1] or ep[i + 2] != ap[i + 2] or ep[i + 3] != ap[i + 3]:
+                diff += 1
+                if diff_rgba is not None:
+                    diff_rgba[i:i + 4] = b"\xff\x00\x00\xff"
+            elif diff_rgba is not None:
+                diff_rgba[i:i + 4] = b"\xff\xff\xff\x00"
+        if diff > args.threshold:
+            print(f"{rel}: {diff} differing pixels, threshold {args.threshold}", file=sys.stderr)
+            if diff_rgba is not None:
+                diff_path = args.diff_dir / rel
+                write_rgba_png(diff_path, ew, eh, diff_rgba)
+                print(f"{rel}: wrote diff image to {diff_path}", file=sys.stderr)
+            ok = False
+
+    if not ok:
+        return 1
+    print(f"PNG comparison passed for {len(expected)} files with threshold {args.threshold}.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

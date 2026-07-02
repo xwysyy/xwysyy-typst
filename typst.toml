@@ -1,6 +1,6 @@
 [package]
 name = "xwysyy"
-version = "0.1.0"
+version = "0.3.0"
 entrypoint = "xwysyy.typ"
 authors = ["xwysyy"]
 license = "MIT"
@@ -9,5 +9,10 @@ repository = "https://github.com/xwysyy/xwysyy-typst"
 keywords = ["slides", "presentation", "academic", "touying", "theme"]
 categories = ["presentation", "components"]
 disciplines = ["computer-science"]
-compiler = "0.14.0"
-exclude = ["examples/", "assets/", "docs/", "AGENTS.md", "CHANGELOG.md", "README-zh.md"]
+compiler = "0.14.2"
+exclude = ["examples/", "assets/", "docs/", "tests/", "scripts/", ".github/", "AGENTS.md", "CHANGELOG.md", "README-zh.md"]
+
+[template]
+path = "template"
+entrypoint = "main.typ"
+thumbnail = "thumbnail.png"

@@ -1,7 +1,14 @@
 #import "../xwysyy.typ": *
+
+#let visual-ci = sys.inputs.at("visual-ci", default: "false") == "true"
+#let visual-font = if visual-ci { ("Liberation Serif", "Noto Serif CJK SC") } else { ("Times New Roman", "Noto Serif CJK SC") }
+#let visual-code-font = if visual-ci { "DejaVu Sans Mono" } else { "Maple Mono" }
+
 #show: xwysyy-note.with(
   title: "笔记模式样式演示",
   subtitle: "xwysyy-typst · 2026年5月",
+  font: visual-font,
+  code-font: visual-code-font,
 )
 
 #outline(title: "目录", indent: 1.5em, depth: 2)

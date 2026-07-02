@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+import argparse
+import pathlib
+import subprocess
+import sys
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+THEMES = ("sky", "sunset", "forest", "midnight", "violet", "graphite")
+
+
+def run(cmd):
+    print("+ " + " ".join(str(c) for c in cmd))
+    subprocess.run(cmd, cwd=ROOT, check=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Render the visual regression PNG set.")
+    parser.add_argument("output", type=pathlib.Path)
+    args = parser.parse_args()
+
+    output = args.output
+    output.mkdir(parents=True, exist_ok=True)
+
+    visual_input = ("--input", "visual-ci=true")
+    jobs = (
+        ("examples/slides-sky.typ", output / "slides-sky-{p}.png", visual_input),
+        ("examples/slides-sunset.typ", output / "slides-sunset-{p}.png", visual_input),
+        ("examples/note.typ", output / "note-{p}.png", visual_input),
+        ("examples/dual-source.typ", output / "dual-source-slides-{p}.png", visual_input),
+        ("examples/dual-source.typ", output / "dual-source-note-{p}.png", ("--input", "mode=note", *visual_input)),
+    )
+    for source, target, extra in jobs:
+        run(("typst", "compile", "--root", ".", *extra, source, "-f", "png", str(target)))
+
+    for theme in THEMES:
+        run((
+            "typst",
+            "compile",
+            "--root",
+            ".",
+            "--input",
+            f"theme={theme}",
+            *visual_input,
+            "examples/theme-preview.typ",
+            "-f",
+            "png",
+            str(output / f"theme-{theme}-{{p}}.png"),
+        ))
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except subprocess.CalledProcessError as exc:
+        raise SystemExit(exc.returncode)

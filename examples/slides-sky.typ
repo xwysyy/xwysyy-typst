@@ -1,6 +1,14 @@
 #import "../xwysyy.typ": *
 
+#let handout-mode = sys.inputs.at("handout", default: "false") == "true"
+#let visual-ci = sys.inputs.at("visual-ci", default: "false") == "true"
+#let visual-font = if visual-ci { ("Liberation Serif", "Noto Serif CJK SC") } else { ("Times New Roman", "Noto Serif CJK SC") }
+#let visual-code-font = if visual-ci { "DejaVu Sans Mono" } else { "Maple Mono" }
+
 #show: xwysyy-pre.with(
+  font: visual-font,
+  code-font: visual-code-font,
+  config-common(handout: handout-mode),
   config-info(
     title: [xwysyy 主题功能演示],
     subtitle: [Typst Slide 模板 · 组件速览],
@@ -12,7 +20,7 @@
 
 #title-slide()
 
-#outline-slide()
+#outline-slide(title: [目录])
 
 // ═══════════════════════════════════════════
 = 基础排版
@@ -23,7 +31,13 @@
 
 #pause
 
+#speaker-note[
+  这页展示基础文本、强调宏和列表样式。handout 模式只保留 pause 后的完整内容。
+]
+
 支持 *粗体强调*、_斜体标记_ 和 `行内代码`，也可以使用 #red[标红]、#bred[粗体标红]、#yellow[标黄]、#byellow[粗体标黄] 的写法。
+
+#pause
 
 #v(0.3em)
 

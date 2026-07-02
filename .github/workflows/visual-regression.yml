@@ -1,0 +1,79 @@
+name: visual-regression
+
+on:
+  pull_request:
+    paths-ignore:
+      - "README.md"
+      - "README-zh.md"
+      - "CHANGELOG.md"
+      - "AGENTS.md"
+      - "docs/**"
+  push:
+    branches: ["master"]
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: typst-community/setup-typst@v4
+        with:
+          typst-version: 0.14.2
+
+      - name: Install deterministic fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu-core fonts-liberation fonts-noto-cjk
+
+      - name: Compile examples
+        run: |
+          typst compile --root . --input visual-ci=true examples/slides-sky.typ
+          typst compile --root . --input visual-ci=true examples/slides-sunset.typ
+          typst compile --root . --input visual-ci=true examples/note.typ
+          typst compile --root . --input visual-ci=true examples/theme-preview.typ
+          typst compile --root . --input visual-ci=true examples/dual-source.typ
+          typst compile --root . --input visual-ci=true --input mode=note examples/dual-source.typ dual-source-note.pdf
+          typst compile --root . --input visual-ci=true --input handout=true examples/slides-sky.typ slides-sky-handout.pdf
+
+      - name: Check theme contrast
+        run: scripts/check-theme-contrast
+
+      - name: Compile API fixtures
+        run: |
+          typst compile --root . tests/fixtures/custom-theme-direct.typ /tmp/custom-theme-direct.pdf
+          typst compile --root . tests/fixtures/custom-theme-registered.typ /tmp/custom-theme-registered.pdf
+          typst compile --root . tests/fixtures/outline-en.typ /tmp/outline-en.pdf
+          typst compile --root . tests/fixtures/outline-zh.typ /tmp/outline-zh.pdf
+          typst compile --root . tests/fixtures/outline-agenda.typ /tmp/outline-agenda.pdf
+          typst compile --root . tests/fixtures/font-override.typ /tmp/font-override.pdf
+
+      - name: Check missing theme field error
+        run: |
+          if typst compile --root . tests/fixtures/custom-theme-missing-field.typ /tmp/custom-theme-missing.pdf 2> /tmp/custom-theme-missing.err; then
+            cat /tmp/custom-theme-missing.err
+            exit 1
+          fi
+          grep 'page-fill' /tmp/custom-theme-missing.err
+
+      - name: Render visual set
+        run: scripts/render-visuals /tmp/xwysyy-visual-current
+
+      - name: Compare visual baseline
+        run: scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current --diff-dir /tmp/xwysyy-visual-diff
+
+      - name: Upload current renders
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-current
+          path: /tmp/xwysyy-visual-current
+          if-no-files-found: ignore
+
+      - name: Upload visual diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff
+          path: /tmp/xwysyy-visual-diff
+          if-no-files-found: ignore

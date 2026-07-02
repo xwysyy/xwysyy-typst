@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+import pathlib
+import re
+import sys
+
+
+MIN_CONTRAST = 4.5
+
+
+def parse_color(value, fallback=None):
+    value = value.strip()
+    if value == "none":
+        return fallback
+    if value == "white":
+        return (255, 255, 255)
+    if value == "black":
+        return (0, 0, 0)
+    match = re.fullmatch(r'rgb\("#([0-9a-fA-F]{6})"\)', value)
+    if not match:
+        raise ValueError(f"unsupported color expression: {value}")
+    hex_value = match.group(1)
+    return tuple(int(hex_value[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def rel_luminance(rgb):
+    def channel(v):
+        v = v / 255
+        if v <= 0.03928:
+            return v / 12.92
+        return ((v + 0.055) / 1.055) ** 2.4
+
+    r, g, b = (channel(v) for v in rgb)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast(a, b):
+    la = rel_luminance(a)
+    lb = rel_luminance(b)
+    lighter = max(la, lb)
+    darker = min(la, lb)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def parse_themes(path):
+    text = path.read_text()
+    pattern = re.compile(r"^  ([a-z][a-z0-9-]*): \(\n(.*?)^  \),", re.M | re.S)
+    themes = {}
+    for name, body in pattern.findall(text):
+        fields = {}
+        for line in body.splitlines():
+            match = re.match(r"\s+([a-z-]+): (.*),$", line)
+            if match:
+                fields[match.group(1)] = match.group(2)
+        if fields:
+            themes[name] = fields
+    return themes
+
+
+def main():
+    path = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path("src/themes.typ")
+    themes = parse_themes(path)
+    if not themes:
+        print("no themes found", file=sys.stderr)
+        return 1
+
+    ok = True
+    for name, fields in sorted(themes.items()):
+        required = {"sea", "paper", "header-fill", "header-text"}
+        missing = sorted(required - set(fields))
+        if missing:
+            print(f"{name}: missing fields {', '.join(missing)}", file=sys.stderr)
+            ok = False
+            continue
+
+        sea = parse_color(fields["sea"])
+        paper = parse_color(fields["paper"])
+        header_fill = parse_color(fields["header-fill"], fallback=sea)
+        header_text = parse_color(fields["header-text"], fallback=paper)
+
+        checks = (
+            ("paper on sea", contrast(paper, sea)),
+            ("header text on header fill", contrast(header_text, header_fill)),
+        )
+        for label, ratio in checks:
+            if ratio < MIN_CONTRAST:
+                print(f"{name}: {label} contrast {ratio:.2f}:1 is below {MIN_CONTRAST}:1", file=sys.stderr)
+                ok = False
+            else:
+                print(f"{name}: {label} contrast {ratio:.2f}:1")
+
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

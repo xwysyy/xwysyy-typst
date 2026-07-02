@@ -3,65 +3,75 @@
 <p align="center">
   <a href="https://typst.app/universe/package/xwysyy"><img src="https://img.shields.io/badge/Typst%20Universe-available-239dad.svg" alt="Typst Universe"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://typst.app"><img src="https://img.shields.io/badge/Typst-%E2%89%A5%200.14-239dad.svg" alt="Typst version: >= 0.14"></a>
+  <a href="https://typst.app"><img src="https://img.shields.io/badge/Typst-%E2%89%A5%200.14.2-239dad.svg" alt="Typst version: >= 0.14.2"></a>
   <a href="https://github.com/touying-typ/touying"><img src="https://img.shields.io/badge/touying-0.7.3-blueviolet.svg" alt="touying version: 0.7.3"></a>
-  <a href="#-themes"><img src="https://img.shields.io/badge/Themes-sky%20%7C%20sunset-ff69b4.svg" alt="Built-in themes: sky and sunset"></a>
-  <a href="docs/THEME-GENERATOR.md"><img src="https://img.shields.io/badge/AI-Theme%20Generator-orange.svg" alt="AI Theme Generator"></a>
+  <a href="#-themes"><img src="https://img.shields.io/badge/Themes-6%20built--in-ff69b4.svg" alt="Built-in themes"></a>
 </p>
 
 <p align="center">
   <a href="README-zh.md">中文</a> | <b>English</b>
 </p>
 
-> Academic presentation and note-taking theme built on [touying](https://github.com/touying-typ/touying). Suitable for research talks, thesis defenses, academic sharing, and literature notes. Derived from [Carlos-Mero/may](https://github.com/Carlos-Mero/may) (MIT).
+Academic presentation and note-taking templates built on [touying](https://github.com/touying-typ/touying). The package covers slide decks, handouts, speaker notes, and A4 notes from one Typst source. The visual theme is derived from [Carlos-Mero/may](https://github.com/Carlos-Mero/may) under MIT.
 
-## ✨ Features
+## Features
 
-- Built-in **sky** / **sunset** color schemes with one-parameter switching, plus [AI custom themes](docs/THEME-GENERATOR.md)
-- 7 slide layouts + academic note mode, covering title, outline, section transition, focus, and more
-- `textbox` multi-column boxes, `red` / `yellow` highlight macros, CJK synthetic italics, and other academic typesetting components
-- `#pause` progressive reveal animations with built-in `frozen-counters` to prevent numbering issues
-- Optional extension `xwysyy-extras.typ`: cetz drawing / fletcher diagrams + theorion theorem environments
-- Compatible with all touying 0.7.x advanced features
+- Universe template support: `typst init @preview/xwysyy:0.3.0` creates a ready-to-compile deck.
+- Six built-in themes: `sky`, `sunset`, `forest`, `midnight`, `violet`, and `graphite`.
+- Custom theme dictionaries can be passed directly to `theme`, so users can customize colors without forking the package.
+- Slide font parameters match note mode: `font`, `code-font`, and `lang`.
+- Touying handout mode, `#speaker-note`, and pdfpc export are documented and covered by examples.
+- `xwysyy-doc` compiles one source as a 16:9 deck by default and as A4 notes with `--input mode=note`.
+- CI scripts cover example compilation, visual regression, theme contrast, and README preview generation.
 
-## 👀 Preview
-
-> Example decks are in the `examples/` directory:
+## Preview
 
 ```bash
-typst compile --root . examples/slides-sky.typ     # sky theme slides
-typst compile --root . examples/slides-sunset.typ  # sunset theme slides
-typst compile --root . examples/note.typ           # academic notes
+typst compile --root . examples/slides-sky.typ
+typst compile --root . examples/slides-sunset.typ
+typst compile --root . examples/note.typ
+typst compile --root . examples/dual-source.typ
+typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 ```
 
-### 🌤️ Sky Theme
+### Slide Themes
 
-| Cover | Lists & Highlights |
+| sky | sunset | forest |
+|:---:|:---:|:---:|
+| ![Sky theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-sky-p1-01.png) | ![Sunset theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-sunset-p1-01.png) | ![Forest theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-forest-p1-01.png) |
+
+| midnight | violet | graphite |
+|:---:|:---:|:---:|
+| ![Midnight theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-midnight-p1-01.png) | ![Violet theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-violet-p1-01.png) | ![Graphite theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-graphite-p1-01.png) |
+
+### Component Pages
+
+| Sky cover | Sky components |
 |:---:|:---:|
-| ![Sky theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p1-01.png) | ![Sky theme lists and highlights](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p4-04.png) |
-| **Textbox Components** | **Code & Equations** |
-| ![Sky theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p5-05.png) | ![Sky theme code and equations](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p8-08.png) |
+| ![Sky theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p1-01.png) | ![Sky theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p5-05.png) |
 
-### 🌅 Sunset Theme
-
-| Cover | Lists & Highlights |
+| Sunset cover | Sunset components |
 |:---:|:---:|
-| ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p1-01.png) | ![Sunset theme lists and highlights](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p4-04.png) |
-| **Textbox Components** | **Code & Equations** |
-| ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p5-05.png) | ![Sunset theme code and equations](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p8-08.png) |
+| ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p1-01.png) | ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p5-05.png) |
 
-### 📝 Note Mode
-
-| Title & TOC | Lists & Code | Tables & Quotes |
+| Note title | Note code | Note table |
 |:---:|:---:|:---:|
 | ![Note mode title and TOC](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-note-p1-1.png) | ![Note mode lists and code](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-note-p2-2.png) | ![Note mode tables and quotes](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-note-p3-3.png) |
 
-## 🚀 Quick Start
+## Quick Start
 
-Copy `xwysyy.typ` and the `src/` directory to your project directory, then:
+Create a new project from the Universe template:
+
+```bash
+typst init @preview/xwysyy:0.3.0 my-talk
+cd my-talk
+typst compile main.typ
+```
+
+Use the package in an existing Typst project:
 
 ```typst
-#import "xwysyy.typ": *
+#import "@preview/xwysyy:0.3.0": *
 
 #show: xwysyy-pre.with(
   theme: "sunset",
@@ -75,6 +85,7 @@ Copy `xwysyy.typ` and the `src/` directory to your project directory, then:
 )
 
 #title-slide()
+#outline-slide()
 
 = Section Title
 
@@ -95,26 +106,50 @@ Body text with *bold* and #red[red highlight].
 #end-slide(title: [Thank You!], body: [Questions?])
 ```
 
-## 🎨 Themes
+## Themes
 
-Select a built-in theme via the `theme` parameter, or create custom color schemes with the [AI Theme Generator](docs/THEME-GENERATOR.md).
+Select a built-in theme by name:
 
-| Field | Purpose | sky | sunset |
-|-------|---------|-----|--------|
-| `sea` | Primary color | `#3b60a0` | `#970014` |
-| `sky` | Accent color | `#bdd0f1` | `#D8A6A2` |
-| `skyl` | Light background | `#eff3ff` | `#fdf0f0` |
-| `skyll` | Code block / textbox fill | `#f4f9ff` | `#FFF8F6` |
-| `paper` | Text on dark backgrounds | `#f5f6f8` | `#f5f6f8` |
-| `header-fill` | Header bar background | sea blue | `#F7EEE7` |
-| `header-text` | Header bar text | paper white | `#970014` |
-| `page-fill` | Page background | white | `#fffefd` |
+```typst
+#show: xwysyy-pre.with(theme: "forest", ...)
+```
 
-## 🧩 Component Reference
+Pass a custom dictionary directly:
+
+```typst
+#let my-theme = (
+  sea: rgb("#1f5d45"),
+  sky: rgb("#a8d5ba"),
+  skyl: rgb("#e9f5ee"),
+  skyll: rgb("#f5fbf7"),
+  paper: rgb("#f7faf8"),
+  header-fill: none,
+  header-text: none,
+  page-fill: white,
+)
+
+#show: xwysyy-pre.with(theme: my-theme, ...)
+```
+
+Each theme has the same eight fields:
+
+| Field | Purpose |
+|-------|---------|
+| `sea` | Primary dark color for headers, links, table heads, badges, and focus slides |
+| `sky` | Accent color |
+| `skyl` | Light background color |
+| `skyll` | Code block, table row, and textbox fill |
+| `paper` | Text on dark backgrounds |
+| `header-fill` | Header bar fill, `none` falls back to `sea` |
+| `header-text` | Header bar text, `none` falls back to `paper` |
+| `page-fill` | Slide page background |
+
+## Component Reference
 
 | Category | API | Usage |
 |----------|-----|-------|
 | Slide entry | `xwysyy-pre` | `#show: xwysyy-pre.with(theme: "sky", ...)` |
+| Dual-output entry | `xwysyy-doc` | default deck, `--input mode=note` for A4 notes |
 | Title slide | `title-slide` | `#title-slide()` |
 | Outline | `outline-slide` | `#outline-slide()` auto-collects section headings |
 | Content slide | `xwysyy-slide` | `== Title` auto-triggers |
@@ -122,34 +157,90 @@ Select a built-in theme via the `theme` parameter, or create custom color scheme
 | Focus slide | `focus-slide` | `#focus-slide[Large text]` |
 | Full-screen image | `image-slide` | `#image-slide(img: image("bg.png"))` |
 | End slide | `end-slide` | `#end-slide(title: [...])` |
-| Text box | `textbox` | `#textbox[Content]` / `#textbox([Col 1], [Col 2])` |
-| Red highlight | `red` / `bred` | `#red[text]` / `#bred[bold red]` |
-| Yellow highlight | `yellow` / `byellow` | `#yellow[text]` / `#byellow[bold yellow]` |
+| Text box | `textbox` | `#textbox[Content]` or `#textbox([Col 1], [Col 2])` |
+| Highlight | `red` / `bred` | `#red[text]` / `#bred[bold red]` |
+| Highlight | `yellow` / `byellow` | `#yellow[text]` / `#byellow[bold yellow]` |
 | Note entry | `xwysyy-note` | `#show: xwysyy-note.with(title: [...])` |
-| Extensions | `xwysyy-extras` | cetz drawing + fletcher diagrams + theorion theorem environments |
+| Extensions | `xwysyy-extras` | cetz, fletcher, and theorion integrations |
 
-Full API reference: [docs/USAGE.md](docs/USAGE.md). Customization guide: [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md).
+## Handouts And Speaker Notes
 
-## ⚙️ Requirements
+`examples/slides-sky.typ` reads `--input handout=true` and passes `config-common(handout: true)` to touying:
 
-- Typst >= 0.14
-- touying 0.7.3 (auto-downloaded on first compile)
-- physica 0.9.8 (auto-downloaded on first compile)
-- Fonts: Times New Roman + Noto Serif CJK SC (CJK) + Maple Mono (code)
+```bash
+typst compile --root . examples/slides-sky.typ slides.pdf
+typst compile --root . --input handout=true examples/slides-sky.typ slides-handout.pdf
+```
 
-## 📖 Documentation
+Speaker notes are available because `xwysyy.typ` re-exports touying:
 
-| Document | Content |
-|----------|---------|
-| [USAGE.md](docs/USAGE.md) | Full API reference: layouts, components, extensions, non-slide document entry |
-| [CUSTOMIZATION.md](docs/CUSTOMIZATION.md) | Customization guide: colors, fonts, layouts, touying advanced features, extensions |
-| [THEME-GENERATOR.md](docs/THEME-GENERATOR.md) | AI theme generator: create custom themes from screenshots or descriptions |
+```typst
+#speaker-note[
+  Mention the ablation table before moving to the next section.
+]
+```
 
-## 🙏 Acknowledgements
+Export pdfpc metadata:
 
-- Theme derived from [Carlos-Mero/may](https://github.com/Carlos-Mero/may) (MIT)
+```bash
+typst query --root . examples/slides-sky.typ --field value --one "<pdfpc-file>" > slides-sky.pdfpc
+```
+
+## One Source, Two Outputs
+
+Use `xwysyy-doc` when one source should produce both deck and notes:
+
+```typst
+#import "@preview/xwysyy:0.3.0": *
+
+#show: xwysyy-doc.with(
+  title: [One Source, Two Outputs],
+  subtitle: [Deck and A4 notes],
+  theme: "forest",
+)
+```
+
+Compile the deck:
+
+```bash
+typst compile --root . examples/dual-source.typ dual-slides.pdf
+```
+
+Compile the A4 notes:
+
+```bash
+typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
+```
+
+## Requirements
+
+- Typst 0.14.2
+- touying 0.7.3, downloaded on first compile
+- physica 0.9.8, downloaded on first compile
+- Default local fonts: Times New Roman, Noto Serif CJK SC, and Maple Mono
+- Typst web app users can pass web-available fonts with `font:` and `code-font:`
+
+## Maintenance
+
+Regenerate README previews:
+
+```bash
+scripts/gen-previews
+```
+
+Regenerate visual regression baselines:
+
+```bash
+scripts/gen-previews --with-baseline
+```
+
+Full API reference: [docs/USAGE.md](docs/USAGE.md). Customization guide: [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md). Theme generator: [docs/THEME-GENERATOR.md](docs/THEME-GENERATOR.md).
+
+## Acknowledgements
+
+- Theme derived from [Carlos-Mero/may](https://github.com/Carlos-Mero/may) under MIT
 - Built on [touying](https://github.com/touying-typ/touying)
 
-## 📄 License
+## License
 
 [MIT](./LICENSE)

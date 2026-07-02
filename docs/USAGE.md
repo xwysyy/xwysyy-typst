@@ -1,323 +1,245 @@
-# USAGE — xwysyy-typst 组件 API 参考
+# USAGE - xwysyy API Reference
 
-本文档列出 `xwysyy.typ` 暴露的所有公开 API，按"主题入口 -> Slide 版式 -> 组件 -> 非 slide 文档"组织。每个 API 含签名、参数、触发方式与最小示例。
+This document lists the public APIs exported by `xwysyy.typ`. Quick setup is in [README.md](../README.md). Color, font, layout, and CI maintenance notes are in [CUSTOMIZATION.md](./CUSTOMIZATION.md).
 
-快速上手见 [README.md](../README.md)；自定义改色 / 改字 / 加版式见 [CUSTOMIZATION.md](./CUSTOMIZATION.md)。
+## 1. Install And Import
 
----
+Create a new deck:
 
-## 1. 安装与引入
-
-`xwysyy.typ` 是 facade entry，实际实现拆分到 `src/` 子目录。复制 `xwysyy.typ` 和 `src/` 整个目录一起到你的项目目录，然后用相对路径引入：
-
-```typst
-#import "xwysyy.typ": *
+```bash
+typst init @preview/xwysyy:0.3.0 my-talk
+cd my-talk
+typst compile main.typ
 ```
 
-依赖（首次编译会从 typst universe 自动下载）：
+Import the package in an existing project:
+
+```typst
+#import "@preview/xwysyy:0.3.0": *
+```
+
+Local development examples in this repository use a relative import:
+
+```typst
+#import "../xwysyy.typ": *
+```
+
+Core dependencies are downloaded by Typst:
 
 - `@preview/touying:0.7.3`
 - `@preview/physica:0.9.8`
 
-可选扩展（需要绘图或定理环境时）：
+Optional drawing and theorem integrations live in `xwysyy-extras.typ`:
 
 ```typst
-#import "xwysyy-extras.typ": *
+#import "@preview/xwysyy:0.3.0": *
+#import "@preview/xwysyy:0.3.0/xwysyy-extras.typ": *
 ```
 
-额外下载 `cetz:0.5.2`、`fletcher:0.5.8`、`theorion:0.6.0` 及其依赖（版本由 `src/extras.typ` 管理）。
+For local development, import `xwysyy-extras.typ` from the repository root. The extras entry adds `cetz`, `fletcher`, and `theorion`.
 
-### 文件结构
+## 2. Slide Entry: `xwysyy-pre`
 
-```
-xwysyy.typ                          # facade entry，re-export src/*.typ
-xwysyy-extras.typ                   # shim，re-export src/extras.typ
-src/
-  themes.typ                        # 主题字典 + 顶层色变量 + _theme-state + 颜色宏
-  elements.typ                      # 共享 show-chain xwysyy-elements + info + textbox
-  note.typ                          # 笔记入口 xwysyy-note
-  slides.typ                        # slide 入口 xwysyy-pre + 7 种版式
-  extras.typ                        # cetz / fletcher / theorion 集成
-examples/
-  slides-sky.typ                     # sky 主题示例
-  slides-sunset.typ                  # sunset 主题示例
-```
+`xwysyy-pre` applies touying slide configuration, theme colors, font settings, and the slide show-chain.
 
-编译示例：`typst compile --root . examples/slides-sky.typ`
-
----
-
-## 2. 主题入口：`xwysyy-pre`
-
-Slide 演示文稿的主入口，应用 touying 配置 + 字体 + 颜色映射 + 主题选择。
-
-### 签名
+### Signature
 
 ```typst
 #let xwysyy-pre(
   aspect-ratio: "16-9",
   footer: none,
   theme: "sky",
+  font: ("Times New Roman", "Noto Serif CJK SC"),
+  code-font: "Maple Mono",
+  lang: "en",
   ..args,
   body,
 )
 ```
 
-### 参数
+### Parameters
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `aspect-ratio` | `"16-9"` | 页面长宽比，touying 支持 `"16-9"` / `"4-3"` / `"16-10"` 等 |
-| `footer` | `none` | 页脚内容，`none` 时不显示页脚文字（仍显示页码） |
-| `theme` | `"sky"` | 主题名，当前支持 `"sky"` 和 `"sunset"` |
-| `..args` | -- | 透传给 touying 的额外配置（如 `config-info(...)`、`config-common(...)` 覆盖） |
-| `body` | -- | 整份 deck 内容 |
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| `aspect-ratio` | `"16-9"` | Presentation paper ratio, passed to touying as `presentation-<ratio>` |
+| `footer` | `none` | Optional footer text on content slides |
+| `theme` | `"sky"` | Built-in theme name or a complete theme dictionary |
+| `font` | `("Times New Roman", "Noto Serif CJK SC")` | Body font fallback list |
+| `code-font` | `"Maple Mono"` | Font for inline and block raw code |
+| `lang` | `"en"` | Typst text language |
+| `..args` | none | Extra touying configs such as `config-info(...)` or `config-common(...)` |
+| `body` | required | Deck content |
 
-### 用法
+### Example
 
 ```typst
 #show: xwysyy-pre.with(
-  aspect-ratio: "16-9",
   theme: "sunset",
-  footer: [我的演讲],
+  font: ("Libertinus Serif",),
+  code-font: "DejaVu Sans Mono",
   config-info(
-    title: [演示标题],
-    subtitle: [副标题],
+    title: [Presentation Title],
     author: " ",
     date: datetime.today(),
-    institution: " ",
   ),
 )
 ```
 
-> `config-info` 的完整字段（`short-title` / `short-subtitle` / `contact` / `logo` / `extra` 等）由 touying 提供，`xwysyy-pre` 透传不限制。
+### Theme Names And Dictionaries
 
-### 主题系统
+Built-in themes:
 
-`xwysyy-pre` 通过 `theme` 参数从 `themes` 字典中选取配色方案，并通过 `_theme-state` 在运行时向 `textbox` 等组件动态传播颜色。每套主题包含 8 个颜色字段：`sea`/`sky`/`skyl`/`skyll`/`paper`/`header-fill`/`header-text`/`page-fill`。
+```typst
+theme: "sky"
+theme: "sunset"
+theme: "forest"
+theme: "midnight"
+theme: "violet"
+theme: "graphite"
+```
 
-header 颜色由 `config-store` 中的 `header-fill` / `header-text` 控制。当主题中 `header-fill` 或 `header-text` 为 `none` 时，分别回退到 `sea` 和 `paper`。
+Direct dictionary:
 
----
+```typst
+#let forest = (
+  sea: rgb("#1f5d45"),
+  sky: rgb("#a8d5ba"),
+  skyl: rgb("#e9f5ee"),
+  skyll: rgb("#f5fbf7"),
+  paper: rgb("#f7faf8"),
+  header-fill: none,
+  header-text: none,
+  page-fill: white,
+)
 
-## 3. Slide 版式
+#show: xwysyy-pre.with(theme: forest, ...)
+```
 
-### 3.1 `title-slide` -- 封面页
+The dictionary must include all eight fields: `sea`, `sky`, `skyl`, `skyll`, `paper`, `header-fill`, `header-text`, and `page-fill`. `header-fill` and `header-text` may be `none`; they fall back to `sea` and `paper`.
 
-**签名**：`#let title-slide(..args)`
+If a field is missing, compilation fails with the missing field name.
 
-**触发方式**：显式调用一次。
+## 3. Slide Layouts
 
-**渲染内容**：从 `config-info` 的 `title / subtitle / author / institution / date` 读取并按主题色排版。
+### 3.1 `title-slide`
 
 ```typst
 #title-slide()
+#title-slide(title: [Temporary title])
 ```
 
-需要在某一次调用中临时覆盖标题信息，可传入 named 参数：
+The slide reads `title`, `subtitle`, `author`, `institution`, and `date` from touying `config-info(...)`. Named arguments override the values for one title slide.
+
+### 3.2 `outline-slide`
 
 ```typst
-#title-slide(title: [仅本页的临时标题])
+#let outline-slide(chapters: auto, title: auto)
 ```
 
-### 3.2 `outline-slide` -- 目录页
+`chapters: auto` collects level-one headings and filters `<touying:hidden>`. More than five sections switch to a two-column layout.
 
-**签名**：`#let outline-slide(chapters: auto)`
-
-**触发方式**：显式调用。
-
-**参数**：
-
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `chapters` | `auto` | `auto` 时自动收集文档中所有 `=` 一级标题；也可手动传入数组 |
-
-默认模式下自动查询文档中所有一级 heading，无需手动维护章节列表：
+`title: auto` uses the current `text.lang`: `zh` gives `目录`, other languages give `Contents`.
 
 ```typst
 #outline-slide()
+#outline-slide(title: [Agenda])
+#outline-slide(chapters: ([Intro], [Method], [Result]))
 ```
 
-手动指定章节（覆盖自动查询）：
+### 3.3 `xwysyy-slide`
+
+Content slides are triggered by level-two headings:
 
 ```typst
-#outline-slide(chapters: ([引言], [方法], [实验], [结论]))
+== Slide Title
+
+Content.
 ```
 
-渲染为带主题色圆形编号牌的章节列表，标题显示在 header bar 中。
-
-**自动行为**：
-
-- **过滤 `<touying:hidden>`**（仅 `auto` 模式）：带 `<touying:hidden>` 标签的一级标题不会出现在目录中，但页面本身正常显示。适用于补充页、Q&A 页等不想暴露在目录中的内容。手动传入 `chapters:` 数组时不做过滤。
-- **自动两列**：当章节数 > 5 时，自动切换为两列布局（badge 和字号同步缩小），避免溢出。
-
-### 3.3 `xwysyy-slide` -- 内容页（默认版式）
-
-**签名**：`#let xwysyy-slide(title: auto, ..args)`
-
-**触发方式**：`==` 二级标题自动触发；也可显式调用。
+Explicit call:
 
 ```typst
-== 页面标题
-
-正文内容。
-```
-
-显式调用时可传 `title` 覆盖默认 heading：
-
-```typst
-#xwysyy-slide(title: [自定义标题])[
-  正文内容。
+#xwysyy-slide(title: [Custom Title])[
+  Content.
 ]
 ```
 
-页面顶部 header 使用 `block` 固定高度 2.5em，显示当前 slide 标题（无章节标题）。颜色由主题的 `header-fill` / `header-text` 决定。底部 footer 仅含可选的 footer 文字 + 页码（无背景/边框，无总页数）。
+### 3.4 `new-section-slide`
 
-### 3.4 `new-section-slide` -- 章节过渡页
-
-**签名**：`#let new-section-slide(self: none, body)`
-
-**触发方式**：`=` 一级标题自动触发。
+Level-one headings trigger section transition slides:
 
 ```typst
-= 章节标题
+= Section Title
 ```
 
-渲染为全屏居中的"章节名"页，不显示 body 内容（body 由 touying 在后续 slide 独立渲染）。`src/slides.typ` 中的 `xwysyy-pre` 已通过 `config-common(new-section-slide-fn: new-section-slide)` 接好钩子。
-
-### 3.5 `focus-slide` -- 全屏强调页
-
-**签名**：`#let focus-slide(body)`
-
-**触发方式**：显式调用。
-
-整张 slide 用 `sea` 色作底，`paper` 色文字，2em 加粗居中——适合"中心议题"或"过渡口号"。
+### 3.5 `focus-slide`
 
 ```typst
-#focus-slide[本系统的核心：知识图谱 + 多步推理]
+#focus-slide[
+  Large centered text.
+]
 ```
 
-### 3.6 `image-slide` -- 全屏图片页
-
-**签名**：`#let image-slide(body: none, img: none)`
-
-**触发方式**：显式调用。
-
-图片作 page background 充满整页；`body` 作为底部叠加的说明文字（可选）。
+### 3.6 `image-slide`
 
 ```typst
 #image-slide(
-  img: image("../images/screenshot.png"),
-  body: [系统首页 / 主问答界面],
+  img: image("screenshot.png"),
+  body: [Caption text],
 )
 ```
 
-### 3.7 `end-slide` -- 结束页
-
-**签名**：`#let end-slide(title: [Thank You!], body: none)`
-
-**触发方式**：显式调用，通常放在 deck 末尾。
+### 3.7 `end-slide`
 
 ```typst
-#end-slide(
-  title: [谢谢！],
-  body: [欢迎提问],
-)
+#end-slide(title: [Thank You!], body: [Questions?])
 ```
 
-`body` 为 `none` 时仅显示标题；非 `none` 时在标题下加 20% 宽度的强调色短线 + 副标题文字。
+## 4. Components
 
----
-
-## 4. 组件
-
-### 4.1 `textbox` -- 浅底圆角文本框
-
-**签名**：
+### 4.1 `textbox`
 
 ```typst
 #let textbox(inset: 0.8em, radius: 0.4em, width: 100%, gutter: 0.6em, ..bodies)
 ```
 
-**参数**：
-
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `inset` | `0.8em` | 内边距 |
-| `radius` | `0.4em` | 圆角半径 |
-| `width` | `100%` | 单列模式下宽度 |
-| `gutter` | `0.6em` | 多列模式下列间距 |
-| `..bodies` | -- | 1 个 body：单文本框；2+ 个 body：等高分列 |
-
-背景色为当前主题的 `skyll`，通过 `_theme-state` 读取。多列模式内部用 touying 0.7.1+ 的 `components.lazy-layout`，每列自动 append `lazy-v(1fr)`，视觉等高。
-
-**用法**：
+One body creates one full-width box. Multiple bodies create equal-height columns.
 
 ```typst
-#textbox([
-  这是一段说明文字，使用浅色背景突出显示。
-])
+#textbox[
+  Single callout.
+]
 
-// 多列等高
 #textbox(
-  [*列 1 标题*
+  [*Left*
 
-  内容 A 较短],
+  Content A],
+  [*Right*
 
-  [*列 2 标题*
-
-  内容 B
-  比较长
-  分多行],
-
-  [*列 3 标题*
-
-  内容 C 中等],
+  Content B],
 )
 ```
 
-### 4.2 `info` -- "标签 - 描述"两列项
+`textbox` reads `_theme-state`; slide mode uses the active theme and note mode uses the theme selected by `xwysyy-doc` or the default `sky` state.
 
-**签名**：`#let info(something, description)`
-
-**用法**：在非 slide 文档（如简历、信息卡）中渲染左右对齐的一行：
+### 4.2 `info`
 
 ```typst
-#info([姓名], [张三])
-#info([日期], [2026-05-10])
+#info[Project][xwysyy-typst]
 ```
 
-输出：
+Renders a left label and right description with flexible space between them.
 
-```
-姓名                                                    张三
-日期                                              2026-05-10
-```
+### 4.3 Highlight Macros
 
-### 4.3 颜色强调宏
+| Macro | Output |
+|-------|--------|
+| `red(body)` | Red text |
+| `bred(body)` | Larger red text with a light stroke |
+| `yellow(body)` | Yellow text |
+| `byellow(body)` | Larger yellow text with a light stroke |
 
-| 宏 | 效果 |
-|----|------|
-| `red(body)` | 红色文字（`#9c1d11`） |
-| `bred(body)` | 红色加粗文字（1.1em + 0.02em 描边） |
-| `yellow(body)` | 黄色文字（`#d9ad20`） |
-| `byellow(body)` | 黄色加粗文字（1.1em + 0.02em 描边） |
-
-用法：
-
-```typst
-这是 #red[重要警告] 和 #bred[极其重要的警告]。
-
-注意 #yellow[提示信息] 和 #byellow[加粗提示]。
-```
-
----
-
-## 5. 笔记模式：`xwysyy-note`
-
-简洁的学术笔记排版入口，支持文献引用。独立于 slide 主题系统，以内容为中心。
-
-### 签名
+## 5. Note Entry: `xwysyy-note`
 
 ```typst
 #let xwysyy-note(
@@ -331,176 +253,171 @@ header 颜色由 `config-store` 中的 `header-fill` / `header-text` 控制。�
 )
 ```
 
-### 参数
-
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `title` | `none` | 文档标题，`none` 时不显示标题块 |
-| `subtitle` | `none` | 副标题（日期、作者等） |
-| `font` | Times + Noto Serif CJK SC | 正文字体 |
-| `code-font` | `"Maple Mono"` | 代码字体 |
-| `base-size` | `10pt` | 正文字号 |
-| `lang` | `"en"` | 语言 |
-
-### 用法
+`xwysyy-note` is an A4 document entry with independent gray-scale show rules:
 
 ```typst
-#import "xwysyy.typ": *
-
 #show: xwysyy-note.with(
-  title: "我的笔记",
-  subtitle: "2026年5月",
-)
-
-#outline(title: "目录", indent: 1.5em, depth: 2)
-
-= 第一章
-
-正文内容 @some_ref。
-
-#set text(lang: "en")
-#bibliography("refs.bib", style: "ieee")
-```
-
-### 内置格式
-
-- A4 纸张，2cm 边距，`regular` 字重
-- heading 自动编号 `1.1`
-- 标题层级用灰度区分（无主题色），H1 有浅灰分隔线
-- 列表标记 ❖ / ⬦ / –（灰色）
-- 代码块浅灰底，表格灰底表头
-- 链接固定蓝色（`#4271ae`），非主题色
-- `>|` 引用装饰（浅灰竖条）
-
----
-
-## 6. Show 规则速览
-
-`xwysyy-elements` 中的 show 规则仅用于 slide 模式（`xwysyy-pre`）。笔记模式（`xwysyy-note`）有独立的规则集。
-
-### Slide 模式 show 规则（`xwysyy-elements`）
-
-| 规则 | 改什么 | 默认行为 |
-|------|--------|----------|
-| `show strong` | strong（粗体） | `stroke: 0.04em`（使用当前文字色描边，不改变字号） |
-| `set list` / `set enum` | list（列表） | 自定义标记 (❖)/⬦/-- + 主题色，spacing 1.2em，body-indent 0.8em |
-| `show emph` | emph（斜体） | 纯文本时逐字符 synthetic skew（-8deg）适配 CJK；非文本 content 整体 skew（兼容 theorion 等） |
-| `show figure.caption` | figure caption | 0.78em + 灰色 |
-| `show figure.where(kind: table)` | table caption | 顶部对齐 |
-| `show raw.where(block: true/false)` | raw（代码块 + 行内代码） | `skyll` 底 + 圆角，block 全宽 / box 内联 |
-| `show link` | link | 下划线 + `sea` 色 |
-| 箭头字符串 show rules | 箭头符号 | `->` / `=>` / `<=>` 等，用 math 模式渲染 |
-| `set table` / `show table.cell` | table | `sea` 底表头 + `skyll` 底数据行 + 首行白字加粗 |
-
-### 笔记模式的 heading 样式
-
-`xwysyy-note` 为 heading 1-4 级定义了样式：
-
-| 级别 | 样式 |
-|------|------|
-| `=` | 深灰字 1.25em 加粗 + 浅灰分隔线 |
-| `==` | 深灰字 1.15em 加粗 |
-| `===` | 深灰字 1.05em 加粗 |
-| `====` | 深灰字 1em 加粗 |
-
-这些规则仅作用于笔记模式。slide 模板的页内标题由 `xwysyy-slide` 的 `header(self)` 渲染。
-
----
-
-## 7. 速查：API 全列表
-
-| 类别 | API | 用法 |
-|------|-----|------|
-| Slide 入口 | `xwysyy-pre` | `#show: xwysyy-pre.with(theme: "sky", ...)` |
-| Slide 版式 | `title-slide` | 显式调用 |
-| Slide 版式 | `outline-slide` | 显式调用，自动收集 `=` 标题生成目录 |
-| Slide 版式 | `xwysyy-slide` | `==` 隐式 / 显式 |
-| Slide 版式 | `new-section-slide` | `=` 隐式 |
-| Slide 版式 | `focus-slide` | 显式调用 |
-| Slide 版式 | `image-slide` | 显式调用 |
-| Slide 版式 | `end-slide` | 显式调用 |
-| 组件 | `textbox` | 显式调用，浅底圆角文本框（单列 / 多列等高） |
-| 组件 | `info` | 显式调用 |
-| 颜色宏 | `red` / `bred` / `yellow` / `byellow` | 行内调用 |
-| 笔记入口 | `xwysyy-note` | `#show: xwysyy-note.with(title: [...])` |
-
-主题色变量 `sea` / `sky` / `skyl` / `skyll` / `paper`（sky 主题默认值）也随 `import` 一并暴露，可以在你的 deck 内直接引用做局部装饰。
-
----
-
-## 8. 可选扩展：`xwysyy-extras.typ`
-
-`xwysyy-extras.typ` 提供 cetz 绘图、fletcher 流程图和 theorion 定理环境的一站式集成。它是独立文件，不影响核心模板的依赖。
-
-### 引入
-
-```typst
-#import "xwysyy.typ": *
-#import "xwysyy-extras.typ": *
-#show: show-theorion
-```
-
-### 8.1 `cetz-canvas` -- 带动画的 cetz 绘图
-
-经过 `touying-reducer` 包装的 cetz 画布，支持 `pause` 逐步显示。每步绘图用独立的 `{}` 代码块，步与步之间用 `pause` 分隔：
-
-```typst
-#cetz-canvas(
-  {
-    import cetz.draw: *
-    rect((0, 0), (2, 1.5), fill: skyl, stroke: sea)
-    content((1, 0.75), [模块 A])
-  },
-  pause,
-  {
-    import cetz.draw: *
-    rect((4, 0), (6, 1.5), fill: skyl, stroke: sea)
-    content((5, 0.75), [模块 B])
-  },
-  pause,
-  {
-    import cetz.draw: *
-    line((2, 0.75), (4, 0.75), mark: (end: ">"), stroke: sea)
-  },
+  title: "My Notes",
+  subtitle: "2026",
+  font: ("Libertinus Serif",),
+  code-font: "DejaVu Sans Mono",
 )
 ```
 
-> 跨步引用：由于每步是独立的绘图调用，不能跨步使用 `name` 锚点引用（如 `"a.right"`），需用坐标代替。
+It sets A4 paper, 2 cm margins, numbered headings, gray table styles, gray code blocks, fixed blue links, and `>|` quote decoration.
 
-### 8.2 `fletcher-diagram` -- 带动画的流程图
+## 6. Dual Output Entry: `xwysyy-doc`
 
-经过 `touying-reducer` 包装的 fletcher 图表：
+`xwysyy-doc` routes one source to slides or notes. The default mode is `slides`; `--input mode=note` switches to A4 notes.
+
+### Signature
 
 ```typst
-#fletcher-diagram(
-  node-stroke: sea,
-  node-fill: skyll,
-  edge-stroke: sea,
-  node((0, 0), [输入]),
-  pause,
-  edge((0, 0), (1, 0), "->", label: [处理]),
-  node((1, 0), [输出]),
+#let xwysyy-doc(
+  aspect-ratio: "16-9",
+  footer: none,
+  theme: "sky",
+  font: ("Times New Roman", "Noto Serif CJK SC"),
+  code-font: "Maple Mono",
+  lang: "en",
+  base-size: 10pt,
+  title: none,
+  subtitle: none,
+  author: " ",
+  date: none,
+  institution: " ",
+  ..args,
+  body,
 )
 ```
 
-`node` 和 `edge` 已作为命名导出，可直接使用。`fletcher` 模块别名也随 star import 导出，可通过 `fletcher.shapes.rect`、`fletcher.shapes.diamond` 等访问节点形状。
-
-### 8.3 theorion 定理环境
-
-`xwysyy-extras.typ` 导出了 theorion 的全部环境：`definition`、`theorem`、`lemma`、`corollary`、`example`、`remark`、`proof` 等。
+### Example
 
 ```typst
-#definition(title: "信息熵")[
-  对离散随机变量 $X$，其信息熵定义为：
-  $ H(X) = -sum_(i=1)^n P(x_i) log_2 P(x_i) $
-]
+#show: xwysyy-doc.with(
+  title: [One Source, Two Outputs],
+  subtitle: [Deck and A4 notes],
+  theme: "forest",
+)
+```
 
-#theorem[
-  $H(X) <= log_2 n$，等号成立当且仅当 $X$ 服从均匀分布。
+Compile slides:
+
+```bash
+typst compile --root . examples/dual-source.typ dual-slides.pdf
+```
+
+Compile notes:
+
+```bash
+typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
+```
+
+### Note-Mode Degradation Rules
+
+| Slide API | Note-mode behavior |
+|-----------|--------------------|
+| `title-slide` | Skipped because `xwysyy-note` renders the title block |
+| `outline-slide` | Converted to `#outline(title: ..., depth: 1)` |
+| `new-section-slide` | Skipped; the original level-one heading remains in the note |
+| `xwysyy-slide` | Explicit calls render an optional heading and body |
+| `focus-slide` | Converted to a gray emphasis block |
+| `image-slide` | Converted to a figure when `img` is present |
+| `end-slide` | Converted to a centered ending block |
+| `#pause` | Note output keeps the complete content and does not create subslides |
+
+## 7. Handouts
+
+Touying handout mode is available through `config-common(handout: true)`. `examples/slides-sky.typ` exposes a command-line switch:
+
+```typst
+#let handout-mode = sys.inputs.at("handout", default: "false") == "true"
+
+#show: xwysyy-pre.with(
+  config-common(handout: handout-mode),
+  ...
+)
+```
+
+Compile the normal deck:
+
+```bash
+typst compile --root . examples/slides-sky.typ slides.pdf
+```
+
+Compile the handout:
+
+```bash
+typst compile --root . --input handout=true examples/slides-sky.typ slides-handout.pdf
+```
+
+Touying options such as `handout-subslides` and the `<touying:handout>` label can be passed through `config-common(...)` because `xwysyy-pre` forwards `..args` to `touying-slides`.
+
+## 8. Speaker Notes And pdfpc
+
+`xwysyy.typ` re-exports touying, so `#speaker-note` is available after importing xwysyy:
+
+```typst
+== Result
+
+Main slide content.
+
+#speaker-note[
+  Mention the ablation table and the failure case.
 ]
 ```
 
-使用 theorion 时建议冻结定理计数器，防止 `#pause` 动画导致编号重复。注意用户传入的 `frozen-counters` 会**替换**默认值，因此必须同时包含模板默认的计数器：
+Show notes on a second screen:
+
+```typst
+#show: xwysyy-pre.with(
+  config-common(show-notes-on-second-screen: right),
+  ...
+)
+```
+
+Export pdfpc metadata:
+
+```bash
+typst query --root . examples/slides-sky.typ --field value --one "<pdfpc-file>" > slides-sky.pdfpc
+```
+
+The query output is JSON with page overlays and note text.
+
+## 9. Show Rules
+
+`xwysyy-elements` applies only in slide mode:
+
+| Rule | Behavior |
+|------|----------|
+| `show strong` | Adds a subtle stroke using current text color |
+| `set list` and `set enum` | Theme-colored markers and spacing |
+| `show emph` | Synthetic skew for CJK-friendly emphasis |
+| `show figure.caption` | Smaller gray captions |
+| `show figure.where(kind: table)` | Table captions on top |
+| `show raw.where(block: true)` | Full-width code blocks with `code-font` |
+| `show raw.where(block: false)` | Inline code boxes with `code-font` |
+| `show link` | Underlined theme-colored links |
+| Arrow string rules | `->`, `=>`, `<=>`, and related patterns render as math arrows |
+| `set table` and `show table.cell` | Theme-colored table head and light row fill |
+
+`xwysyy-note` has its own A4-focused show rules.
+
+## 10. Optional Extras
+
+Local development import:
+
+```typst
+#import "../xwysyy-extras.typ": *
+```
+
+Published-package users can copy the extras entry when they need drawing or theorem environments. The extras module wraps:
+
+- `cetz-canvas` with touying reducer support
+- `fletcher-diagram` with touying reducer support
+- theorion environments such as `definition`, `theorem`, `lemma`, `proof`, and `remark`
+
+When passing custom `frozen-counters`, include the defaults:
 
 ```typst
 #show: xwysyy-pre.with(
@@ -511,4 +428,12 @@ header 颜色由 `config-store` 中的 `header-fill` / `header-text` 控制。�
 )
 ```
 
-> `xwysyy-pre` 默认冻结 `counter(figure)` 和 `counter(math.equation)`。如果你传入自己的 `frozen-counters`，务必将这两个也一并列入，否则它们的冻结会丢失。
+## 11. API Index
+
+| Category | API |
+|----------|-----|
+| Entries | `xwysyy-pre`, `xwysyy-doc`, `xwysyy-note` |
+| Slide layouts | `title-slide`, `outline-slide`, `xwysyy-slide`, `new-section-slide`, `focus-slide`, `image-slide`, `end-slide` |
+| Components | `textbox`, `info` |
+| Highlight macros | `red`, `bred`, `yellow`, `byellow` |
+| Theme values | `themes`, `sea`, `sky`, `skyl`, `skyll`, `paper` |

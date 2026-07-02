@@ -1,7 +1,13 @@
 #import "../xwysyy.typ": *
 
+#let visual-ci = sys.inputs.at("visual-ci", default: "false") == "true"
+#let visual-font = if visual-ci { ("Liberation Serif", "Noto Serif CJK SC") } else { ("Times New Roman", "Noto Serif CJK SC") }
+#let visual-code-font = if visual-ci { "DejaVu Sans Mono" } else { "Maple Mono" }
+
 #show: xwysyy-pre.with(
   theme: "sunset",
+  font: visual-font,
+  code-font: visual-code-font,
   config-info(
     title: [xwysyy 主题功能演示],
     subtitle: [Sunset 配色方案 · 组件速览],
@@ -13,7 +19,7 @@
 
 #title-slide()
 
-#outline-slide()
+#outline-slide(title: [目录])
 
 // ═══════════════════════════════════════════
 = 基础排版
