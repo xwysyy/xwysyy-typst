@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="README-zh.md">中文</a> | <b>English</b>
+  <a href="https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/README-zh.md">中文</a> | <b>English</b>
 </p>
 
 Academic presentation and note-taking templates built on [touying](https://github.com/touying-typ/touying). The package covers slide decks, handouts, speaker notes, and A4 notes from one Typst source. The visual theme is derived from [Carlos-Mero/may](https://github.com/Carlos-Mero/may) under MIT.
@@ -38,25 +38,25 @@ typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 
 | sky | sunset | forest |
 |:---:|:---:|:---:|
-| ![Sky theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-sky-p1-01.png) | ![Sunset theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-sunset-p1-01.png) | ![Forest theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-forest-p1-01.png) |
+| ![Sky theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-sky-p1-01.png) | ![Sunset theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-sunset-p1-01.png) | ![Forest theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-forest-p1-01.png) |
 
 | midnight | violet | graphite |
 |:---:|:---:|:---:|
-| ![Midnight theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-midnight-p1-01.png) | ![Violet theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-violet-p1-01.png) | ![Graphite theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-graphite-p1-01.png) |
+| ![Midnight theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-midnight-p1-01.png) | ![Violet theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-violet-p1-01.png) | ![Graphite theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-graphite-p1-01.png) |
 
 ### Component Pages
 
 | Sky cover | Sky components |
 |:---:|:---:|
-| ![Sky theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p1-01.png) | ![Sky theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p5-05.png) |
+| ![Sky theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-sky-p1-01.png) | ![Sky theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-sky-p5-05.png) |
 
 | Sunset cover | Sunset components |
 |:---:|:---:|
-| ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p1-01.png) | ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p5-05.png) |
+| ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-sunset-p1-01.png) | ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-sunset-p5-05.png) |
 
 | Note title | Note code | Note table |
 |:---:|:---:|:---:|
-| ![Note mode title and TOC](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-note-p1-1.png) | ![Note mode lists and code](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-note-p2-2.png) | ![Note mode tables and quotes](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-note-p3-3.png) |
+| ![Note mode title and TOC](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-note-p1-1.png) | ![Note mode lists and code](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-note-p2-2.png) | ![Note mode tables and quotes](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-note-p3-3.png) |
 
 ## Quick Start
 
@@ -234,7 +234,7 @@ Regenerate visual regression baselines:
 scripts/gen-previews --with-baseline
 ```
 
-Full API reference: [docs/USAGE.md](docs/USAGE.md). Customization guide: [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md). Theme generator: [docs/THEME-GENERATOR.md](docs/THEME-GENERATOR.md).
+Full API reference: [docs/USAGE.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/USAGE.md). Customization guide: [docs/CUSTOMIZATION.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/CUSTOMIZATION.md). Theme generator: [docs/THEME-GENERATOR.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/THEME-GENERATOR.md).
 
 ## Acknowledgements
 
