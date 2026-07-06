@@ -24,7 +24,9 @@ jobs:
       - name: Install deterministic fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y fonts-dejavu-core fonts-liberation fonts-noto-cjk fonts-noto-cjk-extra fonts-libertinus
+          sudo apt-get install -y fonts-dejavu-core fonts-liberation fonts-noto-cjk fonts-noto-cjk-extra
+          curl -fsSL -o /tmp/libertinus.zip https://github.com/alerque/libertinus/releases/download/v7.051/Libertinus-7.051.zip
+          sudo unzip -jo /tmp/libertinus.zip 'Libertinus-7.051/static/OTF/LibertinusSans-*.otf' -d /usr/share/fonts/opentype/libertinus
 
       - name: Compile examples
         run: |
