@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Adopt CI-rendered visual baselines from a visual-regression run artifact."""
+import argparse
+import json
+import pathlib
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+BASELINE = ROOT / "tests" / "visual-baseline"
+
+
+def capture(*cmd):
+    return subprocess.run(cmd, cwd=ROOT, check=True, capture_output=True, text=True).stdout
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Download the visual-current artifact from a visual-regression run and overwrite tests/visual-baseline."
+    )
+    parser.add_argument(
+        "run_id",
+        nargs="?",
+        help="workflow run id; defaults to the latest visual-regression run on the current branch",
+    )
+    args = parser.parse_args()
+
+    run_id = args.run_id
+    if run_id is None:
+        branch = capture("git", "rev-parse", "--abbrev-ref", "HEAD").strip()
+        runs = json.loads(capture(
+            "gh", "run", "list",
+            "--workflow", "visual-regression",
+            "--branch", branch,
+            "--limit", "1",
+            "--json", "databaseId,status,headSha",
+        ))
+        if not runs:
+            print(f"no visual-regression runs found on branch {branch}", file=sys.stderr)
+            return 1
+        run = runs[0]
+        if run["status"] != "completed":
+            print(f"run {run['databaseId']} is still {run['status']}; wait for it to finish", file=sys.stderr)
+            return 1
+        head = capture("git", "rev-parse", "HEAD").strip()
+        if run["headSha"] != head:
+            print(
+                f"run {run['databaseId']} rendered {run['headSha'][:7]}, but local HEAD is {head[:7]}; "
+                "pass that run id explicitly if you really want its baselines",
+                file=sys.stderr,
+            )
+            return 1
+        run_id = str(run["databaseId"])
+
+    with tempfile.TemporaryDirectory(prefix="xwysyy-baseline-") as tmp_name:
+        tmp = pathlib.Path(tmp_name)
+        subprocess.run(
+            ("gh", "run", "download", str(run_id), "--name", "visual-current", "--dir", str(tmp)),
+            cwd=ROOT,
+            check=True,
+        )
+        pngs = sorted(tmp.rglob("*.png"))
+        if not pngs:
+            print(f"run {run_id}: visual-current artifact contains no PNGs", file=sys.stderr)
+            return 1
+        # Full replacement: layout changes can shrink page counts, so stale
+        # baseline pages must go away, not linger and fail compare-png.
+        for stale in BASELINE.glob("*.png"):
+            stale.unlink()
+        for png in pngs:
+            shutil.copyfile(png, BASELINE / png.name)
+
+    print(
+        f"adopted {len(pngs)} baselines from run {run_id}; "
+        "review `git diff --stat tests/visual-baseline`, then commit as `test: adopt CI-rendered baselines`"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

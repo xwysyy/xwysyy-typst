@@ -231,10 +231,10 @@ typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 scripts/gen-previews
 ```
 
-重新生成视觉回归基线：
+从最近一次 CI run 采纳视觉回归基线（需要已登录的 GitHub CLI）：
 
 ```bash
-scripts/gen-previews --with-baseline
+scripts/adopt-baseline
 ```
 
 完整 API 见 [docs/USAGE.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/USAGE.md)。自定义指南见 [docs/CUSTOMIZATION.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/CUSTOMIZATION.md)。配色生成器见 [docs/THEME-GENERATOR.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/THEME-GENERATOR.md)。

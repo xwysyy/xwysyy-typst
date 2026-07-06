@@ -115,7 +115,7 @@ Defaults:
 
 `heading-font` is used by the open header on content slides. The CJK entries in the `code-font` default keep CJK text inside code on a real mono font instead of the Unifont bitmap fallback.
 
-Typst web app users can pass fonts available in the web environment. Local CI uses `fonts-dejavu-core`, `fonts-liberation`, and `fonts-noto-cjk`.
+Typst web app users can pass fonts available in the web environment. Local CI uses `fonts-dejavu-core`, `fonts-liberation`, `fonts-noto-cjk`, `fonts-noto-cjk-extra`, and `fonts-libertinus`.
 
 `outline-slide(title: auto)` follows `text.lang`: `zh` gives `目录`; other languages give `Contents`. A manual title always wins:
 

@@ -231,10 +231,10 @@ Regenerate README previews:
 scripts/gen-previews
 ```
 
-Regenerate visual regression baselines:
+Adopt visual regression baselines from the latest CI run (requires a logged-in GitHub CLI):
 
 ```bash
-scripts/gen-previews --with-baseline
+scripts/adopt-baseline
 ```
 
 Full API reference: [docs/USAGE.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/USAGE.md). Customization guide: [docs/CUSTOMIZATION.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/CUSTOMIZATION.md). Theme generator: [docs/THEME-GENERATOR.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/THEME-GENERATOR.md).
