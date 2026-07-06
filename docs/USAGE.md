@@ -47,10 +47,10 @@ For local development, import `xwysyy-extras.typ` from the repository root. The 
 ```typst
 #let xwysyy-pre(
   aspect-ratio: "16-9",
-  footer: none,
   theme: "sky",
   font: ("Times New Roman", "Noto Serif CJK SC"),
-  code-font: "Maple Mono",
+  heading-font: ("Libertinus Sans", "Noto Sans CJK SC"),
+  code-font: ("Maple Mono", "Noto Sans Mono CJK SC"),
   lang: "en",
   ..args,
   body,
@@ -62,10 +62,10 @@ For local development, import `xwysyy-extras.typ` from the repository root. The 
 | Parameter | Default | Meaning |
 |-----------|---------|---------|
 | `aspect-ratio` | `"16-9"` | Presentation paper ratio, passed to touying as `presentation-<ratio>` |
-| `footer` | `none` | Optional footer text on content slides |
 | `theme` | `"sky"` | Built-in theme name or a complete theme dictionary |
 | `font` | `("Times New Roman", "Noto Serif CJK SC")` | Body font fallback list |
-| `code-font` | `"Maple Mono"` | Font for inline and block raw code |
+| `heading-font` | `("Libertinus Sans", "Noto Sans CJK SC")` | Font for the open-header slide title |
+| `code-font` | `("Maple Mono", "Noto Sans Mono CJK SC")` | Font fallback list for inline and block raw code |
 | `lang` | `"en"` | Typst text language |
 | `..args` | none | Extra touying configs such as `config-info(...)` or `config-common(...)` |
 | `body` | required | Deck content |
@@ -107,15 +107,13 @@ Direct dictionary:
   skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-fill: none,
-  header-text: none,
   page-fill: white,
 )
 
 #show: xwysyy-pre.with(theme: forest, ...)
 ```
 
-The dictionary must include all eight fields: `sea`, `sky`, `skyl`, `skyll`, `paper`, `header-fill`, `header-text`, and `page-fill`. `header-fill` and `header-text` may be `none`; they fall back to `sea` and `paper`.
+The dictionary must include all six fields: `sea`, `sky`, `skyl`, `skyll`, `paper`, and `page-fill`. An optional `header-text` field overrides the header title color; when it is absent or `none`, the title uses `sea`. All built-in themes ship `header-text: none`.
 
 If a field is missing, compilation fails with the missing field name.
 
@@ -172,15 +170,7 @@ Level-one headings trigger section transition slides:
 = Section Title
 ```
 
-### 3.5 `focus-slide`
-
-```typst
-#focus-slide[
-  Large centered text.
-]
-```
-
-### 3.6 `image-slide`
+### 3.5 `image-slide`
 
 ```typst
 #image-slide(
@@ -189,7 +179,7 @@ Level-one headings trigger section transition slides:
 )
 ```
 
-### 3.7 `end-slide`
+### 3.6 `end-slide`
 
 ```typst
 #end-slide(title: [Thank You!], body: [Questions?])
@@ -247,7 +237,7 @@ Renders a left label and right description with flexible space between them.
   title: none,
   subtitle: none,
   font: ("Times New Roman", "Noto Serif CJK SC"),
-  code-font: "Maple Mono",
+  code-font: ("Maple Mono", "Noto Sans Mono CJK SC"),
   base-size: 10pt,
   lang: "en",
 )
@@ -275,10 +265,10 @@ It sets A4 paper, 2 cm margins, numbered headings, gray table styles, gray code 
 ```typst
 #let xwysyy-doc(
   aspect-ratio: "16-9",
-  footer: none,
   theme: "sky",
   font: ("Times New Roman", "Noto Serif CJK SC"),
-  code-font: "Maple Mono",
+  heading-font: ("Libertinus Sans", "Noto Sans CJK SC"),
+  code-font: ("Maple Mono", "Noto Sans Mono CJK SC"),
   lang: "en",
   base-size: 10pt,
   title: none,
@@ -321,7 +311,6 @@ typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 | `outline-slide` | Converted to `#outline(title: ..., depth: 1)` |
 | `new-section-slide` | Skipped; the original level-one heading remains in the note |
 | `xwysyy-slide` | Explicit calls render an optional heading and body |
-| `focus-slide` | Converted to a gray emphasis block |
 | `image-slide` | Converted to a figure when `img` is present |
 | `end-slide` | Converted to a centered ending block |
 | `#pause` | Note output keeps the complete content and does not create subslides |
@@ -390,16 +379,16 @@ The query output is JSON with page overlays and note text.
 
 | Rule | Behavior |
 |------|----------|
-| `show strong` | Adds a subtle stroke using current text color |
+| `show strong` | Enlarges to 1.1em at weight 700 with slight tracking and baseline compensation, matching `bred` and `byellow` |
 | `set list` and `set enum` | Theme-colored markers and spacing |
 | `show emph` | Synthetic skew for CJK-friendly emphasis |
 | `show figure.caption` | Smaller gray captions |
 | `show figure.where(kind: table)` | Table captions on top |
 | `show raw.where(block: true)` | Full-width code blocks with `code-font` |
-| `show raw.where(block: false)` | Inline code boxes with `code-font` |
+| `show raw.where(block: false)` | Inline code chips with `code-font`; the chip fill is painted with `outset` so the code text keeps the surrounding baseline |
 | `show link` | Underlined theme-colored links |
-| Arrow string rules | `->`, `=>`, `<=>`, and related patterns render as math arrows |
-| `set table` and `show table.cell` | Theme-colored table head and light row fill |
+| Arrow string rules | `->`, `=>`, `<=>`, and related patterns render as math arrows; text already set in the `code-font` first family is skipped, so code content stays literal |
+| `set table` and `show table.cell` | Seamless `sea` header row with bold `paper` text, zebra body rows (`skyll` on even rows), and `table.hline` defaulting to `0.5pt + sea.lighten(30%)` |
 
 `xwysyy-note` has its own A4-focused show rules.
 
@@ -433,7 +422,7 @@ When passing custom `frozen-counters`, include the defaults:
 | Category | API |
 |----------|-----|
 | Entries | `xwysyy-pre`, `xwysyy-doc`, `xwysyy-note` |
-| Slide layouts | `title-slide`, `outline-slide`, `xwysyy-slide`, `new-section-slide`, `focus-slide`, `image-slide`, `end-slide` |
+| Slide layouts | `title-slide`, `outline-slide`, `xwysyy-slide`, `new-section-slide`, `image-slide`, `end-slide` |
 | Components | `textbox`, `info` |
 | Highlight macros | `red`, `bred`, `yellow`, `byellow` |
 | Theme values | `themes`, `sea`, `sky`, `skyl`, `skyll`, `paper` |

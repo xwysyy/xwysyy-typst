@@ -109,7 +109,7 @@ xwysyy-typst 当前版本 0.1.0，已上架 Typst Universe，形态是"作者自
 
 **改动清单**：
 
-- `src/slides.typ`：`xwysyy-pre` 的 `theme` 参数同时接受字符串（查内置字典，现行为不变）和字典（直接使用）。传入字典时校验 8 个字段（`sea` / `sky` / `skyl` / `skyll` / `paper` / `header-fill` / `header-text` / `page-fill`）齐全，缺字段时报错并指名缺哪个；`header-fill` / `header-text` 允许为 `none`（回退逻辑不变）。
+- `src/slides.typ`：`xwysyy-pre` 的 `theme` 参数同时接受字符串（查内置字典，现行为不变）和字典（直接使用）。传入字典时校验 6 个必填字段（`sea` / `sky` / `skyl` / `skyll` / `paper` / `page-fill`）齐全，缺字段时报错并指名缺哪个；`header-text` 为可选字段（非 `none` 时覆盖 header 标题色，缺省回退 `sea`）。
 - `docs/THEME-GENERATOR.md`：使用说明从"粘贴进 src/themes.typ"改为"作为 theme 参数传入"，保留"vendor 用户改 themes.typ"作为备选路径。
 - `README.md` / `README-zh.md` / `docs/USAGE.md` / `docs/CUSTOMIZATION.md`：theme 参数说明同步。
 
@@ -126,7 +126,7 @@ xwysyy-typst 当前版本 0.1.0，已上架 Typst Universe，形态是"作者自
 
 **改动清单**：
 
-- `src/slides.typ`：`xwysyy-pre` 新增 `font`、`code-font`、`lang` 参数，默认值与现状一致（`("Times New Roman", "Noto Serif CJK SC")`、`"Maple Mono"`、`"en"`）；`code-font` 接线到 `xwysyy-elements.with(...)`（现在没传）。
+- `src/slides.typ`：`xwysyy-pre` 新增 `font`、`code-font`、`lang` 参数，默认值与现状一致（`("Times New Roman", "Noto Serif CJK SC")`、`("Maple Mono", "Noto Sans Mono CJK SC")`、`"en"`）；`code-font` 接线到 `xwysyy-elements.with(...)`（现在没传）。
 - `src/slides.typ`：`outline-slide` 新增 `title: auto` 参数；`auto` 时按当前 `text.lang` 取"目录"（zh）或 "Contents"（其他），显式传入则用传入值。
 - `docs/USAGE.md`、README 组件表：参数说明同步；README 的 Requirements 一节补一句网页端用法（传入网页可用字体即可）。
 
@@ -180,7 +180,7 @@ xwysyy-typst 当前版本 0.1.0，已上架 Typst Universe，形态是"作者自
 **执行门槛**：这是全路线图唯一有设计难度的 feature。动手写代码前，先产出一页设计稿（写入 PR 描述或临时文档均可）交用户确认，设计稿必须回答：
 
 1. 入口形态：新入口函数（如 `xwysyy-doc`）还是在 `xwysyy-pre` 内分流；如何读 `sys.inputs`。
-2. slide 专属版式在 note 模式下的降级规则，逐个明确：`title-slide`（转标题块？）、`outline-slide`（转 `#outline()`？跳过？）、`new-section-slide`（转一级标题？本身由 `=` 触发，note 模式天然是标题）、`focus-slide` / `image-slide` / `end-slide`（跳过还是转换）。
+2. slide 专属版式在 note 模式下的降级规则，逐个明确：`title-slide`（转标题块？）、`outline-slide`（转 `#outline()`？跳过？）、`new-section-slide`（转一级标题？本身由 `=` 触发，note 模式天然是标题）、`image-slide` / `end-slide`（跳过还是转换）。
 3. `#pause` 在 note 模式的处理（预期等价于 handout 行为：只留完整内容）。
 4. `textbox`、高亮宏、箭头替换等共享组件在两种模式下的行为（`textbox` 依赖 `_theme-state`，note 模式无主题，需定回退色）。
 
@@ -227,7 +227,7 @@ xwysyy-typst 当前版本 0.1.0，已上架 Typst Universe，形态是"作者自
 **改动清单**：
 
 - 用 `docs/THEME-GENERATOR.md` 的工作流生成候选主题，人工挑选后加入 `src/themes.typ`。
-- 对比度检查脚本化：建议做法是 `typst query` 一个导出 `#metadata(themes)<themes>` 的小文件拿到 JSON，再用脚本按 WCAG 相对亮度公式校验每套主题的 paper 对 sea、header-text 对 header-fill（含 none 回退后的实际颜色）不低于 4.5:1；接入 F7 的 CI。
+- 对比度检查脚本化：建议做法是 `typst query` 一个导出 `#metadata(themes)<themes>` 的小文件拿到 JSON，再用脚本按 WCAG 相对亮度公式校验每套主题的 paper 对 sea、header 标题色（header-text，缺省回退 sea）对 page-fill（缺省回退白色）不低于 4.5:1；接入 F7 的 CI。
 - 每套新主题：README 主题表加行、预览图（用 F7 的脚本生成）、CHANGELOG 记录。
 
 **验收标准**：
@@ -251,6 +251,6 @@ xwysyy-typst 当前版本 0.1.0，已上架 Typst Universe，形态是"作者自
 ## 8. 明确不做
 
 - poster 模式、CV 模式：偏离"slides 加 notes"的包定位，如有需求另起包。
-- 继续增加 slide 版式：现有 7 种已覆盖学术 deck 骨架，版式数量不驱动采用。
+- 继续增加 slide 版式：现有 6 种已覆盖学术 deck 骨架，版式数量不驱动采用。
 - 脱离 touying 重写：收益与成本不成比例。
 - 引入新的核心依赖：见全局约束 4。

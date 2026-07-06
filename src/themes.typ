@@ -7,7 +7,6 @@
     skyl: rgb("#eff3ff"),
     skyll: rgb("#f4f9ff"),
     paper: rgb("#f5f6f8"),
-    header-fill: none,
     header-text: none,
     page-fill: white,
   ),
@@ -17,8 +16,7 @@
     skyl: rgb("#fdf0f0"),
     skyll: rgb("#FFF8F6"),
     paper: rgb("#f5f6f8"),
-    header-fill: rgb("#F7EEE7"),
-    header-text: rgb("#970014"),
+    header-text: none,
     page-fill: rgb("#fffefd"),
   ),
   forest: (
@@ -27,7 +25,6 @@
     skyl: rgb("#e9f5ee"),
     skyll: rgb("#f5fbf7"),
     paper: rgb("#f7faf8"),
-    header-fill: none,
     header-text: none,
     page-fill: white,
   ),
@@ -37,7 +34,6 @@
     skyl: rgb("#edf2fb"),
     skyll: rgb("#f7faff"),
     paper: rgb("#f7f8fb"),
-    header-fill: none,
     header-text: none,
     page-fill: white,
   ),
@@ -47,8 +43,7 @@
     skyl: rgb("#f2ecfb"),
     skyll: rgb("#faf7ff"),
     paper: rgb("#f8f6fb"),
-    header-fill: rgb("#f1ebf7"),
-    header-text: rgb("#4c3473"),
+    header-text: none,
     page-fill: white,
   ),
   graphite: (
@@ -57,20 +52,18 @@
     skyl: rgb("#f0f2f4"),
     skyll: rgb("#f8f9fa"),
     paper: rgb("#f7f7f5"),
-    header-fill: none,
     header-text: none,
     page-fill: white,
   ),
 )
 
+// `header-text` is optional: it overrides the open-header title color (default sea).
 #let _theme-required-fields = (
   "sea",
   "sky",
   "skyl",
   "skyll",
   "paper",
-  "header-fill",
-  "header-text",
   "page-fill",
 )
 
@@ -99,7 +92,15 @@
 // Theme state for dynamic components
 #let _theme-state = state("xwysyy-theme", themes.sky)
 
+// Bold color macros share the strong recipe: 1.1em + true bold weight +
+// 0.03em internal tracking + 0.05em hair side spacing (non-weak) + 0.035em
+// baseline drop for CJK optical centering, no stroke.
+#let _bold-run(c, body) = {
+  h(0.05em)
+  text(size: 1.1em, weight: 700, tracking: 0.03em, baseline: 0.035em, fill: c, body)
+  h(0.05em)
+}
 #let red(body) = text(fill: rgb("#9c1d11"), body)
-#let bred(body) = text(size: 1.1em, stroke: 0.02em + rgb("#9c1d11"), fill: rgb("#9c1d11"), body)
+#let bred(body) = _bold-run(rgb("#9c1d11"), body)
 #let yellow(body) = text(fill: rgb("#d9ad20"), body)
-#let byellow(body) = text(size: 1.1em, stroke: 0.02em + rgb("#d9ad20"), fill: rgb("#d9ad20"), body)
+#let byellow(body) = _bold-run(rgb("#d9ad20"), body)

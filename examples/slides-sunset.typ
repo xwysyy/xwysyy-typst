@@ -2,7 +2,7 @@
 
 #let visual-ci = sys.inputs.at("visual-ci", default: "false") == "true"
 #let visual-font = if visual-ci { ("Liberation Serif", "Noto Serif CJK SC") } else { ("Times New Roman", "Noto Serif CJK SC") }
-#let visual-code-font = if visual-ci { "DejaVu Sans Mono" } else { "Maple Mono" }
+#let visual-code-font = if visual-ci { ("DejaVu Sans Mono", "Noto Sans Mono CJK SC") } else { ("Maple Mono", "Noto Sans Mono CJK SC") }
 
 #show: xwysyy-pre.with(
   theme: "sunset",
@@ -190,12 +190,6 @@ $ sum_(k=0)^n binom(n, k) x^k y^(n-k) = (x + y)^n $
     $ pdv(f, x) quad pdv(f, x, 2) $ （偏导 `pdv`）
   ],
 )
-
-#focus-slide[
-  Focus Slide
-
-  深色全屏 · 居中大字
-]
 
 #end-slide(
   title: [谢谢！],

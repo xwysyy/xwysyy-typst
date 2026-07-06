@@ -30,28 +30,26 @@ Most users should pass a dictionary directly:
   skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-fill: none,
-  header-text: none,
   page-fill: white,
 )
 
 #show: xwysyy-pre.with(theme: forest, ...)
 ```
 
-The dictionary must contain 8 fields:
+The dictionary must contain 6 fields:
 
 | Field | Used For |
 |------|----------|
-| `sea` | Header fallback, links, table head, outline badge, focus slide |
-| `sky` | Accent line and secondary marks |
+| `sea` | Default header title color, links, table head, outline badge |
+| `sky` | Header rule gradient tail and secondary marks |
 | `skyl` | Reserved light color |
-| `skyll` | Textbox, code block, and data-row fill |
+| `skyll` | Textbox, code block, and zebra-row fill |
 | `paper` | Text on dark backgrounds |
-| `header-fill` | Header fill, `none` falls back to `sea` |
-| `header-text` | Header text, `none` falls back to `paper` |
 | `page-fill` | Slide page fill |
 
-Missing fields fail compilation and name the missing field.
+An optional `header-text` field overrides the header title color; when it is absent or `none`, the title uses `sea`. All built-in themes ship `header-text: none`.
+
+Missing required fields fail compilation and name the missing field.
 
 ### Vendor A Theme Into The Package
 
@@ -82,9 +80,9 @@ scripts/check-theme-contrast /tmp/themes-candidate.typ
 ```
 
 - `paper` on `sea`
-- effective `header-text` on effective `header-fill`
+- header title on page fill (`header-text` falling back to `sea`, against `page-fill` falling back to white)
 
-Each contrast ratio must be at least 4.5:1.
+Each contrast ratio must be at least 4.5:1. The script requires the parsed fields `sea`, `paper`, and `page-fill`.
 
 ## 2. Fonts And Language
 
@@ -109,11 +107,13 @@ Slide mode and note mode share parameter names:
 
 Defaults:
 
-| Entry | `font` | `code-font` | `lang` |
-|-------|--------|-------------|--------|
-| `xwysyy-pre` | `("Times New Roman", "Noto Serif CJK SC")` | `"Maple Mono"` | `"en"` |
-| `xwysyy-note` | `("Times New Roman", "Noto Serif CJK SC")` | `"Maple Mono"` | `"en"` |
-| `xwysyy-doc` | Same as slide mode | Same as slide mode | `"en"` |
+| Entry | `font` | `heading-font` | `code-font` | `lang` |
+|-------|--------|----------------|-------------|--------|
+| `xwysyy-pre` | `("Times New Roman", "Noto Serif CJK SC")` | `("Libertinus Sans", "Noto Sans CJK SC")` | `("Maple Mono", "Noto Sans Mono CJK SC")` | `"en"` |
+| `xwysyy-note` | `("Times New Roman", "Noto Serif CJK SC")` | none | `("Maple Mono", "Noto Sans Mono CJK SC")` | `"en"` |
+| `xwysyy-doc` | Same as slide mode | Same as slide mode | Same as slide mode | `"en"` |
+
+`heading-font` is used by the open header on content slides. The CJK entries in the `code-font` default keep CJK text inside code on a real mono font instead of the Unifont bitmap fallback.
 
 Typst web app users can pass fonts available in the web environment. Local CI uses `fonts-dejavu-core`, `fonts-liberation`, and `fonts-noto-cjk`.
 
@@ -138,30 +138,54 @@ Typst web app users can pass fonts available in the web environment. Local CI us
 
 Content slide header and footer are implemented in `src/slides.typ` inside `xwysyy-slide`.
 
+The header is open: the slide title is set in `heading-font`, bold, at 1.45em, colored `sea` by default, and sits over a full-width 0.12em rule filled with a gradient running from the title color through `sky` and fading to fully transparent at 92% of the width. The page top margin is 4.35em.
+
 Header:
 
 ```typst
 let header(self) = {
   block(
     width: 100% + 2em,
-    height: 2.5em,
-    fill: self.store.header-fill,
-    ...
+    inset: (x: 1em, top: 1.1em),
+    {
+      block(text(
+        font: self.store.heading-font,
+        fill: self.store.header-color,
+        weight: "bold",
+        size: 1.45em,
+        ...
+      ))
+      v(0.65em, weak: true)
+      rect(
+        width: 100%,
+        height: 0.12em,
+        radius: (left: 0.06em),
+        fill: gradient.linear(
+          (self.store.header-color, 0%),
+          (self.colors.primary, 42%),
+          (self.colors.primary.transparentize(100%), 92%),
+          (self.colors.primary.transparentize(100%), 100%),
+        ),
+      )
+    },
   )
 }
 ```
 
-Footer:
+Footer (page number in the bottom-right corner only):
 
 ```typst
 let footer(self) = {
-  utils.call-or-display(self, self.store.footer)
-  h(1fr)
-  context utils.slide-counter.display()
+  set align(bottom + right)
+  set text(fill: self.colors.neutral-dark, size: .9em)
+  block(
+    inset: (x: 0.5em, bottom: 0.4em),
+    context utils.slide-counter.display(),
+  )
 }
 ```
 
-Theme fields control header colors. `footer:` on `xwysyy-pre` controls footer text.
+The optional theme field `header-text` overrides the title color.
 
 ## 5. Add A Slide Layout
 
@@ -179,7 +203,7 @@ New slide layouts should follow the existing pattern:
 
 Use `utils.merge-dicts(self, config-page(...))` inside the wrapper. This avoids ghost slides in touying 0.7.x.
 
-If the layout should work with `xwysyy-doc`, add a `mode=note` degradation branch similar to `focus-slide` or `image-slide`.
+If the layout should work with `xwysyy-doc`, add a `mode=note` degradation branch similar to `image-slide` or `end-slide`.
 
 ## 6. Show Rules
 
@@ -188,13 +212,13 @@ Slide show rules live in `src/elements.typ` inside `xwysyy-elements`.
 Important split:
 
 - `raw.where(block: true)` handles code blocks with `block(width: 100%)`
-- `raw.where(block: false)` handles inline code with `box(baseline: 0.2em)`
+- `raw.where(block: false)` handles inline code with a `box` whose fill is painted with `outset: (y: 0.2em)`, so the chip does not push the code text below the surrounding baseline
 
-Arrow replacements use math mode. Keep longer patterns before shorter patterns:
+Arrow replacements use math mode. Each rule is wrapped in a guard that skips text whose current first font family equals the `code-font` first family (case-insensitive), so `<=` and `->` inside code stay literal. Keep longer patterns before shorter patterns:
 
 ```typst
-#show "-->": [$-->$]
-#show "->": [$->$]
+#show "-->": non-code([$-->$])
+#show "->": non-code([$->$])
 ```
 
 Note mode show rules live in `src/note.typ` and are independent from slide themes.

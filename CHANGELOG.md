@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `heading-font` parameter on `xwysyy-pre` and `xwysyy-doc` (default `("Libertinus Sans", "Noto Sans CJK SC")`), used by the content-page header
+
+### Changed
+
+- Content-page header redesigned: the solid color bar (`header-fill` background, white extrabold 1.56em title, fixed 2.5em height) is replaced by an open header, with the slide title in `heading-font` (bold, 1.45em, colored `sea`; the theme field `header-text` optionally overrides the color) over a full-width 0.12em rule filled with a gradient running from the title color through `sky` and fading to fully transparent at 92% of the width; page top margin changed from 3.7em to 4.35em
+- Theme contract: required fields reduced from 8 to 6 (`sea`, `sky`, `skyl`, `skyll`, `paper`, `page-fill`); `header-text` is now optional (a non-`none` value overrides the open-header title color, default `sea`), and all 6 built-in themes ship `header-text: none`
+- `strong` (markdown bold) now renders as a 1.1em weight-700 run with 0.03em tracking, 0.05em spacing on both sides, and a 0.035em baseline drop, replacing the 0.04em stroke (stroking filled CJK glyph counters); `bred`/`byellow` share the same recipe
+- Table style: the 0.2em cell gutter is removed so fills are seamless; header row keeps `sea` fill with white bold text; body rows use true zebra striping (even rows `skyll`, odd rows unfilled); cell inset is 0.6em horizontal and 0.42em vertical; `table.hline` defaults to `0.5pt + sea.lighten(30%)`
+- `code-font` default changed from `"Maple Mono"` to `("Maple Mono", "Noto Sans Mono CJK SC")` in `xwysyy-pre`, `xwysyy-doc`, `xwysyy-note`, and `xwysyy-elements`, so CJK inside code no longer falls back to the Unifont bitmap font
+- Example `visual-code-font` values are now CJK-fallback font stacks
+- `scripts/check-theme-contrast` now checks the header title on the page fill (`header-text` falling back to `sea`, against `page-fill` falling back to white) instead of header text on header fill; required parsed fields are now `sea`, `paper`, and `page-fill`
+- Content-page footer reduced to the page number in the bottom-right corner; the left-side footer text slot is gone
+
+### Removed
+
+- `focus-slide` layout (both slide and note modes), its usages in `examples/slides-sky.typ`, `examples/slides-sunset.typ`, and `examples/dual-source.typ`, and its row in the dual-source degradation table
+- Theme field `header-fill`
+- `footer` parameter on `xwysyy-pre` and `xwysyy-doc` (and its usage in `examples/dual-source.typ`)
+
+### Fixed
+
+- Inline code chip vertical padding is now painted with `outset` (0.2em; 0.15em in note mode) instead of `inset` plus `baseline`, so inline code text no longer sinks about 0.1em below the surrounding baseline
+- Arrow replacement show rules (slides and note mode) now skip text whose current first font family equals the code font's first family (case-insensitive), so `<=` and `->` inside code blocks and inline code are no longer rewritten into math arrows
+
 ## [0.3.0] - 2026-07-02
 
 ### Added

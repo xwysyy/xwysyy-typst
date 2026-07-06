@@ -65,7 +65,7 @@ def main():
 
     ok = True
     for name, fields in sorted(themes.items()):
-        required = {"sea", "paper", "header-fill", "header-text"}
+        required = {"sea", "paper", "page-fill"}
         missing = sorted(required - set(fields))
         if missing:
             print(f"{name}: missing fields {', '.join(missing)}", file=sys.stderr)
@@ -74,12 +74,13 @@ def main():
 
         sea = parse_color(fields["sea"])
         paper = parse_color(fields["paper"])
-        header_fill = parse_color(fields["header-fill"], fallback=sea)
-        header_text = parse_color(fields["header-text"], fallback=paper)
+        page_fill = parse_color(fields["page-fill"], fallback=(255, 255, 255))
+        # `header-text` is an optional override of the open-header title color
+        header_color = parse_color(fields.get("header-text", "none"), fallback=sea)
 
         checks = (
             ("paper on sea", contrast(paper, sea)),
-            ("header text on header fill", contrast(header_text, header_fill)),
+            ("header title on page fill", contrast(header_color, page_fill)),
         )
         for label, ratio in checks:
             if ratio < MIN_CONTRAST:

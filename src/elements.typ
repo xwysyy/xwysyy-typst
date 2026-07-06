@@ -5,16 +5,21 @@
 
 #let xwysyy-elements(
   doc,
-  code-font: "Maple Mono",
+  code-font: ("Maple Mono", "Noto Sans Mono CJK SC"),
   t-sea: sea,
   t-sky: sky,
   t-skyll: skyll,
   t-paper: paper,
 ) = [
-  // Bold enhancement
+  // Bold enhancement — 1.1em + true bold weight, no stroke (stroking fills the
+  // CJK glyph counters and looks muddy). 0.03em tracking opens the run
+  // internally; 0.05em hair spacing on both sides keeps it off the neighbors
+  // (non-weak: weak spacing would swallow adjacent Latin word spaces); the
+  // 0.035em baseline drop re-centers the enlarged CJK glyphs optically.
   #show strong: it => {
-    let c = text.fill
-    text(stroke: 0.04em + c, it.body)
+    h(0.05em)
+    text(size: 1.1em, weight: 700, tracking: 0.03em, baseline: 0.035em, it.body)
+    h(0.05em)
   }
 
   // List style
@@ -66,13 +71,16 @@
       it
     )
   }
+  // Inline code — the chip fill is painted with `outset` so it does not join
+  // baseline/line-height layout (the old inset+baseline recipe sank the code
+  // text ~0.1em below the surrounding baseline).
   #show raw.where(block: false): it => {
     set text(font: code-font)
     box(
       fill: t-skyll,
-      inset: (x: 0.3em, y: 0.2em),
+      inset: (x: 0.3em),
+      outset: (y: 0.2em),
       radius: 0.3em,
-      baseline: 0.2em,
       it
     )
   }
@@ -84,26 +92,37 @@
     it
   }
 
-  // Detail Decoration — longer patterns first to avoid partial matches
-  #show "<==>": [$arrow.l.r.double.long$]
-  #show "<=>": [$<=>$]
-  #show "-->": [$-->$]
-  #show "<--": [$<--$]
-  #show "==>": [$==>$]
-  #show "<==": [$arrow.l.double.long$]
-  #show "->": [$->$]
-  #show "<-": [$<-$]
-  #show "=>": [$=>$]
-  #show "<=": [$arrow.l.double$]
-  #show "|->": [$|->$]
+  // Detail Decoration — longer patterns first to avoid partial matches.
+  // Each rule is guarded so it never rewrites code content: string show rules
+  // also match text inside raw, which used to turn `<=` in code into ⇐.
+  // NB: `text.font` reports lowercased family names — compare case-insensitively.
+  #let code-head = lower(if type(code-font) == array { code-font.first() } else { code-font })
+  #let non-code(arrow) = it => context {
+    let f = text.font
+    let head = if type(f) == array and f.len() > 0 { f.first() } else { f }
+    if lower(head) == code-head { it } else { arrow }
+  }
+  #show "<==>": non-code([$arrow.l.r.double.long$])
+  #show "<=>": non-code([$<=>$])
+  #show "-->": non-code([$-->$])
+  #show "<--": non-code([$<--$])
+  #show "==>": non-code([$==>$])
+  #show "<==": non-code([$arrow.l.double.long$])
+  #show "->": non-code([$->$])
+  #show "<-": non-code([$<-$])
+  #show "=>": non-code([$=>$])
+  #show "<=": non-code([$arrow.l.double$])
+  #show "|->": non-code([$|->$])
 
-  // Tables
+  // Tables — seamless filled header + zebra body (no gutter: cell gaps used to
+  // slice the fills into fragments), theme-toned thin hlines
   #set table(
     stroke: none,
-    gutter: 0.2em,
+    inset: (x: 0.6em, y: 0.42em),
     align: center,
-    fill: (x, y) => if y == 0 {t-sea} else {t-skyll},
+    fill: (x, y) => if y == 0 { t-sea } else if calc.even(y) { t-skyll } else { none },
   )
+  #set table.hline(stroke: 0.5pt + t-sea.lighten(30%))
   #show table.cell: it => {
     if it.y == 0 {
     set text(t-paper, weight: "bold")

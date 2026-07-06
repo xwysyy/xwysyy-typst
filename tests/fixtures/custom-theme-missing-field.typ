@@ -6,7 +6,6 @@
   skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-fill: none,
   header-text: none,
 )
 

@@ -3,7 +3,7 @@
 #let handout-mode = sys.inputs.at("handout", default: "false") == "true"
 #let visual-ci = sys.inputs.at("visual-ci", default: "false") == "true"
 #let visual-font = if visual-ci { ("Liberation Serif", "Noto Serif CJK SC") } else { ("Times New Roman", "Noto Serif CJK SC") }
-#let visual-code-font = if visual-ci { "DejaVu Sans Mono" } else { "Maple Mono" }
+#let visual-code-font = if visual-ci { ("DejaVu Sans Mono", "Noto Sans Mono CJK SC") } else { ("Maple Mono", "Noto Sans Mono CJK SC") }
 
 #show: xwysyy-pre.with(
   font: visual-font,
@@ -265,12 +265,6 @@ $ sum_(k=0)^n binom(n, k) x^k y^(n-k) = (x + y)^n $
 #v(0.5em)
 
 链接自动显示为 `sea` 色下划线，*粗体*与 `行内代码` 可混排，行内公式 $E = m c^2$ 正常渲染。
-
-#focus-slide[
-  Focus Slide
-
-  深色全屏 · 居中大字
-]
 
 #image-slide(
   body: [Image Slide：全屏背景图 + 底部半透明标题条],

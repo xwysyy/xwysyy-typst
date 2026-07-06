@@ -27,31 +27,28 @@ Return a complete Typst dictionary named with an English lowercase name:
   skyl: rgb("#______"),
   skyll: rgb("#______"),
   paper: rgb("#______"),
-  header-fill: rgb("#______"),
-  header-text: rgb("#______"),
   page-fill: rgb("#______"),
 )
 ```
 
-`header-fill` and `header-text` may be `none`. When `header-fill` is `none`, it falls back to `sea`. When `header-text` is `none`, it falls back to `paper`.
+These six fields are required. You may add an optional `header-text` field: when it is not `none`, it overrides the header title color; the default title color is `sea`.
 
 ## Fields
 
 | Field | Visual Role |
 |------|-------------|
-| `sea` | Main dark color: header fallback, table header, links, outline badges, focus slides |
-| `sky` | Accent color |
+| `sea` | Main dark color: default header title color, table header, links, outline badges |
+| `sky` | Accent color: header rule gradient tail |
 | `skyl` | Light background |
-| `skyll` | Lightest component fill: code blocks, data rows, textboxes |
+| `skyll` | Lightest component fill: code blocks, zebra rows, textboxes |
 | `paper` | Text on dark backgrounds |
-| `header-fill` | Header bar background |
-| `header-text` | Header bar text |
 | `page-fill` | Slide page background |
+| `header-text` (optional) | Header title color override; `none` falls back to `sea` |
 
 ## Hard Constraints
 
 1. `paper` on `sea` must satisfy WCAG AA contrast, at least 4.5:1.
-2. Effective `header-text` on effective `header-fill` must satisfy WCAG AA contrast, at least 4.5:1.
+2. The header title color (`header-text` falling back to `sea`) on `page-fill` must satisfy WCAG AA contrast, at least 4.5:1.
 3. `sea`, `sky`, `skyl`, and `skyll` should form a clear dark-to-light ramp.
 4. `page-fill` must be visually separable from `skyll`, so code blocks and textboxes are visible.
 5. Keep color temperature coherent. Warm main colors should use warm light backgrounds; cold main colors should use cold light backgrounds.
@@ -67,7 +64,6 @@ sky:
   skyl: rgb("#eff3ff"),
   skyll: rgb("#f4f9ff"),
   paper: rgb("#f5f6f8"),
-  header-fill: none,
   header-text: none,
   page-fill: white,
 )
@@ -82,8 +78,7 @@ sunset:
   skyl: rgb("#fdf0f0"),
   skyll: rgb("#FFF8F6"),
   paper: rgb("#f5f6f8"),
-  header-fill: rgb("#F7EEE7"),
-  header-text: rgb("#970014"),
+  header-text: none,
   page-fill: rgb("#fffefd"),
 )
 ```
@@ -97,7 +92,6 @@ forest:
   skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-fill: none,
   header-text: none,
   page-fill: white,
 )
@@ -124,8 +118,6 @@ Paste the dictionary into your deck:
   skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-fill: none,
-  header-text: none,
   page-fill: white,
 )
 
@@ -158,7 +150,6 @@ If you maintain a fork and want a named theme, add the dictionary to `src/themes
     skyl: rgb("#e9f5ee"),
     skyll: rgb("#f5fbf7"),
     paper: rgb("#f7faf8"),
-    header-fill: none,
     header-text: none,
     page-fill: white,
   ),
@@ -192,8 +183,6 @@ Based on this xwysyy theme, adjust the main color to [your description].
   skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-fill: none,
-  header-text: none,
   page-fill: white,
 )
 ```

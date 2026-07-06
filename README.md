@@ -19,7 +19,7 @@ Academic presentation and note-taking templates built on [touying](https://githu
 - Universe template support: `typst init @preview/xwysyy:0.3.0` creates a ready-to-compile deck.
 - Six built-in themes: `sky`, `sunset`, `forest`, `midnight`, `violet`, and `graphite`.
 - Custom theme dictionaries can be passed directly to `theme`, so users can customize colors without forking the package.
-- Slide font parameters match note mode: `font`, `code-font`, and `lang`.
+- `font`, `code-font`, and `lang` are shared between slide and note mode; slides additionally take `heading-font` for the header title.
 - Touying handout mode, `#speaker-note`, and pdfpc export are documented and covered by examples.
 - `xwysyy-doc` compiles one source as a 16:9 deck by default and as A4 notes with `--input mode=note`.
 - CI scripts cover example compilation, visual regression, theme contrast, and README preview generation.
@@ -126,7 +126,6 @@ Pass a custom dictionary directly:
   skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-fill: none,
   header-text: none,
   page-fill: white,
 )
@@ -137,17 +136,16 @@ Pass a custom dictionary directly:
 )
 ```
 
-Each theme has the same eight fields:
+Six fields are required; `header-text` is optional:
 
 | Field | Purpose |
 |-------|---------|
-| `sea` | Primary dark color for headers, links, table heads, badges, and focus slides |
-| `sky` | Accent color |
+| `sea` | Primary dark color for the header title, links, table heads, and badges |
+| `sky` | Accent color, also the fade-out end of the header rule |
 | `skyl` | Light background color |
 | `skyll` | Code block, table row, and textbox fill |
 | `paper` | Text on dark backgrounds |
-| `header-fill` | Header bar fill, `none` falls back to `sea` |
-| `header-text` | Header bar text, `none` falls back to `paper` |
+| `header-text` | Optional header title color override, `none` falls back to `sea` |
 | `page-fill` | Slide page background |
 
 ## Component Reference
@@ -160,7 +158,6 @@ Each theme has the same eight fields:
 | Outline | `outline-slide` | `#outline-slide()` auto-collects section headings |
 | Content slide | `xwysyy-slide` | `== Title` auto-triggers |
 | Section transition | `new-section-slide` | `= Title` auto-triggers |
-| Focus slide | `focus-slide` | `#focus-slide[Large text]` |
 | Full-screen image | `image-slide` | `#image-slide(img: image("bg.png"))` |
 | End slide | `end-slide` | `#end-slide(title: [...])` |
 | Text box | `textbox` | `#textbox[Content]` or `#textbox([Col 1], [Col 2])` |
@@ -223,8 +220,8 @@ typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 - Typst 0.14.2
 - touying 0.7.4, downloaded on first compile
 - physica 0.9.8, downloaded on first compile
-- Default local fonts: Times New Roman, Noto Serif CJK SC, and Maple Mono
-- Typst web app users can pass web-available fonts with `font:` and `code-font:`
+- Default local fonts: Times New Roman, Noto Serif CJK SC, Libertinus Sans, Noto Sans CJK SC, Maple Mono, and Noto Sans Mono CJK SC
+- Typst web app users can pass web-available fonts with `font:`, `heading-font:`, and `code-font:`
 
 ## Maintenance
 

@@ -19,7 +19,7 @@
 - 支持 Universe 模板：`typst init @preview/xwysyy:0.3.0` 直接生成可编译 deck。
 - 内置 6 套主题：`sky`、`sunset`、`forest`、`midnight`、`violet`、`graphite`。
 - `theme` 可直接接收自定义配色字典，用户不需要 fork 包源码。
-- slide 模式与 note 模式的字体参数一致：`font`、`code-font`、`lang`。
+- slide 与 note 模式共享 `font`、`code-font`、`lang` 参数；slide 模式另有 `heading-font` 控制 header 标题字体。
 - handout、`#speaker-note`、pdfpc 导出都有可复制命令和示例覆盖。
 - `xwysyy-doc` 默认生成 16:9 deck，使用 `--input mode=note` 生成 A4 讲义。
 - CI 脚本覆盖示例编译、视觉回归、主题对比度检查和 README 预览图生成。
@@ -126,7 +126,6 @@ typst compile main.typ
   skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-fill: none,
   header-text: none,
   page-fill: white,
 )
@@ -137,17 +136,16 @@ typst compile main.typ
 )
 ```
 
-每套主题包含 8 个字段：
+主题必须提供 6 个字段，`header-text` 可选：
 
 | 字段 | 用途 |
 |------|------|
-| `sea` | 主深色，用于 header、链接、表格首行、目录徽章和 focus slide |
-| `sky` | 强调色 |
+| `sea` | 主深色，用于 header 标题、链接、表格首行和目录徽章 |
+| `sky` | 强调色，也是 header 分隔线的淡出端 |
 | `skyl` | 浅色背景 |
 | `skyll` | 代码块、表格数据行和 textbox 底色 |
 | `paper` | 深色背景上的文字 |
-| `header-fill` | header 背景，`none` 回退到 `sea` |
-| `header-text` | header 文字，`none` 回退到 `paper` |
+| `header-text` | 可选，覆盖 header 标题颜色，`none` 回退到 `sea` |
 | `page-fill` | slide 页面背景 |
 
 ## 组件速查
@@ -160,7 +158,6 @@ typst compile main.typ
 | 目录 | `outline-slide` | `#outline-slide()` 自动收集章节标题 |
 | 内容页 | `xwysyy-slide` | `== 标题` 自动触发 |
 | 章节过渡 | `new-section-slide` | `= 标题` 自动触发 |
-| 焦点页 | `focus-slide` | `#focus-slide[大字内容]` |
 | 全屏图片 | `image-slide` | `#image-slide(img: image("bg.png"))` |
 | 结束页 | `end-slide` | `#end-slide(title: [...])` |
 | 文本框 | `textbox` | `#textbox[内容]` 或 `#textbox([列 1], [列 2])` |
@@ -223,8 +220,8 @@ typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 - Typst 0.14.2
 - touying 0.7.4，首次编译自动下载
 - physica 0.9.8，首次编译自动下载
-- 默认本地字体：Times New Roman、Noto Serif CJK SC、Maple Mono
-- Typst 网页端可通过 `font:` 和 `code-font:` 传入网页端可用字体
+- 默认本地字体：Times New Roman、Noto Serif CJK SC、Libertinus Sans、Noto Sans CJK SC、Maple Mono、Noto Sans Mono CJK SC
+- Typst 网页端可通过 `font:`、`heading-font:` 和 `code-font:` 传入网页端可用字体
 
 ## 维护命令
 

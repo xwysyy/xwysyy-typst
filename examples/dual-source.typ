@@ -2,7 +2,7 @@
 
 #let visual-ci = sys.inputs.at("visual-ci", default: "false") == "true"
 #let visual-font = if visual-ci { ("Liberation Serif", "Noto Serif CJK SC") } else { ("Times New Roman", "Noto Serif CJK SC") }
-#let visual-code-font = if visual-ci { "DejaVu Sans Mono" } else { "Maple Mono" }
+#let visual-code-font = if visual-ci { ("DejaVu Sans Mono", "Noto Sans Mono CJK SC") } else { ("Maple Mono", "Noto Sans Mono CJK SC") }
 
 #show: xwysyy-doc.with(
   theme: "forest",
@@ -13,7 +13,6 @@
   author: " ",
   date: datetime.today(),
   institution: " ",
-  footer: [xwysyy-doc],
 )
 
 #title-slide()
@@ -55,18 +54,11 @@ The note output keeps the complete content and drops slide-only chrome.
     [`title-slide`], [document title block],
     [`outline-slide`], [`#outline()`],
     [`new-section-slide`], [ordinary level-one heading],
-    [`focus-slide`], [emphasis block],
     [`image-slide`], [figure],
     [`end-slide`], [centered ending block],
   ),
   caption: [Dual-output degradation rules],
 )
-
-#focus-slide[
-  Focus Slide
-
-  This becomes an emphasis block in note mode.
-]
 
 #image-slide(
   img: rect(width: 100%, height: 9em, fill: gradient.linear(sea, sky, angle: 135deg), radius: 0.4em),

@@ -5,7 +5,7 @@
   title: none,
   subtitle: none,
   font: ("Times New Roman", "Noto Serif CJK SC"),
-  code-font: "Maple Mono",
+  code-font: ("Maple Mono", "Noto Sans Mono CJK SC"),
   base-size: 10pt,
   lang: "en",
 ) = [
@@ -98,27 +98,37 @@
     set text(font: code-font, size: 0.9em)
     block(width: 100%, fill: luma(248), inset: 0.6em, radius: 0.3em, it)
   }
+  // Inline code — chip fill painted with `outset` so the baseline stays put
+  // (the old inset+baseline recipe sank the code text below the baseline)
   #show raw.where(block: false): it => {
     set text(font: code-font)
-    box(fill: luma(245), inset: (x: 0.3em, y: 0.15em), radius: 0.2em, baseline: 0.15em, it)
+    box(fill: luma(245), inset: (x: 0.3em), outset: (y: 0.15em), radius: 0.2em, it)
   }
 
   // Links
   #show link: underline
   #show link: it => { set text(fill: rgb("#4271ae")); it }
 
-  // Arrow decorations
-  #show "<==>": [$arrow.l.r.double.long$]
-  #show "<=>": [$<=>$]
-  #show "-->": [$-->$]
-  #show "<--": [$<--$]
-  #show "==>": [$==>$]
-  #show "<==": [$arrow.l.double.long$]
-  #show "->": [$->$]
-  #show "<-": [$<-$]
-  #show "=>": [$=>$]
-  #show "<=": [$arrow.l.double$]
-  #show "|->": [$|->$]
+  // Arrow decorations — guarded so they never rewrite code content (string
+  // show rules also match text inside raw)
+  // NB: `text.font` reports lowercased family names — compare case-insensitively.
+  #let code-head = lower(if type(code-font) == array { code-font.first() } else { code-font })
+  #let non-code(arrow) = it => context {
+    let f = text.font
+    let head = if type(f) == array and f.len() > 0 { f.first() } else { f }
+    if lower(head) == code-head { it } else { arrow }
+  }
+  #show "<==>": non-code([$arrow.l.r.double.long$])
+  #show "<=>": non-code([$<=>$])
+  #show "-->": non-code([$-->$])
+  #show "<--": non-code([$<--$])
+  #show "==>": non-code([$==>$])
+  #show "<==": non-code([$arrow.l.double.long$])
+  #show "->": non-code([$->$])
+  #show "<-": non-code([$<-$])
+  #show "=>": non-code([$=>$])
+  #show "<=": non-code([$arrow.l.double$])
+  #show "|->": non-code([$|->$])
 
   // Tables
   #set table(

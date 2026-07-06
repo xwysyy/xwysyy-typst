@@ -32,35 +32,51 @@
       if title != auto {
         self.store.title = title
       }
+      // Open header (ported from the poster's section header): sans title in
+      // the theme color over a thin gradient rule fading to the right.
       let header(self) = {
         set align(top)
         block(
           width: 100% + 2em,
-          height: 2.5em,
-          fill: self.store.header-fill,
-          inset: (x: 1em),
+          inset: (x: 1em, top: 1.1em),
           {
-            set align(horizon)
-            text(fill: self.store.header-text, weight: "extrabold", size: 1.56em, {
-              if self.store.title != none {
-                utils.call-or-display(self, self.store.title)
-              } else {
-                utils.display-current-heading(level: 2)
-              }
-            })
-          }
+            block(text(
+              font: self.store.heading-font,
+              fill: self.store.header-color,
+              weight: "bold",
+              size: 1.45em,
+              {
+                if self.store.title != none {
+                  utils.call-or-display(self, self.store.title)
+                } else {
+                  utils.display-current-heading(level: 2)
+                }
+              },
+            ))
+            v(0.65em, weak: true)
+            // Full-width track whose ink fades out completely by 92% — the
+            // tail dies before the page edge instead of running into it.
+            rect(
+              width: 100%,
+              height: 0.12em,
+              radius: (left: 0.06em),
+              fill: gradient.linear(
+                (self.store.header-color, 0%),
+                (self.colors.primary, 42%),
+                (self.colors.primary.transparentize(100%), 92%),
+                (self.colors.primary.transparentize(100%), 100%),
+              ),
+            )
+          },
         )
       }
+      // Footer: page number in the bottom-right corner only.
       let footer(self) = {
-        set align(bottom)
+        set align(bottom + right)
         set text(fill: self.colors.neutral-dark, size: .9em)
         block(
           inset: (x: 0.5em, bottom: 0.4em),
-          {
-            utils.call-or-display(self, self.store.footer)
-            h(1fr)
-            context utils.slide-counter.display()
-          }
+          context utils.slide-counter.display(),
         )
       }
       self = utils.merge-dicts(
@@ -152,30 +168,6 @@
         line(start: (-17%, 0em), length: 83%, stroke: self.colors.neutral-dark)
       }
       touying-slide(self: self, main-body)
-    })
-  }
-}
-
-#let focus-slide(body) = {
-  if _xwysyy-note-mode() {
-    block(
-      width: 100%,
-      fill: luma(245),
-      inset: 0.8em,
-      radius: 0.3em,
-      text(weight: "bold", body),
-    )
-  } else {
-    touying-slide-wrapper(self => {
-      self = utils.merge-dicts(
-        self,
-        config-page(
-          fill: self.colors.neutral-dark,
-          margin: 0em,
-        ),
-      )
-      set text(fill: self.colors.neutral-lightest, size: 2em, weight: "bold")
-      touying-slide(self: self, align(horizon + center, body))
     })
   }
 }
@@ -302,10 +294,10 @@
 
 #let xwysyy-pre(
   aspect-ratio: "16-9",
-  footer: none,
   theme: "sky",
   font: ("Times New Roman", "Noto Serif CJK SC"),
-  code-font: "Maple Mono",
+  heading-font: ("Libertinus Sans", "Noto Sans CJK SC"),
+  code-font: ("Maple Mono", "Noto Sans Mono CJK SC"),
   lang: "en",
   ..args,
   body,
@@ -322,7 +314,7 @@
   show: touying-slides.with(
     config-page(
       paper: "presentation-" + aspect-ratio,
-      margin: (top: 3.7em, x: 1em, bottom: 1.4em)
+      margin: (top: 4.35em, x: 1em, bottom: 1.4em)
     ),
     config-common(
       slide-fn: xwysyy-slide,
@@ -342,9 +334,11 @@
     ),
     config-store(
       title: none,
-      footer: footer,
-      header-fill: if t.header-fill != none { t.header-fill } else { t.sea },
-      header-text: if t.header-text != none { t.header-text } else { t.paper },
+      heading-font: heading-font,
+      header-color: {
+        let override = t.at("header-text", default: none)
+        if override != none { override } else { t.sea }
+      },
     ),
     config-page(
       fill: t.page-fill,
@@ -365,10 +359,10 @@
 
 #let xwysyy-doc(
   aspect-ratio: "16-9",
-  footer: none,
   theme: "sky",
   font: ("Times New Roman", "Noto Serif CJK SC"),
-  code-font: "Maple Mono",
+  heading-font: ("Libertinus Sans", "Noto Sans CJK SC"),
+  code-font: ("Maple Mono", "Noto Sans Mono CJK SC"),
   lang: "en",
   base-size: 10pt,
   title: none,
@@ -395,9 +389,9 @@
   } else if selected-mode == "slides" {
     show: xwysyy-pre.with(
       aspect-ratio: aspect-ratio,
-      footer: footer,
       theme: t,
       font: font,
+      heading-font: heading-font,
       code-font: code-font,
       lang: lang,
       config-info(

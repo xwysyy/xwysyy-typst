@@ -27,7 +27,6 @@ typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 - `author`
 - `date`
 - `institution`
-- `footer`
 
 In `slides` mode it calls `xwysyy-pre` and passes `config-info(...)`. In `note` mode it calls `xwysyy-note`.
 
@@ -39,7 +38,6 @@ In `slides` mode it calls `xwysyy-pre` and passes `config-info(...)`. In `note` 
 | `outline-slide` | Converted to `#outline(title: ..., depth: 1)` |
 | `new-section-slide` | Skipped; the original level-one heading remains in the note |
 | `xwysyy-slide` | Explicit calls render an optional heading and body |
-| `focus-slide` | Converted to a gray emphasis block |
 | `image-slide` | Converted to a figure when `img` is present |
 | `end-slide` | Converted to a centered ending block |
 
