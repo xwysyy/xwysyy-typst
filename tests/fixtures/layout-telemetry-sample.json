@@ -1,0 +1,266 @@
+{
+  "slides": [
+    {
+      "schema": "xwysyy-slide-layout/v1",
+      "id": "good-duo",
+      "archetype": "duo",
+      "coordinate_system": "normalized-slide-body",
+      "objects": [
+        {
+          "id": "good-duo:top",
+          "role": "main_visual",
+          "group": "good-duo",
+          "x": 0.09000000000000002,
+          "y": 0.07,
+          "w": 0.82,
+          "h": 0.5608744447969543
+        },
+        {
+          "id": "good-duo:bottom",
+          "role": "takeaway",
+          "group": "good-duo",
+          "x": 0.13,
+          "y": 0.7608744447969542,
+          "w": 0.74,
+          "h": 0.14912555520304568
+        }
+      ],
+      "relations": [
+        {
+          "from": "good-duo:top",
+          "to": "good-duo:bottom",
+          "kind": "supports",
+          "axis": "vertical",
+          "desired_proximity": "medium"
+        }
+      ],
+      "extra": {
+        "mode": "balanced",
+        "gap_ratio": 0.13,
+        "free_ratio": 0.16000000000000006,
+        "overflow": false
+      }
+    },
+    {
+      "schema": "xwysyy-slide-layout/v1",
+      "id": "good-grid",
+      "archetype": "grid",
+      "coordinate_system": "normalized-slide-body",
+      "objects": [
+        {
+          "id": "good-grid:0",
+          "role": "column",
+          "group": "good-grid",
+          "x": 0.0,
+          "y": 0.2,
+          "w": 0.3066666666666667,
+          "h": 0.6
+        },
+        {
+          "id": "good-grid:1",
+          "role": "column",
+          "group": "good-grid",
+          "x": 0.3466666666666667,
+          "y": 0.2,
+          "w": 0.3066666666666667,
+          "h": 0.6
+        },
+        {
+          "id": "good-grid:2",
+          "role": "column",
+          "group": "good-grid",
+          "x": 0.6933333333333334,
+          "y": 0.2,
+          "w": 0.3066666666666667,
+          "h": 0.6
+        }
+      ],
+      "relations": [],
+      "extra": {
+        "count": 3,
+        "gutter": 0.04,
+        "overflow": false,
+        "natural_height_variance": 0.0
+      }
+    },
+    {
+      "schema": "xwysyy-slide-layout/v1",
+      "id": "good-compare",
+      "archetype": "compare",
+      "coordinate_system": "normalized-slide-body",
+      "objects": [
+        {
+          "id": "good-compare:left",
+          "role": "option",
+          "group": "good-compare",
+          "x": 0.0,
+          "y": 0.2,
+          "w": 0.47,
+          "h": 0.6
+        },
+        {
+          "id": "good-compare:right",
+          "role": "option",
+          "group": "good-compare",
+          "x": 0.53,
+          "y": 0.2,
+          "w": 0.47,
+          "h": 0.6
+        }
+      ],
+      "relations": [
+        {
+          "from": "good-compare:left",
+          "to": "good-compare:right",
+          "kind": "contrast",
+          "axis": "horizontal",
+          "desired_proximity": "gutter"
+        }
+      ],
+      "extra": {
+        "gutter": 0.06,
+        "overflow": false,
+        "natural_height_variance": 0.0
+      }
+    },
+    {
+      "schema": "xwysyy-slide-layout/v1",
+      "id": "bad-lowdensity",
+      "archetype": "focus",
+      "coordinate_system": "normalized-slide-body",
+      "objects": [
+        {
+          "id": "bad-lowdensity:focus",
+          "role": "main_visual",
+          "group": "bad-lowdensity",
+          "x": 0.12,
+          "y": 0.4123863816624366,
+          "w": 0.76,
+          "h": 0.0952272366751269
+        }
+      ],
+      "relations": [],
+      "extra": {
+        "center_y": 0.46,
+        "height_ratio": 0.0952272366751269,
+        "overflow": false
+      }
+    },
+    {
+      "schema": "xwysyy-slide-layout/v1",
+      "id": "bad-imbalance",
+      "archetype": "grid",
+      "coordinate_system": "normalized-slide-body",
+      "objects": [
+        {
+          "id": "bad-imbalance:0",
+          "role": "column",
+          "group": "bad-imbalance",
+          "x": 0.0,
+          "y": 0.0,
+          "w": 0.3066666666666667,
+          "h": 1.0735187975888325
+        },
+        {
+          "id": "bad-imbalance:1",
+          "role": "column",
+          "group": "bad-imbalance",
+          "x": 0.3466666666666667,
+          "y": 0.0,
+          "w": 0.3066666666666667,
+          "h": 1.0735187975888325
+        },
+        {
+          "id": "bad-imbalance:2",
+          "role": "column",
+          "group": "bad-imbalance",
+          "x": 0.6933333333333334,
+          "y": 0.0,
+          "w": 0.3066666666666667,
+          "h": 1.0735187975888325
+        }
+      ],
+      "relations": [],
+      "extra": {
+        "count": 3,
+        "gutter": 0.04,
+        "overflow": true,
+        "natural_height_variance": 0.9701697335025381
+      }
+    },
+    {
+      "schema": "xwysyy-slide-layout/v1",
+      "id": "bad-overflow",
+      "archetype": "duo",
+      "coordinate_system": "normalized-slide-body",
+      "objects": [
+        {
+          "id": "bad-overflow:top",
+          "role": "figure",
+          "group": "bad-overflow",
+          "x": 0.09000000000000002,
+          "y": 0.0,
+          "w": 0.82,
+          "h": 0.25103830179972314
+        },
+        {
+          "id": "bad-overflow:bottom",
+          "role": "explanation",
+          "group": "bad-overflow",
+          "x": 0.13,
+          "y": 0.3810383017997231,
+          "w": 0.74,
+          "h": 0.7420070590101523
+        }
+      ],
+      "relations": [
+        {
+          "from": "bad-overflow:top",
+          "to": "bad-overflow:bottom",
+          "kind": "supports",
+          "axis": "vertical",
+          "desired_proximity": "medium"
+        }
+      ],
+      "extra": {
+        "mode": "balanced",
+        "gap_ratio": 0.13,
+        "free_ratio": 0.0,
+        "overflow": true
+      }
+    },
+    {
+      "schema": "xwysyy-slide-layout/v1",
+      "id": "bad-grid-overflow",
+      "archetype": "grid",
+      "coordinate_system": "normalized-slide-body",
+      "objects": [
+        {
+          "id": "bad-grid-overflow:0",
+          "role": "column",
+          "group": "bad-grid-overflow",
+          "x": 0.0,
+          "y": 0.0,
+          "w": 0.48,
+          "h": 1.0735187975888325
+        },
+        {
+          "id": "bad-grid-overflow:1",
+          "role": "column",
+          "group": "bad-grid-overflow",
+          "x": 0.52,
+          "y": 0.0,
+          "w": 0.48,
+          "h": 1.0735187975888325
+        }
+      ],
+      "relations": [],
+      "extra": {
+        "count": 2,
+        "gutter": 0.04,
+        "overflow": true,
+        "natural_height_variance": 0.9701697335025381
+      }
+    }
+  ]
+}

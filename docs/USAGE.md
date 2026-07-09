@@ -185,6 +185,23 @@ Level-one headings trigger section transition slides:
 #end-slide(title: [Thank You!], body: [Questions?])
 ```
 
+### 3.7 Semantic Layout Components
+
+For figure/text pages where spacing matters (especially agent-generated decks), use the semantic layout components instead of hand-written `#v()` spacing. Each measures the real rendered height of its blocks, distributes whitespace by a rhythm rule, and exports `<xwysyy-slide-layout>` telemetry that `scripts/slide-check.py` turns into numeric diagnostics.
+
+```typst
+#duo-slide(title: [...], top: image("fig.png"), bottom: textbox[*Takeaway.* ...], mode: "balanced")
+#focus-slide(title: [...], body: textbox[*One idea.*])
+#grid-slide(title: [...], columns: ([A], [B], [C]))               // equal-height cards
+#stack-slide(title: [...], blocks: (image("fig.png"), textbox[a], textbox[b]))
+#compare-slide(title: [...], left: [Option A], right: [Option B]) // equal-height cards
+#stat-slide(title: [...], stats: ((value: [38%], label: [cost]), (value: [0.4], label: [delta])))
+#figure-slide(title: [...], fig: image("f.png"), caption: [Fig 1. ...], takeaway: textbox[...])
+#sidebar-slide(title: [...], label: [Method], body: textbox[...])
+```
+
+Full parameter reference, the telemetry schema, the checker diagnostic table, and the AI generation contract live in [`LAYOUT.md`](LAYOUT.md).
+
 ## 4. Components
 
 ### 4.1 `textbox`

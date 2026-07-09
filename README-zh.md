@@ -160,11 +160,21 @@ typst compile main.typ
 | 章节过渡 | `new-section-slide` | `= 标题` 自动触发 |
 | 全屏图片 | `image-slide` | `#image-slide(img: image("bg.png"))` |
 | 结束页 | `end-slide` | `#end-slide(title: [...])` |
+| 版式 · 图文对 | `duo-slide` | 上图下文，测量间距 + 遥测 |
+| 版式 · 单焦点 | `focus-slide` | 内容少时单块居中 |
+| 版式 · 多列 | `grid-slide` | N 个等高对等列 |
+| 版式 · 堆叠 | `stack-slide` | N 块同节奏竖排 |
+| 版式 · 对比 | `compare-slide` | 左右两块顶部对齐读作对比 |
+| 版式 · 指标 | `stat-slide` | 一行大数字指标卡片 |
+| 版式 · 配图 | `figure-slide` | 图 + 紧贴 caption + 可选 takeaway |
+| 版式 · 侧栏 | `sidebar-slide` | 窄标签条 + 宽内容卡片 |
 | 文本框 | `textbox` | `#textbox[内容]` 或 `#textbox([列 1], [列 2])` |
 | 标红 | `red` / `bred` | `#red[文字]` / `#bred[粗体标红]` |
 | 标黄 | `yellow` / `byellow` | `#yellow[文字]` / `#byellow[粗体标黄]` |
 | 笔记入口 | `xwysyy-note` | `#show: xwysyy-note.with(title: [...])` |
 | 可选扩展 | `xwysyy-extras` | cetz、fletcher、theorion 集成 |
+
+版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）在编译期测量真实渲染高度、按节奏分配留白，并导出 `<xwysyy-slide-layout>` 遥测供 `scripts/slide-check.py` 转成数值化版面诊断。AI 生成幻灯片时用它们替代手写 `#v()` 间距。详见 [`docs/LAYOUT.md`](docs/LAYOUT.md)。
 
 ## Handout 与讲者备注
 

@@ -330,7 +330,7 @@
       neutral-darkest: black,
     ),
     config-methods(
-      alert: (self: none, it) => text(weight: "bold", stroke: 0.02em, it),
+      alert: (self: none, it) => text(weight: "bold", it),
     ),
     config-store(
       title: none,

@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Semantic layout layer `src/layout.typ` with measured whitespace and layout telemetry: `duo-slide`, `focus-slide`, `grid-slide`, `stack-slide`, `compare-slide`, `stat-slide` (metric tiles), `figure-slide` (figure + tight caption + takeaway), `sidebar-slide` (label tab + content card). Each measures rendered block heights at compile time, distributes whitespace by a rhythm rule, and exports normalized geometry as `<xwysyy-slide-layout>` metadata; all degrade to linear content in note mode. `grid-slide`, `compare-slide`, `stat-slide`, and `sidebar-slide` draw equal-height theme cards from plain content (`card: true` by default, `card: false` for raw content such as images)
+- `scripts/slide-check.py` (stdlib layout-telemetry checker) and `scripts/slide-telemetry` (compile → query → check helper), with `examples/layout-demo.typ`, `tests/test_slide_check.py`, `tests/fixtures/layout-dual.typ`, and `docs/LAYOUT.md` (design, API, and the AI generation contract now referenced from `AGENTS.md`)
 - `heading-font` parameter on `xwysyy-pre` and `xwysyy-doc` (default `("Libertinus Sans", "Noto Sans CJK SC")`), used by the content-page header
 
 ### Changed
 
+- Layout components now distribute space fill-first: outer margins are small and fixed (top 7%, bottom 9%) and the primary content grows to occupy the body instead of centring a small group in a large blank margin. `duo-slide`/`figure-slide` make the figure dominant with the takeaway pinned near the bottom; `grid-slide`/`compare-slide`/`stat-slide`/`sidebar-slide` grow cards to at least 60% of body height with content vertically centred. Card padding increased from 0.8em to 0.9em
+- `alert` (touying) drops its 0.02em stroke to match `strong`'s no-stroke bold, so emphasis is consistent and does not muddy CJK glyph counters
+- `object_outside_body` is suppressed when the slide already reports `content_overflow`, so an overflowing slide surfaces one error instead of one per object
 - Content-page header redesigned: the solid color bar (`header-fill` background, white extrabold 1.56em title, fixed 2.5em height) is replaced by an open header, with the slide title in `heading-font` (bold, 1.45em, colored `sea`; the theme field `header-text` optionally overrides the color) over a full-width 0.12em rule filled with a gradient running from the title color through `sky` and fading to fully transparent at 92% of the width; page top margin changed from 3.7em to 4.35em
 - Theme contract: required fields reduced from 8 to 6 (`sea`, `sky`, `skyl`, `skyll`, `paper`, `page-fill`); `header-text` is now optional (a non-`none` value overrides the open-header title color, default `sea`), and all 6 built-in themes ship `header-text: none`
 - `strong` (markdown bold) now renders as a 1.1em weight-700 run with 0.03em tracking, 0.05em spacing on both sides, and a 0.035em baseline drop, replacing the 0.04em stroke (stroking filled CJK glyph counters); `bred`/`byellow` share the same recipe

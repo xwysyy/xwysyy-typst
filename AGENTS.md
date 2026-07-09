@@ -25,12 +25,17 @@
 | `src/elements.typ` | 共享 show-chain `xwysyy-elements`（slide 共用）+ `info` + `textbox` |
 | `src/note.typ` | 笔记入口 `xwysyy-note`（A4，主题无关，show 规则独立） |
 | `src/slides.typ` | slide 入口 `xwysyy-pre` + 双产物入口 `xwysyy-doc` + 6 种版式（`xwysyy-slide`、`title-slide`、`outline-slide`、`new-section-slide`、`image-slide`、`end-slide`）。`outline-slide` 自动过滤 `<touying:hidden>` 标签且 >5 章自动两列，`title: auto` 按 `text.lang` 输出 `Contents` / `目录`。`frozen-counters` 默认冻结 `figure` 和 `math.equation` 计数器 |
+| `src/layout.typ` | 语义布局层 + 版面遥测：`duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`。每个在编译期 `measure` 真实高度、按节奏分配留白、导出 `<xwysyy-slide-layout>` 归一化几何 metadata，并在 note 模式线性降级。`grid`/`compare`/`stat`/`sidebar` 画等高卡片（`card` 参数）；`stat`/`figure` 复用 grid/duo。**新增组件不要把 `context {}` 套在产出 slide 的调用外层**（touying 会 panic，颜色改在内容层用 `context`）。AI 生成契约见 `docs/LAYOUT.md` |
 | `src/extras.typ` | `touying-reducer` 包装的 `cetz-canvas` / `fletcher-diagram` + theorion 全套环境导出 |
 | `examples/slides-sky.typ` | sky 主题演示 deck |
 | `examples/slides-sunset.typ` | sunset 主题演示 deck |
 | `examples/note.typ` | 笔记模式演示（主题无关） |
 | `examples/theme-preview.typ` | 可通过 `--input theme=<name>` 渲染任意内置主题的预览 deck |
 | `examples/dual-source.typ` | `xwysyy-doc` 双产物示例；默认编译 deck，`--input mode=note` 编译 A4 讲义 |
+| `examples/layout-demo.typ` | 语义布局层演示：5 个组件的 good 样例 + 3 个 checker 应捕获的 bad 样例（低密度 / 列失衡 / 溢出） |
+| `docs/LAYOUT.md` | 语义布局层设计文档 + 组件 API + 遥测 schema + checker 诊断表 + AI 生成契约 |
+| `tests/fixtures/layout-dual.typ` | 组件双产物 fixture：slides 与 `--input mode=note` 都要编译过 |
+| `tests/test_slide_check.py` | checker 单测（fixture）+ 真编译集成测试（`typst` 在 PATH 时编译 demo→query→断言诊断） |
 | `examples/refs.bib` | 笔记演示用 BibTeX |
 | `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.3.0": *` |
 | `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
@@ -41,6 +46,8 @@
 | `docs/CUSTOMIZATION.md` | 自定义指南 + 配合 touying 0.7.x 高级特性 |
 | `docs/THEME-GENERATOR.md` | AI 生成主题字典提示词，默认指导用户直接传给 `theme` 参数 |
 | `docs/DUAL-OUTPUT-DESIGN.md` | `xwysyy-doc` 入口形态、note 模式降级规则、pause 语义和共享组件设计 |
+| `scripts/slide-check.py` | 版面遥测 checker：读 `typst query '<xwysyy-slide-layout>'` 输出，报告密度 / 重心 / 语义关系 / 溢出等内容级诊断（标准库，`--format text\|json`、`--strict`、`--error-only`） |
+| `scripts/slide-telemetry` | compile → query → check 一条龙 helper：`scripts/slide-telemetry <deck.typ> [check args...]` |
 | `scripts/gen-previews` | 重新生成 README preview PNG（基线更新走 `scripts/adopt-baseline`，不要用 `--with-baseline` 的本地渲染当基线） |
 | `scripts/render-visuals` | 渲染视觉回归 PNG 集；内部传 `--input visual-ci=true` 以使用 CI 可安装字体 |
 | `scripts/compare-png` | 无 ImageMagick 依赖的 PNG 像素比较器，可输出 diff PNG |
@@ -56,6 +63,7 @@
 完整开发纪律见 `~/.claude/rules/dev-principles.md` + `dev-protocols.md`；以下是本项目特有提醒。
 
 - **改完必编译**：任何对 `xwysyy.typ` / `src/*.typ` / 示例 / 模板脚手架的修改完成后，至少跑 `typst compile --root . examples/slides-sky.typ && typst compile --root . examples/slides-sunset.typ && typst compile --root . examples/note.typ && typst compile --root . examples/dual-source.typ && typst compile --root . --input mode=note examples/dual-source.typ /tmp/xwysyy-dual-note.pdf`。改主题、脚本或预览时还要跑 `scripts/check-theme-contrast` 与 `scripts/render-visuals /tmp/xwysyy-visual-current && scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current`。
+- **改语义布局层必验遥测**：改 `src/layout.typ` / `scripts/slide-check.py` 后跑 `typst compile --root . examples/layout-demo.typ /tmp/layout-demo.pdf && scripts/slide-telemetry examples/layout-demo.typ && python3 -m unittest tests/test_slide_check.py && typst compile --root . --input mode=note tests/fixtures/layout-dual.typ /tmp/layout-note.pdf`。改阈值后必须确认 demo 的 5 个 good 页仍全过、3 个 bad 页仍被捕获（阈值以真实测量的 good 页为锚校准，不要放水让 bad 页蒙混）。
 - **视觉基线以 CI 环境为准**：`tests/visual-baseline/` 的判定基准是 workflow 钉死的 CI 字体环境。本机多装字体时，落在示例字体栈之外的字形（含中文的行内代码、⬦ 列表标记等）走系统回退，本地 `compare-png` 会对少数页报已知差异，属正常。更新基线：视觉改动 push 后等 CI 跑完，跑 `scripts/adopt-baseline`（自动下载该 run 的 `visual-current` artifact 全量覆盖 `tests/visual-baseline`），review 后补 `test:` 提交；不要用本地渲染图当基线。
 - **文档同步 SOP**：按改动类型查表同步文档，不再维护行号引用。
 
@@ -75,6 +83,15 @@
 - **不要随便引入 typst package**：核心依赖只有 `@preview/touying:0.7.4` 与 `@preview/physica:0.9.8`。`xwysyy-extras.typ` 额外依赖 `cetz`/`fletcher`/`theorion`，但它是可选文件不影响核心模板。新增核心依赖前先评估是否可在 `src/` 子模块内手写实现。
 - **inline code 与 block code 分开处理**：`xwysyy-elements` 中 `raw.where(block: true)` 用 `block(width: 100%)` 全宽显示，`raw.where(block: false)` 用 `box(inset: (x: 0.3em), outset: (y: 0.2em))` 内联显示（竖向留白用 `outset` 画，不参与 baseline/行高布局；note 模式同款 `outset` 为 0.15em）。修改代码样式时需同步改两处。
 - **箭头 show rule 用 math 模式**：箭头替换（`->` -> `$->$` 等）必须用 `$...$` 进入 math 模式才能渲染为箭头符号。不要用 `math.limits(it)`（只管上下标位置，不做符号转换）。长箭头（`-->`、`==>`）的 show rule 必须定义在短箭头（`->`、`=>`）之前，否则短规则会先截取。
+
+## AI 生成排版契约（语义布局层）
+
+> 生成幻灯片内容时（非维护模板本身），间距和位置一律交给 `src/layout.typ` 的语义组件，不手写数值。完整说明见 `docs/LAYOUT.md`。
+
+- **禁止**：手写 `#v(...)` 制造大间距；用 `place` / 绝对坐标控制普通正文；用 `align(bottom)` 把正文推到底部；一页堆多个无约束 block 靠手感排间距。
+- **必须**：图文上下用 `duo-slide`；单一结论少内容用 `focus-slide`；多列对等信息用 `grid-slide`；多块同节奏用 `stack-slide`；左右对比用 `compare-slide`；只通过 `mode: compact | balanced | separated` 调密度。
+- **反馈驱动，不靠手感**：编译后跑 `scripts/slide-telemetry <deck.typ>`（或 `typst query '<xwysyy-slide-layout>' --field value | scripts/slide-check.py`），按返回的 `content_overflow` / `low_density` / `column_imbalance` / `semantic_pair_split` 等数值诊断修正，不靠"看起来差不多"停止迭代。诊断含义与修法见 `docs/LAYOUT.md` 的诊断表。
+- **组件保证间距、checker 判断内容**：组件已用 `measure` + 节奏规则保证间距正确，不会溢出/塌陷；checker 只报组件无法自行决定的内容级问题（太空 / 太满 / 列失衡 / 溢出）。对称留白不是缺陷。
 
 ## 改主题的常见动线
 
