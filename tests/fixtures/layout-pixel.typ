@@ -33,7 +33,10 @@
   id: "wide",
   title: [wide unbreakable token],
   items: (
-    [*Long token.* #box(text(size: 0.9em, raw("A" * 120)))],
+    // A thin unbreakable strip instead of a long raw() token: its width must
+    // not depend on which monospace font the environment resolves (CI has no
+    // Maple Mono, so a glyph-based token renders at a different width there).
+    [*Long token.* #box(rect(width: 28cm, height: 0.45em, fill: rgb("#219ebc")))],
     [*Normal.* A second card so the stack has rhythm.],
   ),
 )
