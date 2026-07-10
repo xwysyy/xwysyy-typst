@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <b>中文</b> | <a href="https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/README.md">English</a>
+  <b>中文</b> | <a href="https://github.com/xwysyy/xwysyy-typst/blob/master/README.md">English</a>
 </p>
 
 `xwysyy` 是基于 [touying](https://github.com/touying-typ/touying) 的学术演示与笔记模板。它支持 slide、handout、讲者备注、pdfpc 元数据，以及同一份 Typst 源码生成 16:9 deck 和 A4 讲义。视觉主题派生自 [Carlos-Mero/may](https://github.com/Carlos-Mero/may)，许可证为 MIT。
@@ -22,6 +22,8 @@
 - slide 与 note 模式共享 `font`、`code-font`、`lang` 参数；slide 模式另有 `heading-font` 控制 header 标题字体。
 - handout、`#speaker-note`、pdfpc 导出都有可复制命令和示例覆盖。
 - `xwysyy-doc` 默认生成 16:9 deck，使用 `--input mode=note` 生成 A4 讲义。
+- 八个语义版式组件（`duo-slide`、`grid-slide`、`figure-slide`、`stat-slide` 等）编译期测量每个块、填满优先分配空间并导出版面遥测，不再手写 `#v()` 间距。
+- 随包发布的 QA 检查器（`scripts/xwysyy-check`）把一次编译变成数值化版面诊断（每条带可执行修法）并做像素交叉验证，agent profile 是 AI 生成 deck 的交付门禁。
 - CI 脚本覆盖示例编译、视觉回归、主题对比度检查和 README 预览图生成。
 
 ## 预览
@@ -38,25 +40,25 @@ typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 
 | sky | sunset | forest |
 |:---:|:---:|:---:|
-| ![Sky theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-sky-p1-01.png) | ![Sunset theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-sunset-p1-01.png) | ![Forest theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-forest-p1-01.png) |
+| ![Sky theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-sky-p1-01.png) | ![Sunset theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-sunset-p1-01.png) | ![Forest theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-forest-p1-01.png) |
 
 | midnight | violet | graphite |
 |:---:|:---:|:---:|
-| ![Midnight theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-midnight-p1-01.png) | ![Violet theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-violet-p1-01.png) | ![Graphite theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-theme-graphite-p1-01.png) |
+| ![Midnight theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-midnight-p1-01.png) | ![Violet theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-violet-p1-01.png) | ![Graphite theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-theme-graphite-p1-01.png) |
 
 ### 组件页
 
 | Sky 封面 | Sky 组件 |
 |:---:|:---:|
-| ![Sky theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-sky-p1-01.png) | ![Sky theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-sky-p5-05.png) |
+| ![Sky theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p1-01.png) | ![Sky theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sky-p5-05.png) |
 
 | Sunset 封面 | Sunset 组件 |
 |:---:|:---:|
-| ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-sunset-p1-01.png) | ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-sunset-p5-05.png) |
+| ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p1-01.png) | ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-sunset-p5-05.png) |
 
 | 笔记标题 | 笔记代码 | 笔记表格 |
 |:---:|:---:|:---:|
-| ![Note mode title and TOC](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-note-p1-1.png) | ![Note mode lists and code](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-note-p2-2.png) | ![Note mode tables and quotes](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.3.0/assets/preview-note-p3-3.png) |
+| ![Note mode title and TOC](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-note-p1-1.png) | ![Note mode lists and code](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-note-p2-2.png) | ![Note mode tables and quotes](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/master/assets/preview-note-p3-3.png) |
 
 ## 快速开始
 
@@ -247,7 +249,7 @@ scripts/gen-previews
 scripts/adopt-baseline
 ```
 
-完整 API 见 [docs/USAGE.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/USAGE.md)。自定义指南见 [docs/CUSTOMIZATION.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/CUSTOMIZATION.md)。配色生成器见 [docs/THEME-GENERATOR.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.3.0/docs/THEME-GENERATOR.md)。
+完整 API 见 [docs/USAGE.md](https://github.com/xwysyy/xwysyy-typst/blob/master/docs/USAGE.md)。自定义指南见 [docs/CUSTOMIZATION.md](https://github.com/xwysyy/xwysyy-typst/blob/master/docs/CUSTOMIZATION.md)。配色生成器见 [docs/THEME-GENERATOR.md](https://github.com/xwysyy/xwysyy-typst/blob/master/docs/THEME-GENERATOR.md)。
 
 ## 致谢
 
