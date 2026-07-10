@@ -340,3 +340,23 @@ scripts/check-theme-contrast
 scripts/render-visuals /tmp/xwysyy-visual-current
 scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current
 ```
+
+## 12. Universe Release Staging
+
+The source repository is the authority for every published package version. Commit and validate release changes here before creating the `typst/packages` branch. The package copy must not receive manual fixes.
+
+Build a package directory from a clean committed ref:
+
+```bash
+scripts/build-universe-package /tmp/xwysyy-universe-head --ref HEAD
+```
+
+After the release tag is created, build the final directory from that immutable ref:
+
+```bash
+scripts/build-universe-package /tmp/xwysyy-universe-v0.4.0 --ref v0.4.0
+```
+
+The builder includes the manifest, license, English README, thumbnail, both package entrypoints, `src/`, `template/`, `docs/LAYOUT.md`, and the three shipped QA scripts. It rejects a dirty source repository, an existing output path, an output path inside this repository, malformed package metadata, missing required files, and lost executable permissions. Extraction and verification happen in a temporary sibling directory, so a failed build leaves no partial output. Its final line reports a tree SHA-256 for review.
+
+Create one branch per package version in the `xwysyy/packages` fork, based on the current `typst/packages:main`. Copy the generated directory to `packages/preview/xwysyy/<version>/`, run package-check and consumer-boundary compilation there, then open the upstream pull request. Apply reviewer changes to this source repository first and regenerate the directory.

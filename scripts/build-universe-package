@@ -1,0 +1,259 @@
+#!/usr/bin/env python3
+"""Build the exact xwysyy directory submitted to typst/packages."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import io
+import os
+import pathlib
+import re
+import subprocess
+import sys
+import tarfile
+import tempfile
+import tomllib
+
+
+REPO = pathlib.Path(__file__).resolve().parent.parent
+PACKAGE_PATHS = (
+    "LICENSE",
+    "README.md",
+    "typst.toml",
+    "thumbnail.png",
+    "xwysyy.typ",
+    "xwysyy-extras.typ",
+    "src",
+    "template",
+    "docs/LAYOUT.md",
+    "scripts/compare-png",
+    "scripts/slide-check.py",
+    "scripts/xwysyy-check",
+)
+EXECUTABLES = (
+    "scripts/compare-png",
+    "scripts/slide-check.py",
+    "scripts/xwysyy-check",
+)
+FORBIDDEN_README = (
+    (
+        r"(?m)^[ \t]*(?:\$[ \t]+)?typst (?:compile|query)[^\n]*\bexamples/",
+        "repo-only example command",
+    ),
+    (r"\bscripts/(?:gen-previews|adopt-baseline)\b", "repo-only maintenance command"),
+    (
+        r"(?:raw\.githubusercontent\.com/xwysyy/xwysyy-typst/master"
+        r"|github\.com/xwysyy/xwysyy-typst/(?:blob|tree)/master)",
+        "mutable source link",
+    ),
+)
+
+
+class BuildError(RuntimeError):
+    pass
+
+
+def run_git(*args: str, text: bool = True) -> str | bytes:
+    proc = subprocess.run(
+        ["git", "-C", str(REPO), *args],
+        capture_output=True,
+        text=text,
+    )
+    if proc.returncode != 0:
+        message = proc.stderr.strip() if text else proc.stderr.decode().strip()
+        raise BuildError(message or f"git {' '.join(args)} failed")
+    return proc.stdout
+
+
+def resolve_commit(ref: str) -> str:
+    return str(
+        run_git("rev-parse", "--verify", "--end-of-options", f"{ref}^{{commit}}")
+    ).strip()
+
+
+def require_clean_worktree() -> None:
+    status = str(run_git("status", "--porcelain", "--untracked-files=all"))
+    if status:
+        raise BuildError("source repository is dirty; commit or remove changes first")
+
+
+def read_manifest(commit: str) -> dict:
+    raw = run_git("show", f"{commit}:typst.toml", text=False)
+    assert isinstance(raw, bytes)
+    return tomllib.loads(raw.decode("utf-8"))
+
+
+def package_path(value: object, label: str) -> pathlib.PurePosixPath:
+    if not isinstance(value, str):
+        raise BuildError(f"{label} must be a relative package path")
+    path = pathlib.PurePosixPath(value)
+    if path.is_absolute() or path == pathlib.PurePosixPath(".") or ".." in path.parts:
+        raise BuildError(f"{label} must be a relative package path")
+    return path
+
+
+def validate_manifest(
+    manifest: dict,
+) -> tuple[str, tuple[pathlib.PurePosixPath, ...]]:
+    package = manifest.get("package")
+    if not isinstance(package, dict):
+        raise BuildError("[package] must be a table")
+    template = manifest.get("template")
+    if not isinstance(template, dict):
+        raise BuildError("[template] must be a table")
+    if package.get("name") != "xwysyy":
+        raise BuildError("typst.toml package name must be xwysyy")
+    version = package.get("version")
+    if not isinstance(version, str) or not version:
+        raise BuildError("typst.toml package version is missing")
+
+    entrypoint = package_path(package.get("entrypoint"), "package.entrypoint")
+    template_path = package_path(template.get("path"), "template.path")
+    template_entrypoint = package_path(
+        template.get("entrypoint"), "template.entrypoint"
+    )
+    thumbnail = package_path(template.get("thumbnail"), "template.thumbnail")
+    required = (entrypoint, template_path / template_entrypoint, thumbnail)
+    return version, required
+
+
+def safe_target(output: pathlib.Path) -> pathlib.Path:
+    output = output.expanduser()
+    if not output.is_absolute():
+        output = pathlib.Path.cwd() / output
+    if output.exists() or output.is_symlink():
+        raise BuildError(f"output already exists: {output}")
+    output = output.resolve(strict=False)
+    if output.exists() or output.is_symlink():
+        raise BuildError(f"output already exists: {output}")
+    if output == REPO or REPO in output.parents:
+        raise BuildError("output must be outside the source repository")
+    return output
+
+
+def archive(commit: str) -> bytes:
+    raw = run_git(
+        "archive",
+        "--format=tar",
+        commit,
+        "--",
+        *PACKAGE_PATHS,
+        text=False,
+    )
+    assert isinstance(raw, bytes)
+    return raw
+
+
+def extract(raw: bytes, output: pathlib.Path) -> None:
+    with tarfile.open(fileobj=io.BytesIO(raw), mode="r:") as tar:
+        for member in tar.getmembers():
+            relative = pathlib.PurePosixPath(member.name)
+            if relative.is_absolute() or ".." in relative.parts:
+                raise BuildError(f"unsafe archive path: {member.name}")
+            if not (member.isdir() or member.isfile()):
+                raise BuildError(f"unsupported archive member: {member.name}")
+            target = output.joinpath(*relative.parts)
+            if member.isdir():
+                target.mkdir(parents=True, exist_ok=True)
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            source = tar.extractfile(member)
+            if source is None:
+                raise BuildError(f"cannot read archive member: {member.name}")
+            target.write_bytes(source.read())
+            target.chmod(member.mode & 0o777)
+
+
+def verify_output(
+    output: pathlib.Path,
+    version: str,
+    manifest_files: tuple[pathlib.PurePosixPath, ...],
+) -> tuple[int, int, str]:
+    required = (
+        pathlib.PurePosixPath("README.md"),
+        pathlib.PurePosixPath("LICENSE"),
+        pathlib.PurePosixPath("typst.toml"),
+        *manifest_files,
+    )
+    missing = [str(path) for path in required if not (output / path).is_file()]
+    if missing:
+        raise BuildError("required package files are missing: " + ", ".join(missing))
+    non_executable = [path for path in EXECUTABLES if not os.access(output / path, os.X_OK)]
+    if non_executable:
+        raise BuildError("package tools are not executable: " + ", ".join(non_executable))
+
+    for relative in ("README.md", "template/main.typ"):
+        text = (output / relative).read_text(encoding="utf-8")
+        versions = set(re.findall(r"@preview/xwysyy:(\d+\.\d+\.\d+)", text))
+        if versions != {version}:
+            found = ", ".join(sorted(versions)) or "none"
+            raise BuildError(
+                f"{relative} package versions must be exactly {version}; found {found}"
+            )
+
+    readme = (output / "README.md").read_text(encoding="utf-8")
+    extras_import = f'#import "@preview/xwysyy:{version}/xwysyy-extras.typ": *'
+    if extras_import not in readme:
+        raise BuildError("README.md must document the versioned extras entrypoint import")
+    for pattern, description in FORBIDDEN_README:
+        if re.search(pattern, readme):
+            raise BuildError(f"README.md contains a {description}")
+
+    digest = hashlib.sha256()
+    count = 0
+    size = 0
+    for path in sorted(p for p in output.rglob("*") if p.is_file()):
+        relative = path.relative_to(output).as_posix()
+        data = path.read_bytes()
+        mode = path.stat().st_mode & 0o777
+        digest.update(f"{mode:o} {len(data)} {relative}\0".encode())
+        digest.update(data)
+        count += 1
+        size += len(data)
+    return count, size, digest.hexdigest()
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Build the minimal xwysyy directory for typst/packages.",
+    )
+    parser.add_argument("output", type=pathlib.Path, help="new package output directory")
+    parser.add_argument("--ref", default="HEAD", help="committed Git ref to package")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    try:
+        require_clean_worktree()
+        commit = resolve_commit(args.ref)
+        manifest = read_manifest(commit)
+        version, manifest_files = validate_manifest(manifest)
+        output = safe_target(args.output)
+        raw = archive(commit)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(
+            dir=output.parent,
+            prefix=f".{output.name}.staging-",
+        ) as temporary:
+            staging = pathlib.Path(temporary)
+            extract(raw, staging)
+            count, size, tree_hash = verify_output(
+                staging, version, manifest_files
+            )
+            if output.exists() or output.is_symlink():
+                raise BuildError(f"output already exists: {output}")
+            staging.rename(output)
+    except (BuildError, OSError, tarfile.TarError, tomllib.TOMLDecodeError) as exc:
+        print(f"build-universe-package: {exc}", file=sys.stderr)
+        return 2
+
+    print(f"built @preview/xwysyy:{version} from {commit}")
+    print(f"output: {output}")
+    print(f"files: {count}; bytes: {size}; tree-sha256: {tree_hash}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

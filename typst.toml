@@ -9,11 +9,11 @@ repository = "https://github.com/xwysyy/xwysyy-typst"
 keywords = ["slides", "presentation", "academic", "touying", "theme"]
 categories = ["presentation", "components"]
 disciplines = ["computer-science"]
-compiler = "0.14.2"
+compiler = "0.14.0"
 # docs/LAYOUT.md and the layout QA toolchain (xwysyy-check, slide-check.py,
 # and the compare-png decoder it reuses) ship with the package, so template
 # users get the full feedback loop; CI/maintainer scripts stay repo-only.
-exclude = ["examples/", "assets/", "docs/CUSTOMIZATION.md", "docs/DUAL-OUTPUT-DESIGN.md", "docs/THEME-GENERATOR.md", "docs/USAGE.md", "tests/", "scripts/adopt-baseline", "scripts/check-theme-contrast", "scripts/gen-previews", "scripts/render-visuals", ".github/", ".gitignore", "AGENTS.md", "CHANGELOG.md", "README-zh.md"]
+exclude = ["examples/", "assets/", "docs/CUSTOMIZATION.md", "docs/DUAL-OUTPUT-DESIGN.md", "docs/THEME-GENERATOR.md", "docs/USAGE.md", "tests/", "scripts/adopt-baseline", "scripts/build-universe-package", "scripts/check-theme-contrast", "scripts/gen-previews", "scripts/render-visuals", ".github/", ".gitignore", "AGENTS.md", "CHANGELOG.md", "README-zh.md"]
 
 [template]
 path = "template"

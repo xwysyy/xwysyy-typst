@@ -42,6 +42,8 @@
 | `tests/fixtures/layout-pixel.typ` | 像素交叉验证真阳性：place 逃逸出 frame（render_telemetry_mismatch）与贴边细长 token（edge_ink 行峰值） |
 | `tests/fixtures/panic/` | 17 个必须编译失败的反例：必填槽位、空内容、spacer / 裸线条、单列 grid、tuning key/区间、reveal-from、metric 缺失/为空、kind 参数、visual fit、role 白名单、focus reveal、takeaway stretch、sidebar typed item、image-slide 无图 |
 | `tests/fixtures/adversarial/` | 外部审查实锤的假绿反例（自动 id 空白首帧、空 stretch 视觉），集成测试断言它们必须 fail |
+| `tests/fixtures/extras-entry.typ` | 可选入口回归：从 `xwysyy-extras.typ` 导入 cetz / fletcher / theorion 代表性公开定义；主 CI 与最低编译器 CI 都必须编译通过 |
+| `tests/test_build_universe_package.py` | 发布 staging CLI 回归：真实临时 Git 仓库覆盖正常发布、manifest 类型与路径约束、README 契约、失败后无半成品 |
 | `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机 + rules 叶级校验）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures 两种产物、页头缩放遥测） |
 | `examples/refs.bib` | 笔记演示用 BibTeX |
 | `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *` |
@@ -59,8 +61,9 @@
 | `scripts/render-visuals` | 渲染视觉回归 PNG 集；内部传 `--input visual-ci=true` 以使用 CI 可安装字体 |
 | `scripts/compare-png` | 无 ImageMagick 依赖的 PNG 像素比较器，可输出 diff PNG |
 | `scripts/adopt-baseline` | 从最近一次 visual-regression run 下载 `visual-current` artifact 全量覆盖视觉基线（需 gh CLI 已登录） |
+| `scripts/build-universe-package` | 从干净的已提交 Git ref 提取官方包白名单，保留执行权限并输出树哈希；生成物是 `typst/packages` PR 分支的唯一来源 |
 | `scripts/check-theme-contrast` | 解析 `src/themes.typ` 并检查主题对比度 |
-| `.github/workflows/visual-regression.yml` | 编译示例、检查主题对比度、渲染视觉基线并比较 |
+| `.github/workflows/visual-regression.yml` | 用 Typst 0.14.0 编译公开入口，检查 Universe 包形状，并在 0.14.2 环境编译示例、运行测试、检查主题对比度、渲染视觉基线并比较 |
 | `tests/fixtures/` | 自定义主题、目录标题、字体参数等编译验证 fixture |
 | `tests/visual-baseline/` | CI 视觉回归基线 PNG |
 | `LICENSE` | MIT，沿用上游 |
@@ -70,8 +73,9 @@
 完整开发纪律见 `~/.claude/rules/dev-principles.md` + `dev-protocols.md`；以下是本项目特有提醒。
 
 - **改完必编译**：任何对 `xwysyy.typ` / `src/*.typ` / 示例 / 模板脚手架的修改完成后，至少跑 `typst compile --root . examples/slides-sky.typ && typst compile --root . examples/slides-sunset.typ && typst compile --root . examples/note.typ && typst compile --root . examples/dual-source.typ && typst compile --root . --input mode=note examples/dual-source.typ /tmp/xwysyy-dual-note.pdf`。改主题、脚本或预览时还要跑 `scripts/check-theme-contrast` 与 `scripts/render-visuals /tmp/xwysyy-visual-current && scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current`。
-- **改语义布局层必验遥测**：改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check` 后跑 `scripts/xwysyy-check examples/layout-demo.typ; python3 -m unittest discover -s tests && typst compile --root . tests/fixtures/layout-dual.typ /tmp/layout-dual.pdf && typst compile --root . --input mode=note tests/fixtures/layout-dual.typ /tmp/layout-note.pdf`（demo 含故意的 bad 页，检查退出码非零属预期；CI 的 `Layout telemetry tests` 步骤跑同一套单测，其中已含 panic fixtures、handout 覆盖率与像素真阳性）。改阈值后必须确认 demo 的 10 个 good 页仍全过、6 个 bad 页仍被捕获（阈值以真实测量的 good 页为锚校准，不要放水让 bad 页蒙混）。发版前另跑 `scripts/xwysyy-check examples/layout-demo.typ --pixels` 做像素级交叉验证。
+- **改语义布局层必验遥测**：改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check` 后跑 `scripts/xwysyy-check examples/layout-demo.typ; python3 -m unittest discover -s tests && typst compile --root . tests/fixtures/layout-dual.typ /tmp/layout-dual.pdf && typst compile --root . --input mode=note tests/fixtures/layout-dual.typ /tmp/layout-note.pdf`（demo 含故意的 bad 页，检查退出码非零属预期；CI 的 `Python regression tests` 步骤跑同一套单测，其中已含 panic fixtures、handout 覆盖率与像素真阳性）。改阈值后必须确认 demo 的 10 个 good 页仍全过、6 个 bad 页仍被捕获（阈值以真实测量的 good 页为锚校准，不要放水让 bad 页蒙混）。发版前另跑 `scripts/xwysyy-check examples/layout-demo.typ --pixels` 做像素级交叉验证。
 - **视觉基线以 CI 环境为准**：`tests/visual-baseline/` 的判定基准是 workflow 钉死的 CI 字体环境。本机多装字体时，落在示例字体栈之外的字形（含中文的行内代码、⬦ 列表标记等）走系统回退，本地 `compare-png` 会对少数页报已知差异，属正常。更新基线：视觉改动 push 后等 CI 跑完，跑 `scripts/adopt-baseline`（自动下载该 run 的 `visual-current` artifact 全量覆盖 `tests/visual-baseline`），review 后补 `test:` 提交；不要用本地渲染图当基线。
+- **Universe 发布以源仓库为权威**：先在本仓库修正并验证，再用 `scripts/build-universe-package <output> --ref <commit-or-tag>` 生成官方包目录。`typst/packages` PR 分支只接收该目录，不手工维护副本。reviewer 要求的修改先回写本仓库，再重新生成。`typst.toml` 的 `compiler` 是最低版本，修改后必须通过 workflow 的 `minimum-compiler` job。
 - **文档同步 SOP**：按改动类型查表同步文档，不再维护行号引用。
 
   | 改了什么 | 必须同步 |
@@ -80,7 +84,7 @@
 	  | 改主题色字段 | README 主题配色表 + CUSTOMIZATION §1 + THEME-GENERATOR |
 	  | 改 show rule 行为 | USAGE §9 show 规则速览 |
 	  | 改 example deck 结构 | 重新生成 preview PNG + README 预览表 |
-	  | 改 CI / preview 脚本 | CUSTOMIZATION 维护命令 + AGENTS 关键文件表 |
+	  | 改 CI / preview / release 脚本 | CUSTOMIZATION 维护命令 + AGENTS 关键文件表 |
 	  | 纯内部重构（不改公开 API） | 无 |
 	  | 发版 | CHANGELOG.md + typst.toml version + git tag |
 - **主题色变量是契约**：`themes` 字典中每套主题必含 6 个字段 `sea` / `sky` / `skyl` / `skyll` / `paper` / `page-fill`（`_resolve-theme` 逐一校验，缺字段 panic）；`header-text` 是可选字段，非 `none` 时覆盖内容页 open header 的标题颜色（默认 `sea`），6 套内置主题均为 `header-text: none`；`header-fill` 字段已删除，不要再写进主题字典。这些字段既是颜色定义，也通过 `config-colors` 映射到 touying 的语义槽（`neutral-dark = sea` 等）；`config-store` 还携带 `heading-font` 与 `header-color`（由 `header-text` 回退到 `sea` 解析而来）供 header 使用。改名要同步改 `xwysyy-pre` 内 `config-colors(...)` 调用，否则下游 slide 组件会拿到错误颜色。运行时通过 `_theme-state`（state）向 `textbox` 等组件传播主题色。

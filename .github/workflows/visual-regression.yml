@@ -12,6 +12,40 @@ on:
     branches: ["master"]
 
 jobs:
+  minimum-compiler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: typst-community/setup-typst@v4
+        with:
+          typst-version: 0.14.0
+
+      - name: Compile public surfaces with the minimum compiler
+        run: |
+          typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf
+          typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf
+          typst compile --root . examples/note.typ /tmp/note.pdf
+          typst compile --root . examples/dual-source.typ /tmp/dual-source.pdf
+          typst compile --root . --input mode=note examples/dual-source.typ /tmp/dual-source-note.pdf
+          typst compile --root . examples/layout-demo.typ /tmp/layout-demo.pdf
+          typst compile --root . tests/fixtures/extras-entry.typ /tmp/extras-entry.pdf
+
+  package-shape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the Universe package directory
+        run: |
+          scripts/build-universe-package /tmp/xwysyy-universe --ref HEAD
+          test -f /tmp/xwysyy-universe/xwysyy.typ
+          test -f /tmp/xwysyy-universe/xwysyy-extras.typ
+          test -f /tmp/xwysyy-universe/docs/LAYOUT.md
+          test -x /tmp/xwysyy-universe/scripts/xwysyy-check
+          test ! -e /tmp/xwysyy-universe/examples
+          test ! -e /tmp/xwysyy-universe/tests
+
   render:
     runs-on: ubuntu-latest
     steps:
@@ -39,7 +73,7 @@ jobs:
           typst compile --root . --input visual-ci=true --input handout=true examples/slides-sky.typ slides-sky-handout.pdf
           typst compile --root . --input visual-ci=true examples/layout-demo.typ
 
-      - name: Layout telemetry tests
+      - name: Python regression tests
         run: python3 -m unittest discover -s tests -v
 
       - name: Check theme contrast
@@ -59,6 +93,7 @@ jobs:
           typst compile --root . --input visual-ci=true tests/fixtures/layout-handout.typ /tmp/layout-handout.pdf
           typst compile --root . --input visual-ci=true --input handout=true tests/fixtures/layout-handout.typ /tmp/layout-handout-collapsed.pdf
           typst compile --root . --input visual-ci=true tests/fixtures/layout-pixel.typ /tmp/layout-pixel.pdf
+          typst compile --root . tests/fixtures/extras-entry.typ /tmp/extras-entry.pdf
 
       - name: Check missing theme field error
         run: |
