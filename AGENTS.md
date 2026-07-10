@@ -40,10 +40,11 @@
 | `tests/fixtures/layout-fit.typ` | fit 态回归 fixture：sidebar tight 窗口、stretch 视觉饿死型 overflow（不变量 body_overflow>0）、间隙压缩型 compressed |
 | `tests/fixtures/layout-handout.typ` | handout 覆盖率回归：手写页在 handout 折叠后仍须报 telemetry_gap（靠 `<xwysyy-frame>` 真实页码） |
 | `tests/fixtures/layout-pixel.typ` | 像素交叉验证真阳性：place 逃逸出 frame（render_telemetry_mismatch）与贴边细长 token（edge_ink 行峰值） |
-| `tests/fixtures/panic/` | 9 个必须编译失败的反例：必填槽位、空内容、单列 grid、tuning key/区间、reveal-from、stat 缺字段、kind 伪装、visual fit |
-| `tests/test_slide_check.py` | checker 单测（合成 v3 记录逐诊断覆盖）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、panic fixtures、页头缩放遥测） |
+| `tests/fixtures/panic/` | 17 个必须编译失败的反例：必填槽位、空内容、spacer / 裸线条、单列 grid、tuning key/区间、reveal-from、metric 缺失/为空、kind 参数、visual fit、role 白名单、focus reveal、takeaway stretch、sidebar typed item、image-slide 无图 |
+| `tests/fixtures/adversarial/` | 外部审查实锤的假绿反例（自动 id 空白首帧、空 stretch 视觉），集成测试断言它们必须 fail |
+| `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机 + rules 叶级校验）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures 两种产物、页头缩放遥测） |
 | `examples/refs.bib` | 笔记演示用 BibTeX |
-| `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.3.0": *` |
+| `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *` |
 | `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
 | `typst.toml` | 包清单：name/version/entrypoint/template/exclude，发版时同步 CHANGELOG |
 | `CHANGELOG.md` | 版本变更记录，遵循 Keep a Changelog 格式 |
@@ -52,8 +53,8 @@
 | `docs/CUSTOMIZATION.md` | 自定义指南 + 配合 touying 0.7.x 高级特性 |
 | `docs/THEME-GENERATOR.md` | AI 生成主题字典提示词，默认指导用户直接传给 `theme` 参数 |
 | `docs/DUAL-OUTPUT-DESIGN.md` | `xwysyy-doc` 入口形态、note 模式降级规则、pause 语义和共享组件设计 |
-| `scripts/slide-check.py` | 版面遥测几何引擎（schema v3）：并集面积覆盖指标（container/visual/payload + utilization）、fit 四态诊断、empty_shell / underfilled_card、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame）、`<xwysyy-frame>` 覆盖率、严格解析（缺字段 / 非法 rules 干净报错）、每条诊断带 action、`--profile agent|human`、`--dump-features`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 恒零）；遥测为空非零退出。随 Universe 包发布 |
-| `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema → 几何检查 → `--pixels` 时渲染 PNG 做像素交叉验证（render_telemetry_mismatch / edge_ink 行峰值 / hollow_render，全出血页按清单豁免）。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。随 Universe 包发布 |
+| `scripts/slide-check.py` | 版面遥测几何引擎（schema v4，fail-closed 解析：缺字段 / 未知枚举 / 旧 schema 一律 exit 2）：并集面积覆盖指标（container/visual/payload + declared_payload）、fit 四态数值不变量、帧状态机（steps 1..N / handout 末帧 / 孤儿帧 / 重复 id 皆 error）、empty_shell / underfilled_card（只认 measured payload）、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame / sparse_frame）、rules 叶级校验、每条诊断带 action、统一 severity 政策表、`--profile agent|human`、`--dump-features`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 恒零）；遥测为空非零退出。随 Universe 包发布 |
+| `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema → 几何检查 → 像素交叉验证（`--profile agent` 强制渲染像素）：render_telemetry_mismatch（只认当前 reveal 步可见对象的 frame）/ edge_ink 行峰值 / hollow_object（逐对象 payload 墨迹，排除自身卡片填色 `paint_fill`），页面几何来自 frame v2 遥测而非硬编码常量。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。随 Universe 包发布 |
 | `scripts/gen-previews` | 重新生成 README preview PNG（基线更新走 `scripts/adopt-baseline`，不要用 `--with-baseline` 的本地渲染当基线） |
 | `scripts/render-visuals` | 渲染视觉回归 PNG 集；内部传 `--input visual-ci=true` 以使用 CI 可安装字体 |
 | `scripts/compare-png` | 无 ImageMagick 依赖的 PNG 像素比较器，可输出 diff PNG |
@@ -94,9 +95,9 @@
 
 > 生成幻灯片内容时（非维护模板本身），间距和位置一律交给 `src/layout.typ` 的语义组件，不手写数值。完整说明见 `docs/LAYOUT.md`。
 
-- **禁止**：手写 `#v(...)` 制造大间距；用 `place` / 绝对坐标控制普通正文；用 `align(bottom)` 把正文推到底部；一页堆多个无约束 block 靠手感排间距；**修改任何组件的 `tuning` 字典**（数字微调属于人工层，`extra.tuned` 会记录，agent profile 下是 error）；**在布局组件内容里用 `#pause` / `#meanwhile` / 全局 `#uncover`**（touying 会 panic，分步展示改用组件的 `reveal: true`）；用 `xwysyy-slide(kind: ...)` 伪装豁免页（panic）。
-- **必须**：图文上下用 `duo-slide`；单一结论少内容用 `focus-slide`；多列对等信息用 `grid-slide`；多块同节奏用 `stack-slide`；左右对比用 `compare-slide`；一行关键数字用 `stat-slide`；图配 caption 与结论用 `figure-slide`；窄标签配宽内容用 `sidebar-slide`（body 传纯内容不包 `textbox`）；要撑满的视觉显式写 `visual(...)`（占位 `rect(width: 100%, height: 100%)`，真实图片 `image(width: 100%, height: 100%, fit: "contain")`），固有尺寸的图用 `image(width: 100%)`；分步展示用 `reveal: true`；只通过 `mode: compact | balanced | separated` 调密度。百分比尺寸的内容不包 `visual()` 会因"渲染为空"直接 panic，这是设计行为。
-- **反馈驱动，不靠手感**：编译后跑 `scripts/xwysyy-check <deck.typ> --profile agent`（交付前再加 `--pixels`），按返回诊断的 `action` 修正（`content_overflow` / `margin_squeeze` / `underfilled_card` / `low_density` / `column_imbalance` / `semantic_pair_split` / `telemetry_gap` / `header_overflow` 等），不靠"看起来差不多"停止迭代。诊断含义与修法见 `docs/LAYOUT.md` 的诊断表。
+- **禁止**：手写 `#v(...)` 制造大间距；用 `place` / 绝对坐标控制普通正文；用 `align(bottom)` 把正文推到底部；一页堆多个无约束 block 靠手感排间距；**修改任何组件的 `tuning` 字典**（数字微调属于人工层，`extra.tuned` 会记录，agent profile 下是 error）；**在布局组件内容里用 `#pause` / `#meanwhile` / 全局 `#uncover`**（touying 会 panic，分步展示改用组件的 `reveal: true`）；给 `xwysyy-slide` 传 `kind`（参数已删除，panic；豁免页只能用 `outline-slide` / `title-slide` 等专用版式）；用 spacer / 空字符串 / 裸线条 / `hide(...)` / 空 stretch 视觉填充槽位（编译期 panic 或像素层 `hollow_object` error）。
+- **必须**：图文上下用 `duo-slide`；单一结论少内容用 `focus-slide`；多列对等信息用 `grid-slide`；多块同节奏用 `stack-slide`；左右对比用 `compare-slide`；一行关键数字用 `stat-slide`（条目用 `metric(value, label)`）；图配 caption 与结论用 `figure-slide`；窄标签配宽内容用 `sidebar-slide`（body 传纯内容不包 `textbox`）；要撑满的视觉显式写 `visual(...)`（占位 `rect(width: 100%, height: 100%)`，真实图片 `image(width: 100%, height: 100%, fit: "contain")`），固有尺寸的图用 `image(width: 100%)`；分步展示用 `reveal: true`（精确步数用 `reveal-from`，显式值恒优先；focus / sidebar 没有展示步骤）；只通过 `mode: compact | balanced | separated` 调密度。百分比尺寸的内容不包 `visual()` 会因"渲染为空 / 无可测量宽度"直接 panic，这是设计行为。
+- **反馈驱动，不靠手感**：编译后跑 `scripts/xwysyy-check <deck.typ> --profile agent`（agent profile 自动含像素交叉验证），按返回诊断的 `action` 修正（`content_overflow` / `margin_squeeze` / `underfilled_card` / `low_density` / `column_imbalance` / `semantic_pair_split` / `telemetry_gap` / `hollow_object` / `header_overflow` 等），不靠"看起来差不多"停止迭代。`report_bug` 类诊断（frame_integrity / orphan_frame / render_telemetry_mismatch / invalid_fit_state）不该靠改内容消掉。诊断含义与修法见 `docs/LAYOUT.md` 的诊断表。
 - **组件保证间距、checker 判断内容**：组件已用 `measure` + 声明式 sizing 分配器保证间距正确；checker 只报组件无法自行决定的内容级问题（太空 / 太满 / 空壳卡片 / 列失衡 / 溢出 / 漏遥测）。对称留白不是缺陷（focus 页有意如此）。
 
 ## 改主题的常见动线

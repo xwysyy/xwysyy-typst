@@ -187,7 +187,7 @@ Level-one headings trigger section transition slides:
 
 ### 3.7 Semantic Layout Components
 
-For figure/text pages where spacing matters (especially agent-generated decks), use the semantic layout components instead of hand-written `#v()` spacing. Slots take typed items with declared sizing (`visual(fit: "stretch"|"natural")`, `card(...)`, `takeaway(...)`, `plain(...)`); each component measures every block, distributes space fill-first (stretch visuals grow dominant, cards grow tall), and exports `<xwysyy-slide-layout>` v3 telemetry (frame, preferred size, 2-D payload bbox, and paint box per object) that `scripts/xwysyy-check` turns into numeric diagnostics with machine-actionable fixes, plus an optional pixel cross-check (`--pixels`).
+For figure/text pages where spacing matters (especially agent-generated decks), use the semantic layout components instead of hand-written `#v()` spacing. Slots take typed items with declared sizing (`visual(fit: "stretch"|"natural")`, `card(...)`, `takeaway(...)`, `plain(...)`); each component measures every block, distributes space fill-first (stretch visuals grow dominant, cards grow tall), and exports `<xwysyy-slide-layout>` v4 telemetry (frame, preferred size, 2-D payload bbox with a measured/declared source, and paint box + fill per object) that `scripts/xwysyy-check` turns into numeric diagnostics with machine-actionable fixes, plus a pixel cross-check (`--pixels`, forced in the agent profile).
 
 ```typst
 #duo-slide(title: [...], top: visual(image("fig.png", width: 100%, height: 100%, fit: "contain")),
@@ -199,15 +199,15 @@ For figure/text pages where spacing matters (especially agent-generated decks), 
   card([Explanation.]), takeaway([Conclusion.]),                  // theme cards
 ))
 #compare-slide(title: [...], left: [Option A], right: [Option B]) // equal-height cards, top-aligned
-#stat-slide(title: [...], stats: ((value: [38%], label: [cost]), (value: [0.4], label: [delta])))
+#stat-slide(title: [...], stats: (metric([38%], [cost]), metric([0.4], [delta])))
 #figure-slide(title: [...], fig: visual(image("f.png", width: 100%, height: 100%, fit: "contain")),
   caption: [Fig 1. ...], takeaway: [*Conclusion.*])
 #sidebar-slide(title: [...], label: [Method], body: [Plain content, the component draws the card.])
 ```
 
-Required slots panic on `none` and on content that renders empty; percent-sized content must be wrapped in `visual(...)` (percent heights measure as zero outside a sized container). For stepwise reveal, pass `reveal: true` (duo/figure show the second block on step 2, stack/grid show block i on step i, compare shows the right side on step 2; typed items take an explicit `reveal-from`). Do not put `#pause` inside a component's content: touying panics; hidden reveal steps keep their measured space so the layout never shifts between subslides. Numeric knobs (widths, gutters) live in each component's `tuning` dictionary, validated for key, type, and range.
+Required slots panic on `none` and on content that renders empty; text slots (cards, plain blocks, metric fields) additionally require a measurable width and height, so spacers, empty strings, and bare rules fail at compile time. Percent-sized content must be wrapped in `visual(...)` (percent heights measure as zero outside a sized container). For stepwise reveal, pass `reveal: true` (duo/figure show the second block on step 2, stack/grid show block i on step i, compare shows the right side on step 2); an explicit `reveal-from` on a typed item always wins over that sugar, and components without reveal steps (focus, sidebar) reject it. Do not put `#pause` inside a component's content: touying panics; hidden reveal steps keep their measured space so the layout never shifts between subslides. Numeric knobs (widths, gutters) live in each component's `tuning` dictionary, validated for key, type, and range.
 
-Check a deck with `scripts/xwysyy-check deck.typ` (add `--pixels` before delivery, `--profile agent` for AI-generated decks). Full parameter reference, the telemetry schema, the checker diagnostic table, the pixel cross-checks, and the AI generation contract live in [`LAYOUT.md`](LAYOUT.md).
+Check a deck with `scripts/xwysyy-check deck.typ` (`--profile agent` for AI-generated decks; the agent profile always renders pixels, because declared stretch payloads are verified against real ink). Full parameter reference, the telemetry schema, the checker diagnostic table, the pixel cross-checks, and the AI generation contract live in [`LAYOUT.md`](LAYOUT.md).
 
 ## 4. Components
 
