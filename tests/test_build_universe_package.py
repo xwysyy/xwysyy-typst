@@ -28,9 +28,13 @@ VALID_README = """\
 
 ```typst
 #import "@preview/xwysyy:0.4.0": *
-#import "@preview/xwysyy:0.4.0/xwysyy-extras.typ": *
+#import xwysyy-extras(): *
 ```
 """
+
+PACKAGE_SUBPATH_README = (
+    VALID_README + '#import "@preview/xwysyy:0.4.0/xwysyy-extras.typ": *\n'
+)
 
 
 class BuildUniversePackageTests(unittest.TestCase):
@@ -163,6 +167,15 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 2)
         self.assertIn("repo-only example command", result.stderr)
+        self.assertFalse(self.output.exists())
+
+    def test_readme_package_subpath_import_is_rejected(self) -> None:
+        self.commit_file("README.md", PACKAGE_SUBPATH_README)
+
+        result = self.build()
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unsupported package subpath import", result.stderr)
         self.assertFalse(self.output.exists())
 
     def test_indented_repo_only_readme_command_is_rejected(self) -> None:

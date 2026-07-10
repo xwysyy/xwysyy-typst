@@ -1,4 +1,5 @@
-#import "../../xwysyy-extras.typ": cetz-canvas, fletcher-diagram, theorem
+#import "../../xwysyy.typ": xwysyy-extras
+#import xwysyy-extras(): cetz-canvas, fletcher-diagram, theorem
 
 #set page(width: 12cm, height: 4cm, margin: 1cm)
 

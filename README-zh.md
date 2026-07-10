@@ -167,12 +167,13 @@ typst compile main.typ
 | 标红 | `red` / `bred` | `#red[文字]` / `#bred[粗体标红]` |
 | 标黄 | `yellow` / `byellow` | `#yellow[文字]` / `#byellow[粗体标黄]` |
 | 笔记入口 | `xwysyy-note` | `#show: xwysyy-note.with(title: [...])` |
-| 可选扩展入口 | `xwysyy-extras.typ` | cetz、fletcher、theorion 集成 |
+| 可选扩展加载器 | `xwysyy-extras()` | 按需加载 cetz、fletcher、theorion 集成 |
 
-绘图与定理环境使用独立入口，让核心导入保持较小的依赖集合：
+只有调用 `xwysyy-extras()` 时才会加载绘图与定理环境，因此核心导入仍保持较小的依赖集合：
 
 ```typst
-#import "@preview/xwysyy:0.4.0/xwysyy-extras.typ": *
+#import "@preview/xwysyy:0.4.0": *
+#import xwysyy-extras(): *
 ```
 
 版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain` / `metric`），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v4 遥测（每对象带分配框、自然外框、区分测量与声明来源的二维 payload 框、卡片色块框与填色）。`scripts/xwysyy-check` 一条命令把遥测转成数值化版面诊断（每条带可执行的 action），并用真实渲染像素与遥测交叉验证（`--pixels`，`--profile agent` 下恒开）。AI 生成幻灯片时用它们替代手写 `#v()` 间距。分步展示用组件的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见 [`docs/LAYOUT.md`](docs/LAYOUT.md)。

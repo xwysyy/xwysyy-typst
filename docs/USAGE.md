@@ -29,14 +29,14 @@ Core dependencies are downloaded by Typst:
 - `@preview/touying:0.7.4`
 - `@preview/physica:0.9.8`
 
-Optional drawing and theorem integrations live in `xwysyy-extras.typ`:
+Optional drawing and theorem integrations load through `xwysyy-extras()`:
 
 ```typst
 #import "@preview/xwysyy:0.4.0": *
-#import "@preview/xwysyy:0.4.0/xwysyy-extras.typ": *
+#import xwysyy-extras(): *
 ```
 
-For local development, import `xwysyy-extras.typ` from the repository root. The extras entry adds `cetz`, `fletcher`, and `theorion`.
+The loader imports `xwysyy-extras.typ` only when called. A core import does not resolve the optional `cetz`, `fletcher`, or `theorion` packages.
 
 ## 2. Slide Entry: `xwysyy-pre`
 
@@ -418,13 +418,14 @@ The query output is JSON with page overlays and note text.
 
 ## 10. Optional Extras
 
-Local development import:
+The same loader API works during local development:
 
 ```typst
-#import "../xwysyy-extras.typ": *
+#import "../xwysyy.typ": xwysyy-extras
+#import xwysyy-extras(): *
 ```
 
-Published-package users can copy the extras entry when they need drawing or theorem environments. The extras module wraps:
+The extras module wraps:
 
 - `cetz-canvas` with touying reducer support
 - `fletcher-diagram` with touying reducer support
@@ -445,7 +446,7 @@ When passing custom `frozen-counters`, include the defaults:
 
 | Category | API |
 |----------|-----|
-| Entries | `xwysyy-pre`, `xwysyy-doc`, `xwysyy-note` |
+| Entries | `xwysyy-pre`, `xwysyy-doc`, `xwysyy-note`, `xwysyy-extras()` |
 | Slide layouts | `title-slide`, `outline-slide`, `xwysyy-slide`, `new-section-slide`, `image-slide`, `end-slide` |
 | Components | `textbox`, `info` |
 | Highlight macros | `red`, `bred`, `yellow`, `byellow` |

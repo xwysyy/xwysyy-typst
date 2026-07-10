@@ -21,7 +21,7 @@
 
 | 文件 | 作用 |
 |------|------|
-| `xwysyy.typ` | facade entry，re-export `src/*.typ` 各子模块 + 包级 `physica` / `touying` import + `super-T-as-transpose` show 规则。用户写 `#import "xwysyy.typ": *` 一次拿全 |
+| `xwysyy.typ` | facade entry，re-export 核心 `src/*.typ` 子模块 + 包级 `physica` / `touying` import + `super-T-as-transpose` show 规则，并导出惰性模块加载器 `xwysyy-extras()`。用户写 `#import "xwysyy.typ": *` 一次拿全核心 API，调用加载器时才解析可选依赖 |
 | `xwysyy-extras.typ` | shim，re-export `src/extras.typ`（cetz / fletcher / theorion 集成） |
 | `src/themes.typ` | `themes` 字典（sky / sunset / forest / midnight / violet / graphite）+ 主题字段校验 `_resolve-theme` + 顶层色变量（`sea` / `sky` / `skyl` / `skyll` / `paper`）+ `_theme-state` + 颜色宏（`red`/`bred`/`yellow`/`byellow`） |
 | `src/elements.typ` | 共享 show-chain `xwysyy-elements`（slide 共用）+ `info` + `textbox` |
@@ -42,7 +42,8 @@
 | `tests/fixtures/layout-pixel.typ` | 像素交叉验证真阳性：place 逃逸出 frame（render_telemetry_mismatch）与贴边细长 token（edge_ink 行峰值） |
 | `tests/fixtures/panic/` | 17 个必须编译失败的反例：必填槽位、空内容、spacer / 裸线条、单列 grid、tuning key/区间、reveal-from、metric 缺失/为空、kind 参数、visual fit、role 白名单、focus reveal、takeaway stretch、sidebar typed item、image-slide 无图 |
 | `tests/fixtures/adversarial/` | 外部审查实锤的假绿反例（自动 id 空白首帧、空 stretch 视觉），集成测试断言它们必须 fail |
-| `tests/fixtures/extras-entry.typ` | 可选入口回归：从 `xwysyy-extras.typ` 导入 cetz / fletcher / theorion 代表性公开定义；主 CI 与最低编译器 CI 都必须编译通过 |
+| `tests/fixtures/extras-entry.typ` | 可选模块本地回归：通过 `xwysyy-extras()` 导入 cetz / fletcher / theorion 代表性公开定义；主 CI 与最低编译器 CI 都必须编译通过 |
+| `tests/fixtures/package-entry.typ` | Universe 消费边界回归：经 `@preview/xwysyy:0.4.0` 的真实包解析器调用 `xwysyy-extras()`，由 package-shape job 用 staging 目录编译 |
 | `tests/test_build_universe_package.py` | 发布 staging CLI 回归：真实临时 Git 仓库覆盖正常发布、manifest 类型与路径约束、README 契约、失败后无半成品 |
 | `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机 + rules 叶级校验）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures 两种产物、页头缩放遥测） |
 | `examples/refs.bib` | 笔记演示用 BibTeX |
@@ -88,10 +89,10 @@
 	  | 纯内部重构（不改公开 API） | 无 |
 	  | 发版 | CHANGELOG.md + typst.toml version + git tag |
 - **主题色变量是契约**：`themes` 字典中每套主题必含 6 个字段 `sea` / `sky` / `skyl` / `skyll` / `paper` / `page-fill`（`_resolve-theme` 逐一校验，缺字段 panic）；`header-text` 是可选字段，非 `none` 时覆盖内容页 open header 的标题颜色（默认 `sea`），6 套内置主题均为 `header-text: none`；`header-fill` 字段已删除，不要再写进主题字典。这些字段既是颜色定义，也通过 `config-colors` 映射到 touying 的语义槽（`neutral-dark = sea` 等）；`config-store` 还携带 `heading-font` 与 `header-color`（由 `header-text` 回退到 `sea` 解析而来）供 header 使用。改名要同步改 `xwysyy-pre` 内 `config-colors(...)` 调用，否则下游 slide 组件会拿到错误颜色。运行时通过 `_theme-state`（state）向 `textbox` 等组件传播主题色。
-- **函数命名前缀**：当前所有公开主题函数前缀为 `xwysyy-`（`xwysyy-pre`、`xwysyy-doc`、`xwysyy-slide`、`xwysyy-elements`、`xwysyy-note`）。新增函数沿用此前缀；`title-slide` / `outline-slide` / `textbox` / `end-slide` 等通用 helper 不带前缀。
+- **函数命名前缀**：当前所有公开主题函数前缀为 `xwysyy-`（`xwysyy-pre`、`xwysyy-doc`、`xwysyy-slide`、`xwysyy-elements`、`xwysyy-note`、`xwysyy-extras`）。新增函数沿用此前缀；`title-slide` / `outline-slide` / `textbox` / `end-slide` 等通用 helper 不带前缀。
 - **笔记模式是主题无关的**：`xwysyy-note` 不使用 `themes` 字典或 `_theme-state`，所有颜色为灰度 + 固定蓝色链接。改笔记样式不需要关心 slide 主题系统。
 - **typst + touying 边界 bug**：不要使用 `config-info(author: [])`（空 content），touying 会把空 content 处理成 none，并触发内部类型检查失败。空作者用 `author: " "` 绕开，不要回退到 `[]`。
-- **不要随便引入 typst package**：核心依赖只有 `@preview/touying:0.7.4` 与 `@preview/physica:0.9.8`。`xwysyy-extras.typ` 额外依赖 `cetz`/`fletcher`/`theorion`，但它是可选文件不影响核心模板。新增核心依赖前先评估是否可在 `src/` 子模块内手写实现。
+- **不要随便引入 typst package**：核心依赖只有 `@preview/touying:0.7.4` 与 `@preview/physica:0.9.8`。`xwysyy-extras()` 的函数体按需 import `xwysyy-extras.typ`，后者额外依赖 `cetz`/`fletcher`/`theorion`；不要把 extras import 移到 facade 顶层。新增核心依赖前先评估是否可在 `src/` 子模块内手写实现。
 - **inline code 与 block code 分开处理**：`xwysyy-elements` 中 `raw.where(block: true)` 用 `block(width: 100%)` 全宽显示，`raw.where(block: false)` 用 `box(inset: (x: 0.3em), outset: (y: 0.2em))` 内联显示（竖向留白用 `outset` 画，不参与 baseline/行高布局；note 模式同款 `outset` 为 0.15em）。修改代码样式时需同步改两处。
 - **箭头 show rule 用 math 模式**：箭头替换（`->` -> `$->$` 等）必须用 `$...$` 进入 math 模式才能渲染为箭头符号。不要用 `math.limits(it)`（只管上下标位置，不做符号转换）。长箭头（`-->`、`==>`）的 show rule 必须定义在短箭头（`->`、`=>`）之前，否则短规则会先截取。
 

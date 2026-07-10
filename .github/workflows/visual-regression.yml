@@ -36,15 +36,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: typst-community/setup-typst@v4
+        with:
+          typst-version: 0.14.0
+
       - name: Build the Universe package directory
         run: |
-          scripts/build-universe-package /tmp/xwysyy-universe --ref HEAD
-          test -f /tmp/xwysyy-universe/xwysyy.typ
-          test -f /tmp/xwysyy-universe/xwysyy-extras.typ
-          test -f /tmp/xwysyy-universe/docs/LAYOUT.md
-          test -x /tmp/xwysyy-universe/scripts/xwysyy-check
-          test ! -e /tmp/xwysyy-universe/examples
-          test ! -e /tmp/xwysyy-universe/tests
+          mkdir -p /tmp/xwysyy-package-path/preview/xwysyy
+          scripts/build-universe-package /tmp/xwysyy-package-path/preview/xwysyy/0.4.0 --ref HEAD
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/xwysyy.typ
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/xwysyy-extras.typ
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/docs/LAYOUT.md
+          test -x /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/scripts/xwysyy-check
+          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/examples
+          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/tests
+
+      - name: Compile through the package resolver
+        run: |
+          typst compile --root . --package-path /tmp/xwysyy-package-path --deps /tmp/xwysyy-core-deps.json template/main.typ /tmp/xwysyy-template.pdf
+          python3 -c 'import json; paths = json.load(open("/tmp/xwysyy-core-deps.json"))["inputs"]; forbidden = [p for p in paths if "xwysyy-extras.typ" in p or "/src/extras.typ" in p or "/preview/cetz/" in p or "/preview/fletcher/" in p or "/preview/theorion/" in p]; assert not forbidden, forbidden'
+          typst compile --root . --package-path /tmp/xwysyy-package-path tests/fixtures/package-entry.typ /tmp/xwysyy-package-entry.pdf
 
   render:
     runs-on: ubuntu-latest

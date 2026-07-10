@@ -47,6 +47,10 @@ FORBIDDEN_README = (
         r"|github\.com/xwysyy/xwysyy-typst/(?:blob|tree)/master)",
         "mutable source link",
     ),
+    (
+        r"@preview/xwysyy:\d+\.\d+\.\d+/",
+        "unsupported package subpath import",
+    ),
 )
 
 
@@ -193,9 +197,8 @@ def verify_output(
             )
 
     readme = (output / "README.md").read_text(encoding="utf-8")
-    extras_import = f'#import "@preview/xwysyy:{version}/xwysyy-extras.typ": *'
-    if extras_import not in readme:
-        raise BuildError("README.md must document the versioned extras entrypoint import")
+    if "#import xwysyy-extras(): *" not in readme:
+        raise BuildError("README.md must document the xwysyy-extras() loader import")
     for pattern, description in FORBIDDEN_README:
         if re.search(pattern, readme):
             raise BuildError(f"README.md contains a {description}")
