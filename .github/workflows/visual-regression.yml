@@ -37,6 +37,10 @@ jobs:
           typst compile --root . --input visual-ci=true examples/dual-source.typ
           typst compile --root . --input visual-ci=true --input mode=note examples/dual-source.typ dual-source-note.pdf
           typst compile --root . --input visual-ci=true --input handout=true examples/slides-sky.typ slides-sky-handout.pdf
+          typst compile --root . --input visual-ci=true examples/layout-demo.typ
+
+      - name: Layout telemetry tests
+        run: python3 -m unittest discover -s tests -v
 
       - name: Check theme contrast
         run: scripts/check-theme-contrast
@@ -49,6 +53,12 @@ jobs:
           typst compile --root . tests/fixtures/outline-zh.typ /tmp/outline-zh.pdf
           typst compile --root . tests/fixtures/outline-agenda.typ /tmp/outline-agenda.pdf
           typst compile --root . tests/fixtures/font-override.typ /tmp/font-override.pdf
+          typst compile --root . tests/fixtures/layout-dual.typ /tmp/layout-dual-slides.pdf
+          typst compile --root . --input mode=note tests/fixtures/layout-dual.typ /tmp/layout-dual-note.pdf
+          typst compile --root . --input visual-ci=true tests/fixtures/layout-fit.typ /tmp/layout-fit.pdf
+          typst compile --root . --input visual-ci=true tests/fixtures/layout-handout.typ /tmp/layout-handout.pdf
+          typst compile --root . --input visual-ci=true --input handout=true tests/fixtures/layout-handout.typ /tmp/layout-handout-collapsed.pdf
+          typst compile --root . --input visual-ci=true tests/fixtures/layout-pixel.typ /tmp/layout-pixel.pdf
 
       - name: Check missing theme field error
         run: |

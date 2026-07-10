@@ -1,0 +1,360 @@
+#!/usr/bin/env python3
+"""One-command layout QA for xwysyy decks: geometry telemetry + pixel cross-check.
+
+    scripts/xwysyy-check deck.typ
+    scripts/xwysyy-check deck.typ --profile agent --pixels --format json
+
+Pipeline:
+
+  1. one ``typst query deck "metadata"`` collects every xwysyy schema at once
+     (layout records, page manifests, per-subslide frame mappings, header
+     telemetry);
+  2. the geometry checker (scripts/slide-check.py, imported as a library)
+     turns them into numeric diagnostics with machine-actionable fix slugs;
+  3. with ``--pixels`` the deck is also rendered to PNG and the actual pixels
+     are cross-checked against the telemetry:
+       * ink inside the body region but outside every allocated frame is a
+         render/telemetry mismatch (content escaped its wrapper — the class
+         of bug geometry alone cannot see);
+       * ink inside the outer edge band is a clipping / horizontal-overflow
+         suspect (full-bleed pages are exempted via the page manifest); a
+         sliding-window row scan catches even a single thin escaped line;
+       * a page whose telemetry claims real payload but renders almost no
+         ink is reported as a hollow render.
+
+Exit codes: 2 broken input/compile, 1 any error (or any warning with
+``--strict``), 0 otherwise (always 0 with ``--advisory``).  Standard library
+only.
+"""
+
+from __future__ import annotations
+
+import argparse
+import importlib.machinery
+import importlib.util
+import json
+import pathlib
+import subprocess
+import sys
+import tempfile
+from typing import Any
+
+SCRIPTS = pathlib.Path(__file__).resolve().parent
+REPO = SCRIPTS.parent
+# Page kinds that legitimately paint to the page edge (full-bleed designs).
+FULL_BLEED_KINDS = {"title", "section", "end", "image"}
+# Page geometry from src/slides.typ: base em and margins of the content page.
+EM_MM = 5.5
+MARGIN_EM = {"top": 4.35, "x": 1.0, "bottom": 1.4}
+
+
+def _load(name: str, path: pathlib.Path):
+    loader = importlib.machinery.SourceFileLoader(name, str(path))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    assert spec is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[loader.name] = module
+    loader.exec_module(module)
+    return module
+
+
+check = _load("slide_check", SCRIPTS / "slide-check.py")
+read_png = _load("compare_png", SCRIPTS / "compare-png").read_png
+
+
+def _root_for(deck: pathlib.Path) -> pathlib.Path:
+    deck = deck.resolve()
+    return REPO if REPO in deck.parents else deck.parent
+
+
+def _run(cmd: list[str]) -> str:
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"{' '.join(cmd[:3])} failed:\n{proc.stderr}")
+    return proc.stdout
+
+
+def _background(width: int, height: int, rgba: bytes) -> tuple[int, int, int]:
+    """Estimate the page background as the dominant colour along the border."""
+    counts: dict[tuple[int, int, int], int] = {}
+    stride = width * 4
+    for x in range(0, width, max(width // 64, 1)):
+        for y in (0, height - 1):
+            i = y * stride + x * 4
+            key = (rgba[i], rgba[i + 1], rgba[i + 2])
+            counts[key] = counts.get(key, 0) + 1
+    for y in range(0, height, max(height // 64, 1)):
+        for x in (0, width - 1):
+            i = y * stride + x * 4
+            key = (rgba[i], rgba[i + 1], rgba[i + 2])
+            counts[key] = counts.get(key, 0) + 1
+    return max(counts, key=lambda k: counts[k])
+
+
+def analyze_page(path: pathlib.Path, ppi: int, band_frac: float, tolerance: int,
+                 frames: list[dict[str, float]] | None) -> dict[str, Any]:
+    """Per-page pixel statistics: page/body ink, edge bands (with a sliding
+    row window for thin escapes), and ink outside the telemetry frames."""
+    width, height, rgba = read_png(path)
+    bg = _background(width, height, rgba)
+    stride = width * 4
+    band_x = max(int(width * band_frac), 1)
+    band_y = max(int(height * band_frac), 1)
+
+    px_per_mm = ppi / 25.4
+    em = EM_MM * px_per_mm
+    bx0, bx1 = MARGIN_EM["x"] * em, width - MARGIN_EM["x"] * em
+    by0, by1 = MARGIN_EM["top"] * em, height - MARGIN_EM["bottom"] * em
+    bw, bh = bx1 - bx0, by1 - by0
+
+    boxes = []
+    if frames:
+        pad_x, pad_y = 0.02 * bw, 0.02 * bh
+        for f in frames:
+            boxes.append((bx0 + f["x"] * bw - pad_x, by0 + f["y"] * bh - pad_y,
+                          bx0 + (f["x"] + f["w"]) * bw + pad_x, by0 + (f["y"] + f["h"]) * bh + pad_y))
+
+    ink = 0
+    body_px = 0
+    body_ink = 0
+    stray_ink = 0
+    edges = {"left": 0, "right": 0, "top": 0, "bottom": 0}
+    edge_px = {"left": 0, "right": 0, "top": 0, "bottom": 0}
+    row_left: list[float] = []
+    row_right: list[float] = []
+    for y in range(height):
+        row = y * stride
+        l_ink = l_px = r_ink = r_px = 0
+        for x in range(width):
+            i = row + x * 4
+            inked = (abs(rgba[i] - bg[0]) + abs(rgba[i + 1] - bg[1]) + abs(rgba[i + 2] - bg[2])) > tolerance
+            if inked:
+                ink += 1
+            in_body = bx0 <= x < bx1 and by0 <= y < by1
+            if in_body:
+                body_px += 1
+                if inked:
+                    body_ink += 1
+                    if boxes and not any(x0 <= x < x1 and y0 <= y < y1 for x0, y0, x1, y1 in boxes):
+                        stray_ink += 1
+            if x < band_x:
+                l_px += 1
+                edge_px["left"] += 1
+                if inked:
+                    l_ink += 1
+                    edges["left"] += 1
+            elif x >= width - band_x:
+                r_px += 1
+                edge_px["right"] += 1
+                if inked:
+                    r_ink += 1
+                    edges["right"] += 1
+            if y < band_y:
+                edge_px["top"] += 1
+                edges["top"] += inked
+            elif y >= height - band_y:
+                edge_px["bottom"] += 1
+                edges["bottom"] += inked
+        row_left.append(l_ink / l_px if l_px else 0.0)
+        row_right.append(r_ink / r_px if r_px else 0.0)
+
+    def window_peak(rows: list[float], win: int) -> float:
+        if not rows:
+            return 0.0
+        win = min(max(win, 1), len(rows))
+        acc = sum(rows[:win])
+        peak = acc
+        for i in range(win, len(rows)):
+            acc += rows[i] - rows[i - win]
+            peak = max(peak, acc)
+        return peak / win
+
+    win = max(int(0.25 * EM_MM * px_per_mm), 3)  # ~ a quarter em: thin-line scale
+    return {
+        "page_ink": ink / (width * height),
+        "body_ink": (body_ink / body_px) if body_px else 0.0,
+        "stray_ink": (stray_ink / body_px) if body_px else 0.0,
+        "edge_ink": {side: (edges[side] / edge_px[side] if edge_px[side] else 0.0) for side in edges},
+        "edge_row_peak": {"left": window_peak(row_left, win), "right": window_peak(row_right, win)},
+        "background": list(bg),
+    }
+
+
+def pixel_report(deck: pathlib.Path, root: pathlib.Path, input_flags: list[str],
+                 buckets: dict[str, list[dict[str, Any]]], args) -> tuple[Any, int]:
+    """Render the deck and cross-check pixels against telemetry.  Returns the
+    pixel SlideReport and the physical page count."""
+    diagnostics = []
+    metrics: dict[str, Any] = {}
+    # The layout is identical on every subslide (hidden steps keep their
+    # space), so a record's frames apply to every physical page its frame
+    # mappings name — reveal steps are cross-checked too.
+    pages_by_id: dict[str, set[int]] = {}
+    for f in buckets["frames"]:
+        if isinstance(f.get("page"), int):
+            pages_by_id.setdefault(str(f.get("id", "?")), set()).add(f["page"])
+    frames_by_page: dict[int, list[dict[str, float]]] = {}
+    claimed: dict[int, float] = {}
+    for rec in buckets["layout"]:
+        page = rec.get("page")
+        if not isinstance(page, int):
+            continue
+        rec_pages = pages_by_id.get(str(rec.get("id", "")), set()) | {page}
+        for obj in rec.get("objects", []) or []:
+            for key in ("frame", "paint"):
+                box = obj.get(key)
+                if isinstance(box, dict) and all(k in box for k in "xywh"):
+                    for p in rec_pages:
+                        frames_by_page.setdefault(p, []).append(box)
+            pay = obj.get("payload")
+            if isinstance(pay, dict) and all(k in pay for k in "xywh"):
+                claimed[page] = claimed.get(page, 0.0) + max(pay["w"], 0.0) * max(pay["h"], 0.0)
+    kinds = {p["page"]: str(p.get("kind", "content")) for p in buckets["pages"]
+             if isinstance(p.get("page"), int)}
+
+    with tempfile.TemporaryDirectory() as tmp:
+        target = pathlib.Path(tmp) / "page-{0p}.png"
+        _run(["typst", "compile", "--root", str(root)] + input_flags
+             + [str(deck), str(target), "--format", "png", "--ppi", str(args.ppi)])
+        pages = sorted(pathlib.Path(tmp).glob("page-*.png"))
+        if not pages:
+            raise RuntimeError("no pages rendered")
+        page_stats = []
+        for n, page in enumerate(pages, start=1):
+            rep = analyze_page(page, args.ppi, args.band, args.tolerance,
+                               frames_by_page.get(n))
+            rep["page"] = n
+            exempt = kinds.get(n) in FULL_BLEED_KINDS
+            rep["exempt"] = exempt
+            page_stats.append(rep)
+            if exempt:
+                continue
+            flagged = [side for side, share in rep["edge_ink"].items() if share > args.edge_max]
+            for side, peak in rep["edge_row_peak"].items():
+                if side not in flagged and peak > args.edge_peak_max:
+                    flagged.append(side)
+            if flagged:
+                diagnostics.append(check.Diagnostic(
+                    "warning", "edge_ink",
+                    f"Page {n} paints into the outer edge band ({', '.join(sorted(flagged))}).",
+                    {"page": n, "edge_ink": check._round(rep["edge_ink"]),
+                     "edge_row_peak": check._round(rep["edge_row_peak"])},
+                    "Content reaches the page edge: a wide line/URL escaped its wrapper, or the block is clipped.",
+                    action="trim_content"))
+            if n in frames_by_page and rep["stray_ink"] > args.stray_max:
+                diagnostics.append(check.Diagnostic(
+                    "warning", "render_telemetry_mismatch",
+                    f"Page {n} renders ink outside every telemetry frame.",
+                    {"page": n, "stray_ink": round(rep["stray_ink"], 4)},
+                    "Content escaped its allocated frame; the telemetry no longer describes the render.",
+                    action="report_bug"))
+            if claimed.get(n, 0.0) > 0.25 and rep["body_ink"] < 0.10 * claimed[n]:
+                diagnostics.append(check.Diagnostic(
+                    "warning", "hollow_render",
+                    f"Page {n} claims payload {claimed[n]:.2f} but renders almost no ink.",
+                    {"page": n, "claimed_payload": round(claimed[n], 4),
+                     "body_ink": round(rep["body_ink"], 4)},
+                    "The telemetry over-claims: check that the content actually renders.",
+                    action="report_bug"))
+        metrics["pages"] = [
+            {"page": r["page"], "page_ink": round(r["page_ink"], 4),
+             "body_ink": round(r["body_ink"], 4), "stray_ink": round(r["stray_ink"], 4),
+             "exempt": r["exempt"]}
+            for r in page_stats]
+        return check.SlideReport("<pixels>", "pixels", metrics, diagnostics), len(pages)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("deck", help="deck .typ file")
+    parser.add_argument("--input", action="append", default=[], metavar="k=v",
+                        help="forwarded to typst compile and query (repeatable)")
+    parser.add_argument("--root", default=None, help="typst project root (default: auto)")
+    parser.add_argument("--profile", choices=("human", "agent"), default="human")
+    parser.add_argument("--rules", default=None, help="JSON/TOML rule overrides for the geometry checker")
+    parser.add_argument("--pixels", action="store_true", help="render PNGs and cross-check pixels")
+    parser.add_argument("--ppi", type=int, default=72)
+    parser.add_argument("--band", type=float, default=0.012,
+                        help="edge band width as a fraction of the page (default 0.012)")
+    parser.add_argument("--edge-max", type=float, default=0.05,
+                        help="max ink share inside an edge band before it is flagged")
+    parser.add_argument("--edge-peak-max", type=float, default=0.35,
+                        help="max sliding-window row ink inside a side band (thin escapes)")
+    parser.add_argument("--stray-max", type=float, default=0.002,
+                        help="max body ink outside all telemetry frames")
+    parser.add_argument("--tolerance", type=int, default=24,
+                        help="summed RGB distance from the background that counts as ink")
+    parser.add_argument("--dump-features", default=None, metavar="PATH")
+    parser.add_argument("--save-meta", default=None, metavar="PATH",
+                        help="also write the merged metadata query JSON here")
+    parser.add_argument("--format", choices=("json", "text"), default="text")
+    parser.add_argument("--strict", action="store_true", help="exit non-zero on any warning or error")
+    parser.add_argument("--advisory", action="store_true", help="always exit zero (report only)")
+    args = parser.parse_args(argv)
+
+    deck = pathlib.Path(args.deck)
+    root = pathlib.Path(args.root).resolve() if args.root else _root_for(deck)
+    input_flags: list[str] = []
+    for kv in args.input:
+        input_flags += ["--input", kv]
+
+    try:
+        meta = _run(["typst", "query", "--root", str(root)] + input_flags
+                    + [str(deck), "metadata", "--field", "value"])
+        values = check._values(json.loads(meta))
+        buckets = check.split_records(values)
+        if args.save_meta:
+            pathlib.Path(args.save_meta).write_text(meta, encoding="utf-8")
+
+        rules = check._load_rules(args.rules)
+        records = buckets["layout"]
+        frames_by_id: dict[str, list[dict[str, Any]]] = {}
+        for f in buckets["frames"]:
+            frames_by_id.setdefault(str(f.get("id", "?")), []).append(f)
+        reports = [check.analyze_slide(rec, rules, frames_by_id.get(str(rec.get("id", ""))), args.profile)
+                   for rec in records]
+        if buckets["headers"]:
+            reports.append(check.header_report(buckets["headers"]))
+
+        page_count = None
+        if args.pixels:
+            pixels, page_count = pixel_report(deck, root, input_flags, buckets, args)
+        else:
+            pixels = None
+        if buckets["pages"]:
+            reports.append(check.coverage_report(records, buckets["frames"], buckets["pages"],
+                                                 args.profile, page_count))
+        if pixels is not None:
+            reports.append(pixels)
+    except (RuntimeError, OSError, json.JSONDecodeError, check.TelemetryError) as exc:
+        print(f"xwysyy-check: {exc}", file=sys.stderr)
+        return 2
+
+    if not records:
+        print("xwysyy-check: no telemetry records found — the deck does not use "
+              "any layout component", file=sys.stderr)
+        return 0 if args.advisory else 1
+
+    seen: set[str] = set()
+    for r in reports:
+        if r.id in seen:
+            r.diagnostics.append(check.Diagnostic("warning", "duplicate_slide_id",
+                                                  "Two slides share one telemetry id.",
+                                                  {"id": r.id}, "Give each slide a unique explicit id."))
+        seen.add(r.id)
+
+    if args.dump_features:
+        pathlib.Path(args.dump_features).write_text(
+            json.dumps(check._features(reports), ensure_ascii=False, indent=2), encoding="utf-8")
+
+    print(check._as_json(reports) if args.format == "json" else check._as_text(reports))
+
+    if args.advisory:
+        return 0
+    if args.strict:
+        return 1 if any(r.has_problem for r in reports) else 0
+    return 1 if any(r.has_error for r in reports) else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

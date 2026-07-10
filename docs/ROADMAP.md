@@ -1,4 +1,6 @@
-# 开发路线图（Roadmap）
+# 开发路线图（Roadmap）· 已归档
+
+> **状态：superseded（2026-07）。** 本路线图的三个 Phase 已全部完成并发版（0.2.0 / 0.3.0 / CI 视觉回归与 6 套主题）。§2 的"现状事实"与 §8 的"明确不做"均已过期：仓库现有语义布局层（`src/layout.typ`，8 个版式 + 遥测 schema v3 + `scripts/xwysyy-check` 检查闭环），"不再增加 slide 版式"的约束不再成立。本文件仅作历史记录保留，现状以 `AGENTS.md` 与 `docs/LAYOUT.md` 为准。
 
 > 本文档是交给执行 agent 的实施规划，按 Phase 顺序执行。
 > 每个 feature 自带验收标准，全部满足才算完成；动手前先读 §2 现状事实和 §3 全局约束。

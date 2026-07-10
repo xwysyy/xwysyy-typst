@@ -13,7 +13,9 @@
 
 ## 必读
 
-暂无。本项目尚无 `docs/project-memo.md`（跨任务铁律 / 偏好沉淀）；当跨会话信号 >=2 条同类时再按 `~/.claude/rules/dev-protocols.md § Project Memo Protocol` 升级创建。
+- `docs/LAYOUT.md` — 语义布局层契约（schema v3）：typed items、声明式 sizing、fit 四态、遥测字段、checker 诊断表与 AI 生成契约。凡是生成 slide 内容或改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check`，先读它。
+
+本项目尚无 `docs/project-memo.md`（跨任务铁律 / 偏好沉淀）；当跨会话信号 >=2 条同类时再按 `~/.claude/rules/dev-protocols.md § Project Memo Protocol` 升级创建。
 
 ## 关键文件
 
@@ -25,17 +27,21 @@
 | `src/elements.typ` | 共享 show-chain `xwysyy-elements`（slide 共用）+ `info` + `textbox` |
 | `src/note.typ` | 笔记入口 `xwysyy-note`（A4，主题无关，show 规则独立） |
 | `src/slides.typ` | slide 入口 `xwysyy-pre` + 双产物入口 `xwysyy-doc` + 6 种版式（`xwysyy-slide`、`title-slide`、`outline-slide`、`new-section-slide`、`image-slide`、`end-slide`）。`outline-slide` 自动过滤 `<touying:hidden>` 标签且 >5 章自动两列，`title: auto` 按 `text.lang` 输出 `Contents` / `目录`。`frozen-counters` 默认冻结 `figure` 和 `math.equation` 计数器 |
-| `src/layout.typ` | 语义布局层 + 版面遥测：`duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`。每个在编译期 `measure` 真实高度、按节奏分配留白、导出 `<xwysyy-slide-layout>` 归一化几何 metadata，并在 note 模式线性降级。`grid`/`compare`/`stat`/`sidebar` 画等高卡片（`card` 参数）；`stat`/`figure` 复用 grid/duo。**新增组件不要把 `context {}` 套在产出 slide 的调用外层**（touying 会 panic，颜色改在内容层用 `context`）。AI 生成契约见 `docs/LAYOUT.md` |
+| `src/layout.typ` | 语义布局层 + 版面遥测 v3：`duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`，共用 `_alloc-column`/`_fit-row` 分配器（item min/pref/max/grow + gap min/pref，fit 四态 normal/compressed/tight/overflow，不变量 overflow⇒body_overflow>0；stretch 视觉硬下限 0.28H），note 模式线性降级。所有槽位收 typed items（`visual(fit: "stretch"|"natural")`/`card`/`takeaway`/`plain`，sizing 声明不推断）；必填槽位 none / 渲染为空 / grid<2 列 / stat 缺 value·label / reveal-from 越界 / tuning key·类型·区间违规一律 panic。对象带 frame/preferred/payload(二维)/paint 四框 + 逐轴 sizing；每个真实渲染 subslide 发 `<xwysyy-frame>` 映射（handout 覆盖率安全）。分步展示用 `reveal: true`（callback 式 `utils.uncover`，完整记录末帧导出）；**组件内容里禁用 `#pause`**（marks 进不了 `context`/`layout` 闭包，touying 会 panic）。**新增组件不要把 `context {}` 套在产出 slide 的调用外层**（touying 会 panic，颜色改在内容层用 `context`）。AI 生成契约见 `docs/LAYOUT.md` |
 | `src/extras.typ` | `touying-reducer` 包装的 `cetz-canvas` / `fletcher-diagram` + theorion 全套环境导出 |
 | `examples/slides-sky.typ` | sky 主题演示 deck |
 | `examples/slides-sunset.typ` | sunset 主题演示 deck |
 | `examples/note.typ` | 笔记模式演示（主题无关） |
 | `examples/theme-preview.typ` | 可通过 `--input theme=<name>` 渲染任意内置主题的预览 deck |
 | `examples/dual-source.typ` | `xwysyy-doc` 双产物示例；默认编译 deck，`--input mode=note` 编译 A4 讲义 |
-| `examples/layout-demo.typ` | 语义布局层演示：5 个组件的 good 样例 + 3 个 checker 应捕获的 bad 样例（低密度 / 列失衡 / 溢出） |
-| `docs/LAYOUT.md` | 语义布局层设计文档 + 组件 API + 遥测 schema + checker 诊断表 + AI 生成契约 |
+| `examples/layout-demo.typ` | 语义布局层演示：10 个 good 样例（8 组件 + 纯文本 stack + reveal）+ 6 个 checker 应捕获的 bad 样例（低密度 / 小图 / 列失衡 / 空壳卡片 / 双重溢出） |
+| `docs/LAYOUT.md` | 语义布局层设计文档 + 组件 API + 遥测 schema v3 + checker 诊断表 + AI 生成契约（随 Universe 包发布） |
 | `tests/fixtures/layout-dual.typ` | 组件双产物 fixture：slides 与 `--input mode=note` 都要编译过 |
-| `tests/test_slide_check.py` | checker 单测（fixture）+ 真编译集成测试（`typst` 在 PATH 时编译 demo→query→断言诊断） |
+| `tests/fixtures/layout-fit.typ` | fit 态回归 fixture：sidebar tight 窗口、stretch 视觉饿死型 overflow（不变量 body_overflow>0）、间隙压缩型 compressed |
+| `tests/fixtures/layout-handout.typ` | handout 覆盖率回归：手写页在 handout 折叠后仍须报 telemetry_gap（靠 `<xwysyy-frame>` 真实页码） |
+| `tests/fixtures/layout-pixel.typ` | 像素交叉验证真阳性：place 逃逸出 frame（render_telemetry_mismatch）与贴边细长 token（edge_ink 行峰值） |
+| `tests/fixtures/panic/` | 9 个必须编译失败的反例：必填槽位、空内容、单列 grid、tuning key/区间、reveal-from、stat 缺字段、kind 伪装、visual fit |
+| `tests/test_slide_check.py` | checker 单测（合成 v3 记录逐诊断覆盖）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、panic fixtures、页头缩放遥测） |
 | `examples/refs.bib` | 笔记演示用 BibTeX |
 | `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.3.0": *` |
 | `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
@@ -46,8 +52,8 @@
 | `docs/CUSTOMIZATION.md` | 自定义指南 + 配合 touying 0.7.x 高级特性 |
 | `docs/THEME-GENERATOR.md` | AI 生成主题字典提示词，默认指导用户直接传给 `theme` 参数 |
 | `docs/DUAL-OUTPUT-DESIGN.md` | `xwysyy-doc` 入口形态、note 模式降级规则、pause 语义和共享组件设计 |
-| `scripts/slide-check.py` | 版面遥测 checker：读 `typst query '<xwysyy-slide-layout>'` 输出，报告密度 / 重心 / 语义关系 / 溢出等内容级诊断（标准库，`--format text\|json`、`--strict`、`--error-only`） |
-| `scripts/slide-telemetry` | compile → query → check 一条龙 helper：`scripts/slide-telemetry <deck.typ> [check args...]` |
+| `scripts/slide-check.py` | 版面遥测几何引擎（schema v3）：并集面积覆盖指标（container/visual/payload + utilization）、fit 四态诊断、empty_shell / underfilled_card、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame）、`<xwysyy-frame>` 覆盖率、严格解析（缺字段 / 非法 rules 干净报错）、每条诊断带 action、`--profile agent|human`、`--dump-features`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 恒零）；遥测为空非零退出。随 Universe 包发布 |
+| `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema → 几何检查 → `--pixels` 时渲染 PNG 做像素交叉验证（render_telemetry_mismatch / edge_ink 行峰值 / hollow_render，全出血页按清单豁免）。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。随 Universe 包发布 |
 | `scripts/gen-previews` | 重新生成 README preview PNG（基线更新走 `scripts/adopt-baseline`，不要用 `--with-baseline` 的本地渲染当基线） |
 | `scripts/render-visuals` | 渲染视觉回归 PNG 集；内部传 `--input visual-ci=true` 以使用 CI 可安装字体 |
 | `scripts/compare-png` | 无 ImageMagick 依赖的 PNG 像素比较器，可输出 diff PNG |
@@ -63,7 +69,7 @@
 完整开发纪律见 `~/.claude/rules/dev-principles.md` + `dev-protocols.md`；以下是本项目特有提醒。
 
 - **改完必编译**：任何对 `xwysyy.typ` / `src/*.typ` / 示例 / 模板脚手架的修改完成后，至少跑 `typst compile --root . examples/slides-sky.typ && typst compile --root . examples/slides-sunset.typ && typst compile --root . examples/note.typ && typst compile --root . examples/dual-source.typ && typst compile --root . --input mode=note examples/dual-source.typ /tmp/xwysyy-dual-note.pdf`。改主题、脚本或预览时还要跑 `scripts/check-theme-contrast` 与 `scripts/render-visuals /tmp/xwysyy-visual-current && scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current`。
-- **改语义布局层必验遥测**：改 `src/layout.typ` / `scripts/slide-check.py` 后跑 `typst compile --root . examples/layout-demo.typ /tmp/layout-demo.pdf && scripts/slide-telemetry examples/layout-demo.typ && python3 -m unittest tests/test_slide_check.py && typst compile --root . --input mode=note tests/fixtures/layout-dual.typ /tmp/layout-note.pdf`。改阈值后必须确认 demo 的 5 个 good 页仍全过、3 个 bad 页仍被捕获（阈值以真实测量的 good 页为锚校准，不要放水让 bad 页蒙混）。
+- **改语义布局层必验遥测**：改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check` 后跑 `scripts/xwysyy-check examples/layout-demo.typ; python3 -m unittest discover -s tests && typst compile --root . tests/fixtures/layout-dual.typ /tmp/layout-dual.pdf && typst compile --root . --input mode=note tests/fixtures/layout-dual.typ /tmp/layout-note.pdf`（demo 含故意的 bad 页，检查退出码非零属预期；CI 的 `Layout telemetry tests` 步骤跑同一套单测，其中已含 panic fixtures、handout 覆盖率与像素真阳性）。改阈值后必须确认 demo 的 10 个 good 页仍全过、6 个 bad 页仍被捕获（阈值以真实测量的 good 页为锚校准，不要放水让 bad 页蒙混）。发版前另跑 `scripts/xwysyy-check examples/layout-demo.typ --pixels` 做像素级交叉验证。
 - **视觉基线以 CI 环境为准**：`tests/visual-baseline/` 的判定基准是 workflow 钉死的 CI 字体环境。本机多装字体时，落在示例字体栈之外的字形（含中文的行内代码、⬦ 列表标记等）走系统回退，本地 `compare-png` 会对少数页报已知差异，属正常。更新基线：视觉改动 push 后等 CI 跑完，跑 `scripts/adopt-baseline`（自动下载该 run 的 `visual-current` artifact 全量覆盖 `tests/visual-baseline`），review 后补 `test:` 提交；不要用本地渲染图当基线。
 - **文档同步 SOP**：按改动类型查表同步文档，不再维护行号引用。
 
@@ -88,10 +94,10 @@
 
 > 生成幻灯片内容时（非维护模板本身），间距和位置一律交给 `src/layout.typ` 的语义组件，不手写数值。完整说明见 `docs/LAYOUT.md`。
 
-- **禁止**：手写 `#v(...)` 制造大间距；用 `place` / 绝对坐标控制普通正文；用 `align(bottom)` 把正文推到底部；一页堆多个无约束 block 靠手感排间距。
-- **必须**：图文上下用 `duo-slide`；单一结论少内容用 `focus-slide`；多列对等信息用 `grid-slide`；多块同节奏用 `stack-slide`；左右对比用 `compare-slide`；只通过 `mode: compact | balanced | separated` 调密度。
-- **反馈驱动，不靠手感**：编译后跑 `scripts/slide-telemetry <deck.typ>`（或 `typst query '<xwysyy-slide-layout>' --field value | scripts/slide-check.py`），按返回的 `content_overflow` / `low_density` / `column_imbalance` / `semantic_pair_split` 等数值诊断修正，不靠"看起来差不多"停止迭代。诊断含义与修法见 `docs/LAYOUT.md` 的诊断表。
-- **组件保证间距、checker 判断内容**：组件已用 `measure` + 节奏规则保证间距正确，不会溢出/塌陷；checker 只报组件无法自行决定的内容级问题（太空 / 太满 / 列失衡 / 溢出）。对称留白不是缺陷。
+- **禁止**：手写 `#v(...)` 制造大间距；用 `place` / 绝对坐标控制普通正文；用 `align(bottom)` 把正文推到底部；一页堆多个无约束 block 靠手感排间距；**修改任何组件的 `tuning` 字典**（数字微调属于人工层，`extra.tuned` 会记录，agent profile 下是 error）；**在布局组件内容里用 `#pause` / `#meanwhile` / 全局 `#uncover`**（touying 会 panic，分步展示改用组件的 `reveal: true`）；用 `xwysyy-slide(kind: ...)` 伪装豁免页（panic）。
+- **必须**：图文上下用 `duo-slide`；单一结论少内容用 `focus-slide`；多列对等信息用 `grid-slide`；多块同节奏用 `stack-slide`；左右对比用 `compare-slide`；一行关键数字用 `stat-slide`；图配 caption 与结论用 `figure-slide`；窄标签配宽内容用 `sidebar-slide`（body 传纯内容不包 `textbox`）；要撑满的视觉显式写 `visual(...)`（占位 `rect(width: 100%, height: 100%)`，真实图片 `image(width: 100%, height: 100%, fit: "contain")`），固有尺寸的图用 `image(width: 100%)`；分步展示用 `reveal: true`；只通过 `mode: compact | balanced | separated` 调密度。百分比尺寸的内容不包 `visual()` 会因"渲染为空"直接 panic，这是设计行为。
+- **反馈驱动，不靠手感**：编译后跑 `scripts/xwysyy-check <deck.typ> --profile agent`（交付前再加 `--pixels`），按返回诊断的 `action` 修正（`content_overflow` / `margin_squeeze` / `underfilled_card` / `low_density` / `column_imbalance` / `semantic_pair_split` / `telemetry_gap` / `header_overflow` 等），不靠"看起来差不多"停止迭代。诊断含义与修法见 `docs/LAYOUT.md` 的诊断表。
+- **组件保证间距、checker 判断内容**：组件已用 `measure` + 声明式 sizing 分配器保证间距正确；checker 只报组件无法自行决定的内容级问题（太空 / 太满 / 空壳卡片 / 列失衡 / 溢出 / 漏遥测）。对称留白不是缺陷（focus 页有意如此）。
 
 ## 改主题的常见动线
 

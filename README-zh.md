@@ -16,7 +16,7 @@
 
 ## 特性
 
-- 支持 Universe 模板：`typst init @preview/xwysyy:0.3.0` 直接生成可编译 deck。
+- 支持 Universe 模板：`typst init @preview/xwysyy:0.4.0` 直接生成可编译 deck。
 - 内置 6 套主题：`sky`、`sunset`、`forest`、`midnight`、`violet`、`graphite`。
 - `theme` 可直接接收自定义配色字典，用户不需要 fork 包源码。
 - slide 与 note 模式共享 `font`、`code-font`、`lang` 参数；slide 模式另有 `heading-font` 控制 header 标题字体。
@@ -63,7 +63,7 @@ typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 从 Universe 模板创建新项目：
 
 ```bash
-typst init @preview/xwysyy:0.3.0 my-talk
+typst init @preview/xwysyy:0.4.0 my-talk
 cd my-talk
 typst compile main.typ
 ```
@@ -71,7 +71,7 @@ typst compile main.typ
 在已有项目中引入包：
 
 ```typst
-#import "@preview/xwysyy:0.3.0": *
+#import "@preview/xwysyy:0.4.0": *
 
 #show: xwysyy-pre.with(
   theme: "sunset",
@@ -163,7 +163,7 @@ typst compile main.typ
 | 版式 · 图文对 | `duo-slide` | 上图下文，测量间距 + 遥测 |
 | 版式 · 单焦点 | `focus-slide` | 内容少时单块居中 |
 | 版式 · 多列 | `grid-slide` | N 个等高对等列 |
-| 版式 · 堆叠 | `stack-slide` | N 块同节奏竖排 |
+| 版式 · 堆叠 | `stack-slide` | N 块竖排，视觉块撑大或卡片做高 |
 | 版式 · 对比 | `compare-slide` | 左右两块顶部对齐读作对比 |
 | 版式 · 指标 | `stat-slide` | 一行大数字指标卡片 |
 | 版式 · 配图 | `figure-slide` | 图 + 紧贴 caption + 可选 takeaway |
@@ -174,7 +174,7 @@ typst compile main.typ
 | 笔记入口 | `xwysyy-note` | `#show: xwysyy-note.with(title: [...])` |
 | 可选扩展 | `xwysyy-extras` | cetz、fletcher、theorion 集成 |
 
-版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）在编译期测量真实渲染高度、按节奏分配留白，并导出 `<xwysyy-slide-layout>` 遥测供 `scripts/slide-check.py` 转成数值化版面诊断。AI 生成幻灯片时用它们替代手写 `#v()` 间距。详见 [`docs/LAYOUT.md`](docs/LAYOUT.md)。
+版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain`），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v3 遥测（每对象带分配框、自然外框、二维 payload 框与卡片色块框）。`scripts/xwysyy-check` 一条命令把遥测转成数值化版面诊断（每条带可执行的 action），加 `--pixels` 时用真实渲染像素与遥测交叉验证。AI 生成幻灯片时用它们替代手写 `#v()` 间距。分步展示用组件的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见 [`docs/LAYOUT.md`](docs/LAYOUT.md)。
 
 ## Handout 与讲者备注
 
@@ -204,7 +204,7 @@ typst query --root . examples/slides-sky.typ --field value --one "<pdfpc-file>" 
 需要同一份源码同时生成 slide 和 A4 讲义时使用 `xwysyy-doc`：
 
 ```typst
-#import "@preview/xwysyy:0.3.0": *
+#import "@preview/xwysyy:0.4.0": *
 
 #show: xwysyy-doc.with(
   title: [One Source, Two Outputs],

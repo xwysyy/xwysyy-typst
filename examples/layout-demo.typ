@@ -1,10 +1,12 @@
-// Demo deck for the semantic layout layer.
+// Demo deck for the semantic layout layer (telemetry schema v3).
 //
 // Every slide below is produced by a semantic component: the author fills
-// content + roles + mode and the component measures, distributes whitespace,
-// and exports telemetry.  Good slides pass the checker; the slides marked
-// "problem" are deliberate content mistakes the checker is meant to catch
-// (a component fixes spacing, but it cannot invent or remove content).
+// typed content items and the component measures, allocates, and exports
+// telemetry.  Good slides pass the checker; the slides marked "problem" are
+// deliberate content mistakes the checker is meant to catch (a component
+// fixes spacing, but it cannot invent or remove content).
+//
+// Run: scripts/xwysyy-check examples/layout-demo.typ --pixels
 
 #import "../xwysyy.typ": *
 
@@ -23,8 +25,12 @@
   ),
 )
 
-#let fig(label) = rect(
-  width: 100%, height: 3.4cm, radius: 4pt,
+// Placeholder visual.  Wrapped in `visual(...)` it fills the allocated frame
+// (the layout contract for real images is
+// `image(width: 100%, height: 100%, fit: "contain")`); pass a fixed height
+// for a natural-size figure.
+#let fig(label, h: 100%) = rect(
+  width: 100%, height: h, radius: 4pt,
   fill: gradient.linear(rgb("#8ecae6"), rgb("#bdd0f1")),
   align(center + horizon, text(weight: "bold", label)),
 )
@@ -36,17 +42,15 @@
 #duo-slide(
   title: [duo · balanced figure and takeaway],
   id: "good-duo",
-  top: fig[Main visual],
-  bottom: textbox[*Takeaway.* The visual and its explanation stay one readable group; the gap breathes without splitting the slide.],
-  top-role: "main_visual",
-  bottom-role: "takeaway",
+  top: visual(fig[Main visual]),
+  bottom: card([*Takeaway.* The visual and its explanation stay one readable group; the gap breathes without splitting the slide.], role: "takeaway"),
   debug: true,
 )
 
 #focus-slide(
   title: [focus · a single centered message],
   id: "good-focus",
-  body: textbox[*Main conclusion.* One idea, centered on the optical axis, with balanced margins above and below.],
+  body: [*Main conclusion.* One idea, centered on the optical axis, with balanced margins above and below.],
   debug: true,
 )
 
@@ -54,31 +58,49 @@
   title: [grid · three balanced peer columns],
   id: "good-grid",
   columns: (
-    [*Method.* Measure each block at compile time.],
-    [*Feedback.* Export normalized geometry as metadata.],
-    [*Decision.* The agent reads numbers, not pixels.],
+    [*Method.* Measure each block at compile time and allocate the body by declared sizing.],
+    [*Feedback.* Export the measured geometry as machine-readable metadata.],
+    [*Decision.* The agent reads numeric diagnostics, not rendered pixels.],
   ),
-  roles: ("column", "column", "column"),
   debug: true,
 )
 
 #compare-slide(
   title: [compare · two options side by side],
   id: "good-compare",
-  left: [*Rigid auto-layout.* Style converges, hard to express intent.],
-  right: [*Observable semi-auto.* Component fixes spacing, agent tunes content.],
+  left: [*Rigid auto-layout.* Style converges, but authors cannot express intent.],
+  right: [*Observable semi-auto.* The component fixes spacing, the agent tunes content.],
   debug: true,
 )
 
 #stack-slide(
-  title: [stack · three blocks on one rhythm],
+  title: [stack · a dominant figure over two explanations],
   id: "good-stack",
-  blocks: (
-    fig[Overview],
-    textbox[*Step one.* Author picks a component.],
-    textbox[*Step two.* Checker reports density and fit.],
+  items: (
+    visual(fig[Overview]),
+    card([*Step one.* The author picks a semantic component and fills typed items.]),
+    card([*Step two.* The checker reports density, fit, and relation quality.]),
   ),
-  roles: ("main_visual", "explanation", "explanation"),
+  debug: true,
+)
+
+#stack-slide(
+  title: [stack · pure text grows into tall cards],
+  id: "good-stack-cards",
+  items: (
+    [*Measure.* Every block's rendered height is known at compile time.],
+    [*Distribute.* Free space grows the cards instead of the margins.],
+    [*Report.* The checker reads the exported geometry, not the source.],
+  ),
+  debug: true,
+)
+
+#duo-slide(
+  title: [duo · reveal, takeaway on step two],
+  id: "good-reveal",
+  top: visual(fig[Main visual]),
+  bottom: card([*Takeaway.* Appears on the second subslide; the layout does not shift.], role: "takeaway"),
+  reveal: true,
   debug: true,
 )
 
@@ -96,9 +118,9 @@
 #figure-slide(
   title: [figure · figure, caption, takeaway],
   id: "good-figure",
-  fig: fig[Overview figure],
+  fig: visual(fig[Overview figure]),
   caption: [Fig 1. Accuracy holds while cost drops across six datasets.],
-  takeaway: textbox[*Takeaway.* The caption stays tight to the figure; the takeaway breathes below.],
+  takeaway: [*Takeaway.* The caption stays tight to the figure; the takeaway breathes below.],
   debug: true,
 )
 
@@ -106,7 +128,7 @@
   title: [sidebar · label beside content],
   id: "good-sidebar",
   label: [Method],
-  body: textbox[Measure each block at compile time, distribute whitespace by rhythm, and export telemetry the checker reads. The label tab matches the content card height.],
+  body: [Measure each block at compile time, distribute whitespace by rhythm, and export telemetry the checker reads. The label tab matches the content card height.],
   debug: true,
 )
 
@@ -115,7 +137,15 @@
 #focus-slide(
   title: [problem · low density],
   id: "bad-lowdensity",
-  body: textbox[*Ok.*],
+  body: [*Ok.*],
+  debug: true,
+)
+
+#duo-slide(
+  title: [problem · small natural figure],
+  id: "bad-smallfig",
+  top: fig(h: 1.6cm)[Small fixed figure],
+  bottom: [*Takeaway.* The figure keeps its tiny natural size, so the page barely inks the body.],
   debug: true,
 )
 
@@ -124,18 +154,27 @@
   id: "bad-imbalance",
   columns: (
     [*Short.* A line.],
-    [*Very long.* #lorem(70)],
+    [*Very long.* #lorem(40)],
     [*Short.* Another line.],
   ),
-  roles: ("column", "column", "column"),
+  debug: true,
+)
+
+#grid-slide(
+  title: [problem · a large card holding one word],
+  id: "bad-empty-card",
+  columns: (
+    [Ok.],
+    [*Substantial.* This column actually explains something, so the row grows tall and the left card turns into an underfilled shell.],
+  ),
   debug: true,
 )
 
 #duo-slide(
   title: [problem · content overflow],
   id: "bad-overflow",
-  top: fig[Main visual],
-  bottom: textbox[*Overflowing text.* #lorem(150)],
+  top: visual(fig[Main visual]),
+  bottom: [*Overflowing text.* #lorem(230)],
   debug: true,
 )
 
@@ -146,7 +185,6 @@
     [*Overflowing column.* #lorem(130)],
     [*Short.* A line.],
   ),
-  roles: ("column", "column"),
   debug: true,
 )
 

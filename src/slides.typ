@@ -18,7 +18,23 @@
   }
 }
 
-#let xwysyy-slide(title: auto, ..args) = {
+// Per-page manifest: every slide layout declares its kind and physical page,
+// so the layout checker can compute telemetry coverage (which content pages
+// carry no layout telemetry) and exempt title/section/end/image/outline pages.
+#let _page-manifest(kind) = context [
+  #metadata((schema: "xwysyy-page/v1", kind: kind, page: here().position().page)) <xwysyy-page>
+]
+
+// Kinds a content slide may declare.  The full-bleed kinds (title / section /
+// end / image) are emitted by their own layout functions only, so a slide
+// cannot spoof a checker-exempt kind through this parameter.
+#let _SLIDE-KINDS = ("content", "outline")
+
+#let xwysyy-slide(title: auto, kind: "content", ..args) = {
+  if kind not in _SLIDE-KINDS {
+    panic("xwysyy-slide: kind must be one of " + repr(_SLIDE-KINDS)
+      + "; full-bleed pages use title-slide / new-section-slide / end-slide / image-slide")
+  }
   if _xwysyy-note-mode() {
     let bodies = args.pos()
     if title != auto {
@@ -33,26 +49,43 @@
         self.store.title = title
       }
       // Open header (ported from the poster's section header): sans title in
-      // the theme color over a thin gradient rule fading to the right.
+      // the theme color over a thin gradient rule fading to the right.  The
+      // title shrinks to fit one line (floor 0.65×): the page's top margin is
+      // fixed, so a wrapped title would collide with the rule and the body.
+      // The applied scale is exported as `<xwysyy-header>` telemetry; a title
+      // still wider than the header at the floor scale reports fits: false.
       let header(self) = {
         set align(top)
         block(
           width: 100% + 2em,
           inset: (x: 1em, top: 1.1em),
           {
-            block(text(
-              font: self.store.heading-font,
-              fill: self.store.header-color,
-              weight: "bold",
-              size: 1.45em,
-              {
-                if self.store.title != none {
-                  utils.call-or-display(self, self.store.title)
-                } else {
-                  utils.display-current-heading(level: 2)
-                }
-              },
-            ))
+            context {
+              let avail = page.width - 2em.to-absolute()
+              let title-body = if self.store.title != none {
+                utils.call-or-display(self, self.store.title)
+              } else {
+                utils.display-current-heading(level: 2)
+              }
+              let styled(s) = text(
+                font: self.store.heading-font,
+                fill: self.store.header-color,
+                weight: "bold",
+                size: 1.45em * s,
+                title-body,
+              )
+              let natural = measure(box(styled(1.0))).width
+              let scale = if natural > avail and natural > 0pt {
+                calc.max(avail / natural, 0.65)
+              } else { 1.0 }
+              [#metadata((
+                schema: "xwysyy-header/v1",
+                page: here().position().page,
+                scale: scale,
+                fits: natural * scale <= avail + 0.01pt,
+              )) <xwysyy-header>]
+              block(styled(scale))
+            }
             v(0.65em, weak: true)
             // Full-width track whose ink fades out completely by 92% — the
             // tail dies before the page edge instead of running into it.
@@ -86,7 +119,16 @@
           footer: footer,
         ),
       )
-      touying-slide(self: self, ..args)
+      // Prepend the page manifest to the slide body (works for both plain
+      // content and callback-style `self => ...` bodies).
+      let bodies = args.pos()
+      let raw-body = if bodies.len() > 0 { bodies.first() } else { [] }
+      let tagged = if type(raw-body) == function {
+        s => { _page-manifest(kind); raw-body(s) }
+      } else {
+        { _page-manifest(kind); raw-body }
+      }
+      touying-slide(self: self, ..args.named(), tagged, ..bodies.slice(1))
     })
   }
 }
@@ -102,6 +144,7 @@
       )
       let info = self.info + args.named()
       let body = {
+        _page-manifest("title")
         set align(center + horizon)
         line(length: 100%, stroke: self.colors.neutral-dark)
         v(-0.9em)
@@ -154,6 +197,7 @@
         ),
       )
       let main-body = {
+        _page-manifest("section")
         set align(center + horizon)
         set text(size: 2em, fill: self.colors.neutral-dark, weight: "bold", style: "italic")
         line(start: (17%, 0em), length: 83%, stroke: self.colors.neutral-dark)
@@ -192,6 +236,7 @@
         margin: 2em,
       ))
       let main-body = {
+        _page-manifest("end")
         set align(center + horizon)
         text(fill: self.colors.neutral-dark, size: 3em, weight: "bold", title)
         if body != none {
@@ -210,7 +255,7 @@
   if _xwysyy-note-mode() {
     outline(title: _auto-outline-title(title), indent: 1.5em, depth: 1)
   } else {
-    xwysyy-slide(title: _auto-outline-title(title))[
+    xwysyy-slide(title: _auto-outline-title(title), kind: "outline")[
       #context {
         let t = _theme-state.get()
         let chs = if chapters == auto {
@@ -273,21 +318,24 @@
       )
       set text(fill: self.colors.neutral-dark, size: 1.4em)
       set image(width: 100%, height: auto)
-      touying-slide(self: self, align(left + bottom,
-        align(
-          center,
-          block(
-            fill: self.colors.neutral-lighter,
-            if body != none {
-              line(length: 100%, stroke: self.colors.neutral-dark)
-              v(-0.85em)
-              body
-              v(-0.85em)
-              line(length: 100%, stroke: self.colors.neutral-dark)
-            }
+      touying-slide(self: self, {
+        _page-manifest("image")
+        align(left + bottom,
+          align(
+            center,
+            block(
+              fill: self.colors.neutral-lighter,
+              if body != none {
+                line(length: 100%, stroke: self.colors.neutral-dark)
+                v(-0.85em)
+                body
+                v(-0.85em)
+                line(length: 100%, stroke: self.colors.neutral-dark)
+              }
+            )
           )
         )
-      ))
+      })
     })
   }
 }

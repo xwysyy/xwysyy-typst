@@ -29,6 +29,7 @@ def main():
         ("examples/note.typ", output / "note-{p}.png", visual_input),
         ("examples/dual-source.typ", output / "dual-source-slides-{p}.png", visual_input),
         ("examples/dual-source.typ", output / "dual-source-note-{p}.png", ("--input", "mode=note", *visual_input)),
+        ("examples/layout-demo.typ", output / "layout-demo-{p}.png", visual_input),
     )
     for source, target, extra in jobs:
         run(("typst", "compile", "--root", ".", *extra, source, "-f", "png", str(target)))

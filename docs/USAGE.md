@@ -7,7 +7,7 @@ This document lists the public APIs exported by `xwysyy.typ`. Quick setup is in 
 Create a new deck:
 
 ```bash
-typst init @preview/xwysyy:0.3.0 my-talk
+typst init @preview/xwysyy:0.4.0 my-talk
 cd my-talk
 typst compile main.typ
 ```
@@ -15,7 +15,7 @@ typst compile main.typ
 Import the package in an existing project:
 
 ```typst
-#import "@preview/xwysyy:0.3.0": *
+#import "@preview/xwysyy:0.4.0": *
 ```
 
 Local development examples in this repository use a relative import:
@@ -32,8 +32,8 @@ Core dependencies are downloaded by Typst:
 Optional drawing and theorem integrations live in `xwysyy-extras.typ`:
 
 ```typst
-#import "@preview/xwysyy:0.3.0": *
-#import "@preview/xwysyy:0.3.0/xwysyy-extras.typ": *
+#import "@preview/xwysyy:0.4.0": *
+#import "@preview/xwysyy:0.4.0/xwysyy-extras.typ": *
 ```
 
 For local development, import `xwysyy-extras.typ` from the repository root. The extras entry adds `cetz`, `fletcher`, and `theorion`.
@@ -187,20 +187,27 @@ Level-one headings trigger section transition slides:
 
 ### 3.7 Semantic Layout Components
 
-For figure/text pages where spacing matters (especially agent-generated decks), use the semantic layout components instead of hand-written `#v()` spacing. Each measures the real rendered height of its blocks, distributes whitespace by a rhythm rule, and exports `<xwysyy-slide-layout>` telemetry that `scripts/slide-check.py` turns into numeric diagnostics.
+For figure/text pages where spacing matters (especially agent-generated decks), use the semantic layout components instead of hand-written `#v()` spacing. Slots take typed items with declared sizing (`visual(fit: "stretch"|"natural")`, `card(...)`, `takeaway(...)`, `plain(...)`); each component measures every block, distributes space fill-first (stretch visuals grow dominant, cards grow tall), and exports `<xwysyy-slide-layout>` v3 telemetry (frame, preferred size, 2-D payload bbox, and paint box per object) that `scripts/xwysyy-check` turns into numeric diagnostics with machine-actionable fixes, plus an optional pixel cross-check (`--pixels`).
 
 ```typst
-#duo-slide(title: [...], top: image("fig.png"), bottom: textbox[*Takeaway.* ...], mode: "balanced")
-#focus-slide(title: [...], body: textbox[*One idea.*])
-#grid-slide(title: [...], columns: ([A], [B], [C]))               // equal-height cards
-#stack-slide(title: [...], blocks: (image("fig.png"), textbox[a], textbox[b]))
-#compare-slide(title: [...], left: [Option A], right: [Option B]) // equal-height cards
+#duo-slide(title: [...], top: visual(image("fig.png", width: 100%, height: 100%, fit: "contain")),
+  bottom: [*Takeaway.* ...], mode: "balanced")                    // plain bottom becomes a card
+#focus-slide(title: [...], body: [*One idea.*])
+#grid-slide(title: [...], columns: ([A], [B], [C]))               // equal-height cards, >= 2 columns
+#stack-slide(title: [...], items: (
+  visual(rect(width: 100%, height: 100%, fill: aqua)),            // stretch: grows dominant, never carded
+  card([Explanation.]), takeaway([Conclusion.]),                  // theme cards
+))
+#compare-slide(title: [...], left: [Option A], right: [Option B]) // equal-height cards, top-aligned
 #stat-slide(title: [...], stats: ((value: [38%], label: [cost]), (value: [0.4], label: [delta])))
-#figure-slide(title: [...], fig: image("f.png"), caption: [Fig 1. ...], takeaway: textbox[...])
-#sidebar-slide(title: [...], label: [Method], body: textbox[...])
+#figure-slide(title: [...], fig: visual(image("f.png", width: 100%, height: 100%, fit: "contain")),
+  caption: [Fig 1. ...], takeaway: [*Conclusion.*])
+#sidebar-slide(title: [...], label: [Method], body: [Plain content, the component draws the card.])
 ```
 
-Full parameter reference, the telemetry schema, the checker diagnostic table, and the AI generation contract live in [`LAYOUT.md`](LAYOUT.md).
+Required slots panic on `none` and on content that renders empty; percent-sized content must be wrapped in `visual(...)` (percent heights measure as zero outside a sized container). For stepwise reveal, pass `reveal: true` (duo/figure show the second block on step 2, stack/grid show block i on step i, compare shows the right side on step 2; typed items take an explicit `reveal-from`). Do not put `#pause` inside a component's content: touying panics; hidden reveal steps keep their measured space so the layout never shifts between subslides. Numeric knobs (widths, gutters) live in each component's `tuning` dictionary, validated for key, type, and range.
+
+Check a deck with `scripts/xwysyy-check deck.typ` (add `--pixels` before delivery, `--profile agent` for AI-generated decks). Full parameter reference, the telemetry schema, the checker diagnostic table, the pixel cross-checks, and the AI generation contract live in [`LAYOUT.md`](LAYOUT.md).
 
 ## 4. Components
 

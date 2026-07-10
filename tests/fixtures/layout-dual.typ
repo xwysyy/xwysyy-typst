@@ -14,13 +14,29 @@
 #duo-slide(
   title: [duo],
   top: rect(width: 100%, height: 3cm, fill: rgb("#8ecae6")),
-  bottom: textbox[*Takeaway.* Figure over explanation.],
+  bottom: [*Takeaway.* Figure over explanation.],
+  reveal: true,
 )
 
-#focus-slide(title: [focus], body: textbox[*One centered idea.*])
+#focus-slide(title: [focus], body: [*One centered idea.*])
 
 #grid-slide(title: [grid], columns: ([Left column.], [Right column.]))
 
 #compare-slide(title: [compare], left: [Option A.], right: [Option B.])
 
-#stack-slide(title: [stack], blocks: (textbox[First.], textbox[Second.], textbox[Third.]))
+#stack-slide(
+  title: [stack],
+  items: (visual(rect(width: 100%, height: 100%, fill: rgb("#bdd0f1"))), card([Second.]), takeaway([Third.])),
+  reveal: true,
+)
+
+#stat-slide(title: [stat], stats: ((value: [38%], label: [metric]),))
+
+#figure-slide(
+  title: [figure],
+  fig: rect(width: 100%, height: 2cm, fill: rgb("#8ecae6")),
+  caption: [A caption.],
+  takeaway: [*Takeaway.*],
+)
+
+#sidebar-slide(title: [sidebar], label: [Label], body: [Body text.])
