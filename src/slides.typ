@@ -25,16 +25,10 @@
   #metadata((schema: "xwysyy-page/v1", kind: kind, page: here().position().page)) <xwysyy-page>
 ]
 
-// Kinds a content slide may declare.  The full-bleed kinds (title / section /
-// end / image) are emitted by their own layout functions only, so a slide
-// cannot spoof a checker-exempt kind through this parameter.
-#let _SLIDE-KINDS = ("content", "outline")
-
-#let xwysyy-slide(title: auto, kind: "content", ..args) = {
-  if kind not in _SLIDE-KINDS {
-    panic("xwysyy-slide: kind must be one of " + repr(_SLIDE-KINDS)
-      + "; full-bleed pages use title-slide / new-section-slide / end-slide / image-slide")
-  }
+// Checker-exempt page kinds (title / section / end / image / outline) are
+// emitted by their own slide functions only: the public `xwysyy-slide` has no
+// kind parameter, so a content page cannot spoof an exemption.
+#let _kinded-slide(kind, title: auto, ..args) = {
   if _xwysyy-note-mode() {
     let bodies = args.pos()
     if title != auto {
@@ -78,11 +72,18 @@
               let scale = if natural > avail and natural > 0pt {
                 calc.max(avail / natural, 0.65)
               } else { 1.0 }
+              let hsize = measure(box(styled(scale)))
+              // Vertical fit: top inset + title + gap + rule must stay inside
+              // the fixed top margin, or an explicitly wrapped / oversized
+              // title collides with the rule and the body.
+              let used = (1.1em + 0.65em + 0.12em).to-absolute() + hsize.height
               [#metadata((
-                schema: "xwysyy-header/v1",
+                schema: "xwysyy-header/v2",
                 page: here().position().page,
                 scale: scale,
                 fits: natural * scale <= avail + 0.01pt,
+                height: hsize.height.pt(),
+                fits_v: used <= 4.35em.to-absolute() + 0.01pt,
               )) <xwysyy-header>]
               block(styled(scale))
             }
@@ -131,6 +132,14 @@
       touying-slide(self: self, ..args.named(), tagged, ..bodies.slice(1))
     })
   }
+}
+
+#let xwysyy-slide(title: auto, ..args) = {
+  if "kind" in args.named() {
+    panic("xwysyy-slide: kind is not a parameter; outline pages use outline-slide, "
+      + "full-bleed pages use title-slide / new-section-slide / end-slide / image-slide")
+  }
+  _kinded-slide("content", title: title, ..args)
 }
 
 #let title-slide(..args) = {
@@ -255,7 +264,7 @@
   if _xwysyy-note-mode() {
     outline(title: _auto-outline-title(title), indent: 1.5em, depth: 1)
   } else {
-    xwysyy-slide(title: _auto-outline-title(title), kind: "outline")[
+    _kinded-slide("outline", title: _auto-outline-title(title))[
       #context {
         let t = _theme-state.get()
         let chs = if chapters == auto {
@@ -298,6 +307,11 @@
 }
 
 #let image-slide(body: none, img: none) = {
+  // An image slide without an image is a spoofed full-bleed exemption: the
+  // page would carry arbitrary body content while the checker skips it.
+  if img == none {
+    panic("image-slide: img is required; use xwysyy-slide for text-only pages")
+  }
   if _xwysyy-note-mode() {
     if img != none {
       figure(

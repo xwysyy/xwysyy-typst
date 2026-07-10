@@ -2,25 +2,33 @@
 """One-command layout QA for xwysyy decks: geometry telemetry + pixel cross-check.
 
     scripts/xwysyy-check deck.typ
-    scripts/xwysyy-check deck.typ --profile agent --pixels --format json
+    scripts/xwysyy-check deck.typ --profile agent --format json
 
 Pipeline:
 
   1. one ``typst query deck "metadata"`` collects every xwysyy schema at once
      (layout records, page manifests, per-subslide frame mappings, header
-     telemetry);
+     telemetry); parsing is fail-closed (schema v4);
   2. the geometry checker (scripts/slide-check.py, imported as a library)
      turns them into numeric diagnostics with machine-actionable fix slugs;
-  3. with ``--pixels`` the deck is also rendered to PNG and the actual pixels
-     are cross-checked against the telemetry:
-       * ink inside the body region but outside every allocated frame is a
-         render/telemetry mismatch (content escaped its wrapper — the class
-         of bug geometry alone cannot see);
+  3. with ``--pixels`` (FORCED in the agent profile: geometry alone cannot
+     verify declared payloads) the deck is rendered to PNG and cross-checked:
+       * page geometry comes from the frame telemetry (physical body box in
+         pt per page), never from hard-coded template constants;
+       * each physical page maps to its (record, reveal step): only objects
+         with ``visible_from <= step`` may explain ink — content escaping
+         into a not-yet-visible slot is a render/telemetry mismatch;
+       * every object is checked ONCE (on its record's final page) for real
+         ink inside its claimed payload box, excluding the page background
+         and the object's own card fill — an empty stretch visual, a hidden
+         block, or a spacer-stuffed card is a hollow object;
        * ink inside the outer edge band is a clipping / horizontal-overflow
          suspect (full-bleed pages are exempted via the page manifest); a
-         sliding-window row scan catches even a single thin escaped line;
-       * a page whose telemetry claims real payload but renders almost no
-         ink is reported as a hollow render.
+         sliding-window row scan catches even a single thin escaped line.
+
+Severities follow the shared policy in slide-check.py: telemetry mismatches
+are errors everywhere; hollow objects and edge ink escalate to errors in the
+agent profile.
 
 Exit codes: 2 broken input/compile, 1 any error (or any warning with
 ``--strict``), 0 otherwise (always 0 with ``--advisory``).  Standard library
@@ -42,10 +50,9 @@ from typing import Any
 SCRIPTS = pathlib.Path(__file__).resolve().parent
 REPO = SCRIPTS.parent
 # Page kinds that legitimately paint to the page edge (full-bleed designs).
+# They are emitted only by their dedicated slide functions (not spoofable
+# through xwysyy-slide, which has no kind parameter).
 FULL_BLEED_KINDS = {"title", "section", "end", "image"}
-# Page geometry from src/slides.typ: base em and margins of the content page.
-EM_MM = 5.5
-MARGIN_EM = {"top": 4.35, "x": 1.0, "bottom": 1.4}
 
 
 def _load(name: str, path: pathlib.Path):
@@ -74,6 +81,13 @@ def _run(cmd: list[str]) -> str:
     return proc.stdout
 
 
+def _hex_rgb(value: str) -> tuple[int, int, int]:
+    digits = value.lstrip("#")
+    if len(digits) < 6:
+        raise check.TelemetryError(f"paint_fill {value!r} is not a hex colour")
+    return (int(digits[0:2], 16), int(digits[2:4], 16), int(digits[4:6], 16))
+
+
 def _background(width: int, height: int, rgba: bytes) -> tuple[int, int, int]:
     """Estimate the page background as the dominant colour along the border."""
     counts: dict[tuple[int, int, int], int] = {}
@@ -92,27 +106,39 @@ def _background(width: int, height: int, rgba: bytes) -> tuple[int, int, int]:
 
 
 def analyze_page(path: pathlib.Path, ppi: int, band_frac: float, tolerance: int,
-                 frames: list[dict[str, float]] | None) -> dict[str, Any]:
-    """Per-page pixel statistics: page/body ink, edge bands (with a sliding
-    row window for thin escapes), and ink outside the telemetry frames."""
+                 geometry: dict[str, Any] | None,
+                 boxes_norm: list[Any],
+                 hollow_objects: list[Any]) -> dict[str, Any]:
+    """Per-page pixel statistics.
+
+    ``geometry`` is the frame telemetry's physical body box (pt); ``boxes_norm``
+    are the normalized frames/paints of the objects VISIBLE on this page;
+    ``hollow_objects`` are the objects whose payload boxes must contain real
+    ink on this page (each object is checked once, on its record's final
+    page)."""
     width, height, rgba = read_png(path)
     bg = _background(width, height, rgba)
     stride = width * 4
     band_x = max(int(width * band_frac), 1)
     band_y = max(int(height * band_frac), 1)
 
-    px_per_mm = ppi / 25.4
-    em = EM_MM * px_per_mm
-    bx0, bx1 = MARGIN_EM["x"] * em, width - MARGIN_EM["x"] * em
-    by0, by1 = MARGIN_EM["top"] * em, height - MARGIN_EM["bottom"] * em
-    bw, bh = bx1 - bx0, by1 - by0
+    scale = ppi / 72.0  # px per pt
+    if geometry is not None:
+        body = geometry["body"]
+        bx0, by0 = body["x"] * scale, body["y"] * scale
+        bw, bh = body["w"] * scale, body["h"] * scale
+        bx1, by1 = bx0 + bw, by0 + bh
+    else:
+        bx0 = by0 = 0.0
+        bx1 = by1 = -1.0  # no body region: body-based checks are skipped
+        bw = bh = 0.0
 
     boxes = []
-    if frames:
+    if geometry is not None:
         pad_x, pad_y = 0.02 * bw, 0.02 * bh
-        for f in frames:
-            boxes.append((bx0 + f["x"] * bw - pad_x, by0 + f["y"] * bh - pad_y,
-                          bx0 + (f["x"] + f["w"]) * bw + pad_x, by0 + (f["y"] + f["h"]) * bh + pad_y))
+        for f in boxes_norm:
+            boxes.append((bx0 + f.x * bw - pad_x, by0 + f.y * bh - pad_y,
+                          bx0 + f.right * bw + pad_x, by0 + f.bottom * bh + pad_y))
 
     ink = 0
     body_px = 0
@@ -158,6 +184,37 @@ def analyze_page(path: pathlib.Path, ppi: int, band_frac: float, tolerance: int,
         row_left.append(l_ink / l_px if l_px else 0.0)
         row_right.append(r_ink / r_px if r_px else 0.0)
 
+    # Per-object payload ink: pixels inside the claimed payload box that are
+    # neither the page background nor the object's own card fill.  A card's
+    # paint cannot vouch for its content, and a declared (stretch) payload
+    # must prove itself here.
+    object_ink: list[dict[str, Any]] = []
+    if geometry is not None:
+        for o in hollow_objects:
+            p = o.payload
+            px0 = max(int(bx0 + p.x * bw), 0)
+            py0 = max(int(by0 + p.y * bh), 0)
+            px1 = min(int(bx0 + p.right * bw), width)
+            py1 = min(int(by0 + p.bottom * bh), height)
+            region = max(px1 - px0, 0) * max(py1 - py0, 0)
+            fill = _hex_rgb(o.paint_fill) if o.paint_fill else None
+            hits = 0
+            for y in range(py0, py1):
+                row = y * stride
+                for x in range(px0, px1):
+                    i = row + x * 4
+                    r, g, b = rgba[i], rgba[i + 1], rgba[i + 2]
+                    if (abs(r - bg[0]) + abs(g - bg[1]) + abs(b - bg[2])) <= tolerance:
+                        continue
+                    if fill and (abs(r - fill[0]) + abs(g - fill[1]) + abs(b - fill[2])) <= tolerance:
+                        continue
+                    hits += 1
+            object_ink.append({
+                "id": o.id,
+                "payload_area": p.area,
+                "ink_share": (hits / region) if region else 0.0,
+            })
+
     def window_peak(rows: list[float], win: int) -> float:
         if not rows:
             return 0.0
@@ -169,48 +226,43 @@ def analyze_page(path: pathlib.Path, ppi: int, band_frac: float, tolerance: int,
             peak = max(peak, acc)
         return peak / win
 
-    win = max(int(0.25 * EM_MM * px_per_mm), 3)  # ~ a quarter em: thin-line scale
+    win = max(int(height * 0.03), 3)  # ~ a thin-line scale
     return {
         "page_ink": ink / (width * height),
         "body_ink": (body_ink / body_px) if body_px else 0.0,
         "stray_ink": (stray_ink / body_px) if body_px else 0.0,
         "edge_ink": {side: (edges[side] / edge_px[side] if edge_px[side] else 0.0) for side in edges},
         "edge_row_peak": {"left": window_peak(row_left, win), "right": window_peak(row_right, win)},
+        "object_ink": object_ink,
         "background": list(bg),
     }
 
 
 def pixel_report(deck: pathlib.Path, root: pathlib.Path, input_flags: list[str],
-                 buckets: dict[str, list[dict[str, Any]]], args) -> tuple[Any, int]:
+                 records: list[Any], frames_by_id: dict[str, list[dict[str, Any]]],
+                 kinds: dict[int, str], args, profile: str) -> tuple[Any, int]:
     """Render the deck and cross-check pixels against telemetry.  Returns the
     pixel SlideReport and the physical page count."""
     diagnostics = []
     metrics: dict[str, Any] = {}
-    # The layout is identical on every subslide (hidden steps keep their
-    # space), so a record's frames apply to every physical page its frame
-    # mappings name — reveal steps are cross-checked too.
-    pages_by_id: dict[str, set[int]] = {}
-    for f in buckets["frames"]:
-        if isinstance(f.get("page"), int):
-            pages_by_id.setdefault(str(f.get("id", "?")), set()).add(f["page"])
-    frames_by_page: dict[int, list[dict[str, float]]] = {}
-    claimed: dict[int, float] = {}
-    for rec in buckets["layout"]:
-        page = rec.get("page")
-        if not isinstance(page, int):
-            continue
-        rec_pages = pages_by_id.get(str(rec.get("id", "")), set()) | {page}
-        for obj in rec.get("objects", []) or []:
-            for key in ("frame", "paint"):
-                box = obj.get(key)
-                if isinstance(box, dict) and all(k in box for k in "xywh"):
-                    for p in rec_pages:
-                        frames_by_page.setdefault(p, []).append(box)
-            pay = obj.get("payload")
-            if isinstance(pay, dict) and all(k in pay for k in "xywh"):
-                claimed[page] = claimed.get(page, 0.0) + max(pay["w"], 0.0) * max(pay["h"], 0.0)
-    kinds = {p["page"]: str(p.get("kind", "content")) for p in buckets["pages"]
-             if isinstance(p.get("page"), int)}
+    # page -> geometry (from the frame telemetry) and the frames/paints of
+    # the objects visible at that page's reveal step.
+    geometry: dict[int, dict[str, Any]] = {}
+    boxes_by_page: dict[int, list[Any]] = {}
+    hollow_by_page: dict[int, list[Any]] = {}
+    for rec in records:
+        for f in frames_by_id.get(rec.id, []):
+            page, step = f["page"], f["step"]
+            geometry.setdefault(page, f)
+            vis = [o for o in rec.objects if o.visible_from <= step]
+            entry = boxes_by_page.setdefault(page, [])
+            for o in vis:
+                entry.append(o.frame)
+                if o.paint is not None:
+                    entry.append(o.paint)
+        # Every object is pixel-verified exactly once, on the record's final
+        # page (where all objects are visible).
+        hollow_by_page.setdefault(rec.page, []).extend(rec.objects)
 
     with tempfile.TemporaryDirectory() as tmp:
         target = pathlib.Path(tmp) / "page-{0p}.png"
@@ -222,7 +274,8 @@ def pixel_report(deck: pathlib.Path, root: pathlib.Path, input_flags: list[str],
         page_stats = []
         for n, page in enumerate(pages, start=1):
             rep = analyze_page(page, args.ppi, args.band, args.tolerance,
-                               frames_by_page.get(n))
+                               geometry.get(n), boxes_by_page.get(n, []),
+                               hollow_by_page.get(n, []))
             rep["page"] = n
             exempt = kinds.get(n) in FULL_BLEED_KINDS
             rep["exempt"] = exempt
@@ -234,28 +287,29 @@ def pixel_report(deck: pathlib.Path, root: pathlib.Path, input_flags: list[str],
                 if side not in flagged and peak > args.edge_peak_max:
                     flagged.append(side)
             if flagged:
-                diagnostics.append(check.Diagnostic(
-                    "warning", "edge_ink",
+                diagnostics.append(check._diag(
+                    profile, "edge_ink",
                     f"Page {n} paints into the outer edge band ({', '.join(sorted(flagged))}).",
                     {"page": n, "edge_ink": check._round(rep["edge_ink"]),
                      "edge_row_peak": check._round(rep["edge_row_peak"])},
-                    "Content reaches the page edge: a wide line/URL escaped its wrapper, or the block is clipped.",
-                    action="trim_content"))
-            if n in frames_by_page and rep["stray_ink"] > args.stray_max:
-                diagnostics.append(check.Diagnostic(
-                    "warning", "render_telemetry_mismatch",
-                    f"Page {n} renders ink outside every telemetry frame.",
+                    "Content reaches the page edge: a wide line/URL escaped its wrapper, or the block is clipped."))
+            if n in boxes_by_page and rep["stray_ink"] > args.stray_max:
+                diagnostics.append(check._diag(
+                    profile, "render_telemetry_mismatch",
+                    f"Page {n} renders ink outside every visible telemetry frame.",
                     {"page": n, "stray_ink": round(rep["stray_ink"], 4)},
-                    "Content escaped its allocated frame; the telemetry no longer describes the render.",
-                    action="report_bug"))
-            if claimed.get(n, 0.0) > 0.25 and rep["body_ink"] < 0.10 * claimed[n]:
-                diagnostics.append(check.Diagnostic(
-                    "warning", "hollow_render",
-                    f"Page {n} claims payload {claimed[n]:.2f} but renders almost no ink.",
-                    {"page": n, "claimed_payload": round(claimed[n], 4),
-                     "body_ink": round(rep["body_ink"], 4)},
-                    "The telemetry over-claims: check that the content actually renders.",
-                    action="report_bug"))
+                    "Content escaped its allocated frame (or shows up before its reveal step); "
+                    "the telemetry no longer describes the render."))
+            for oink in rep["object_ink"]:
+                if oink["payload_area"] >= args.object_area_min and oink["ink_share"] < args.object_ink_min:
+                    diagnostics.append(check._diag(
+                        profile, "hollow_object",
+                        f"Object {oink['id']} claims a payload but renders almost no ink inside it.",
+                        {"page": n, "object_id": oink["id"],
+                         "payload_area": round(oink["payload_area"], 4),
+                         "ink_share": round(oink["ink_share"], 4),
+                         "floor": args.object_ink_min},
+                        "The payload claim has no pixel evidence: fill the slot with real content."))
         metrics["pages"] = [
             {"page": r["page"], "page_ink": round(r["page_ink"], 4),
              "body_ink": round(r["body_ink"], 4), "stray_ink": round(r["stray_ink"], 4),
@@ -272,7 +326,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", default=None, help="typst project root (default: auto)")
     parser.add_argument("--profile", choices=("human", "agent"), default="human")
     parser.add_argument("--rules", default=None, help="JSON/TOML rule overrides for the geometry checker")
-    parser.add_argument("--pixels", action="store_true", help="render PNGs and cross-check pixels")
+    parser.add_argument("--pixels", action="store_true",
+                        help="render PNGs and cross-check pixels (forced with --profile agent)")
     parser.add_argument("--ppi", type=int, default=72)
     parser.add_argument("--band", type=float, default=0.012,
                         help="edge band width as a fraction of the page (default 0.012)")
@@ -281,7 +336,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--edge-peak-max", type=float, default=0.35,
                         help="max sliding-window row ink inside a side band (thin escapes)")
     parser.add_argument("--stray-max", type=float, default=0.002,
-                        help="max body ink outside all telemetry frames")
+                        help="max body ink outside all visible telemetry frames")
+    parser.add_argument("--object-ink-min", type=float, default=0.01,
+                        help="min ink share inside a claimed payload box (hollow objects)")
+    parser.add_argument("--object-area-min", type=float, default=0.01,
+                        help="payload area below which the hollow check is skipped (noise floor)")
     parser.add_argument("--tolerance", type=int, default=24,
                         help="summed RGB distance from the background that counts as ink")
     parser.add_argument("--dump-features", default=None, metavar="PATH")
@@ -291,6 +350,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--strict", action="store_true", help="exit non-zero on any warning or error")
     parser.add_argument("--advisory", action="store_true", help="always exit zero (report only)")
     args = parser.parse_args(argv)
+
+    # Geometry alone cannot verify declared (stretch) payloads, so the agent
+    # gate always includes the pixel cross-check.
+    if args.profile == "agent":
+        args.pixels = True
 
     deck = pathlib.Path(args.deck)
     root = pathlib.Path(args.root).resolve() if args.root else _root_for(deck)
@@ -307,22 +371,27 @@ def main(argv: list[str] | None = None) -> int:
             pathlib.Path(args.save_meta).write_text(meta, encoding="utf-8")
 
         rules = check._load_rules(args.rules)
-        records = buckets["layout"]
-        frames_by_id: dict[str, list[dict[str, Any]]] = {}
-        for f in buckets["frames"]:
-            frames_by_id.setdefault(str(f.get("id", "?")), []).append(f)
-        reports = [check.analyze_slide(rec, rules, frames_by_id.get(str(rec.get("id", ""))), args.profile)
+        records = [check.parse_record(rec) for rec in buckets["layout"]]
+        frames_by_id, orphans, dup_ids = check.join_frames(records, buckets["frames"])
+        reports = [check.analyze_slide(rec, rules, frames_by_id.get(rec.id), args.profile)
                    for rec in records]
+        structure = check.structure_report(orphans, dup_ids, args.profile)
+        if structure is not None:
+            reports.append(structure)
         if buckets["headers"]:
-            reports.append(check.header_report(buckets["headers"]))
+            reports.append(check.header_report(buckets["headers"], args.profile))
 
+        kinds = {p["page"]: str(p.get("kind", "content")) for p in buckets["pages"]
+                 if isinstance(p.get("page"), int)}
         page_count = None
         if args.pixels:
-            pixels, page_count = pixel_report(deck, root, input_flags, buckets, args)
+            pixels, page_count = pixel_report(deck, root, input_flags, records,
+                                              frames_by_id, kinds, args, args.profile)
         else:
             pixels = None
-        if buckets["pages"]:
-            reports.append(check.coverage_report(records, buckets["frames"], buckets["pages"],
+        if buckets["pages"] or records:
+            joined = [f for fs in frames_by_id.values() for f in fs]
+            reports.append(check.coverage_report(records, joined, buckets["pages"],
                                                  args.profile, page_count))
         if pixels is not None:
             reports.append(pixels)
@@ -334,14 +403,6 @@ def main(argv: list[str] | None = None) -> int:
         print("xwysyy-check: no telemetry records found — the deck does not use "
               "any layout component", file=sys.stderr)
         return 0 if args.advisory else 1
-
-    seen: set[str] = set()
-    for r in reports:
-        if r.id in seen:
-            r.diagnostics.append(check.Diagnostic("warning", "duplicate_slide_id",
-                                                  "Two slides share one telemetry id.",
-                                                  {"id": r.id}, "Give each slide a unique explicit id."))
-        seen.add(r.id)
 
     if args.dump_features:
         pathlib.Path(args.dump_features).write_text(

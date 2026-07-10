@@ -108,9 +108,9 @@
   title: [stat · a row of metric tiles],
   id: "good-stat",
   stats: (
-    (value: [38%], label: [cost reduction]),
-    (value: [0.4], label: [accuracy delta]),
-    (value: [6], label: [datasets]),
+    metric([38%], [cost reduction]),
+    metric([0.4], [accuracy delta]),
+    metric([6], [datasets]),
   ),
   debug: true,
 )

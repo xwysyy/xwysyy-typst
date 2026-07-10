@@ -30,7 +30,7 @@
   reveal: true,
 )
 
-#stat-slide(title: [stat], stats: ((value: [38%], label: [metric]),))
+#stat-slide(title: [stat], stats: (metric([38%], [metric]),))
 
 #figure-slide(
   title: [figure],
