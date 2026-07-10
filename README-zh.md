@@ -174,7 +174,7 @@ typst compile main.typ
 | 笔记入口 | `xwysyy-note` | `#show: xwysyy-note.with(title: [...])` |
 | 可选扩展 | `xwysyy-extras` | cetz、fletcher、theorion 集成 |
 
-版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain`），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v3 遥测（每对象带分配框、自然外框、二维 payload 框与卡片色块框）。`scripts/xwysyy-check` 一条命令把遥测转成数值化版面诊断（每条带可执行的 action），加 `--pixels` 时用真实渲染像素与遥测交叉验证。AI 生成幻灯片时用它们替代手写 `#v()` 间距。分步展示用组件的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见 [`docs/LAYOUT.md`](docs/LAYOUT.md)。
+版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain` / `metric`），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v4 遥测（每对象带分配框、自然外框、区分测量与声明来源的二维 payload 框、卡片色块框与填色）。`scripts/xwysyy-check` 一条命令把遥测转成数值化版面诊断（每条带可执行的 action），并用真实渲染像素与遥测交叉验证（`--pixels`，`--profile agent` 下恒开）。AI 生成幻灯片时用它们替代手写 `#v()` 间距。分步展示用组件的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见 [`docs/LAYOUT.md`](docs/LAYOUT.md)。
 
 ## Handout 与讲者备注
 
