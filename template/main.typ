@@ -6,7 +6,7 @@
     title: [xwysyy Starter Deck],
     subtitle: [Academic slides in Typst],
     author: " ",
-    date: [Date],
+    date: datetime.today(),
     institution: " ",
   ),
 )
@@ -17,19 +17,23 @@
 
 = Motivation
 
-#grid-slide(
-  title: [One Minute Setup],
-  columns: (
-    [*Start editing.* This project came from `typst init @preview/xwysyy:0.4.0`; edit `main.typ` and reuse `textbox`, #red[red highlights], tables, code blocks, and touying animations.],
-    [*Control the theme.* Switch built-in themes with `theme: "sunset"` or pass a custom color dictionary directly.],
-  ),
+== One Minute Setup
+
+Use `typst init @preview/xwysyy:0.4.0` to create this deck, then edit `main.typ`.
+
+#textbox(
+  [*Reusable components*
+
+  `textbox`, #red[red highlights], #yellow[yellow highlights], tables, code blocks, and touying animations share one theme.],
+
+  [*Theme control*
+
+  Switch built-in themes with `theme: "sunset"` or pass a custom color dictionary directly.],
 )
 
 = Semantic layouts
 
-// The layout components measure every block, distribute space, and export
-// telemetry that the template's scripts/xwysyy-check turns into numeric
-// layout diagnostics. See the package's docs/LAYOUT.md.
+// Layout components measure every block and distribute available space.
 
 #duo-slide(
   title: [A figure over its takeaway],
@@ -46,7 +50,7 @@
   columns: (
     [*Measure.* Every block's height is known at compile time.],
     [*Distribute.* Free space grows the cards, not the margins.],
-    [*Check.* Run `scripts/xwysyy-check main.typ` after adding your content.],
+    [*Compose.* Choose the component that matches the slide's structure.],
   ),
 )
 

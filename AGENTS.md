@@ -35,7 +35,7 @@
 | `examples/theme-preview.typ` | 可通过 `--input theme=<name>` 渲染任意内置主题的预览 deck |
 | `examples/dual-source.typ` | `xwysyy-doc` 双产物示例；默认编译 deck，`--input mode=note` 编译 A4 讲义 |
 | `examples/layout-demo.typ` | 语义布局层演示：10 个 good 样例（8 组件 + 纯文本 stack + reveal）+ 6 个 checker 应捕获的 bad 样例（低密度 / 小图 / 列失衡 / 空壳卡片 / 双重溢出） |
-| `docs/LAYOUT.md` | 语义布局层设计文档 + 组件 API + 遥测 schema v3 + checker 诊断表 + AI 生成契约（随 Universe 包发布） |
+| `docs/LAYOUT.md` | 语义布局层设计文档 + 组件 API + 遥测 schema v3 + checker 诊断表 + AI 生成契约；保留在开发仓库，Universe README 链接对应版本标签 |
 | `tests/fixtures/layout-dual.typ` | 组件双产物 fixture：slides 与 `--input mode=note` 都要编译过 |
 | `tests/fixtures/layout-fit.typ` | fit 态回归 fixture：sidebar tight 窗口、stretch 视觉饿死型 overflow（不变量 body_overflow>0）、间隙压缩型 compressed |
 | `tests/fixtures/layout-handout.typ` | handout 覆盖率回归：手写页在 handout 折叠后仍须报 telemetry_gap（靠 `<xwysyy-frame>` 真实页码） |
@@ -49,7 +49,7 @@
 | `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机 + rules 叶级校验）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures 两种产物、页头缩放遥测） |
 | `tests/test_render_visuals.py` | 视觉渲染发布回归：成功时完整替换脚本拥有的 PNG 集，编译失败时保留上一套完整输出，无关文件不受影响 |
 | `examples/refs.bib` | 笔记演示用 BibTeX |
-| `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *`；发布构建器把三个 QA 工具装入 staging 的 `template/scripts/`，因此 `typst init` 后可直接运行 `scripts/xwysyy-check` |
+| `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *` |
 | `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
 | `typst.toml` | 包清单：name/version/entrypoint/template/exclude，发版时同步 CHANGELOG |
 | `CHANGELOG.md` | 版本变更记录，遵循 Keep a Changelog 格式 |
@@ -58,18 +58,18 @@
 | `docs/CUSTOMIZATION.md` | 自定义指南 + 配合 touying 0.7.x 高级特性 |
 | `docs/THEME-GENERATOR.md` | AI 生成主题字典提示词，默认指导用户直接传给 `theme` 参数 |
 | `docs/DUAL-OUTPUT-DESIGN.md` | `xwysyy-doc` 入口形态、note 模式降级规则、pause 语义和共享组件设计 |
-| `scripts/slide-check.py` | 版面遥测几何引擎（schema v4，fail-closed 解析：缺字段 / 未知枚举 / 旧 schema 一律 exit 2）：并集面积覆盖指标（container/visual/payload + declared_payload）、fit 四态数值不变量、帧状态机（steps 1..N / handout 末帧 / 孤儿帧 / 重复 id 皆 error）、empty_shell / underfilled_card（只认 measured payload）、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame / sparse_frame）、rules 叶级校验、每条诊断带 action、统一 severity 政策表、`--profile agent|human`、`--dump-features`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 恒零）；遥测为空非零退出。发布构建器把它复制到模板项目的 `scripts/` |
-| `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema，随后执行几何检查和像素交叉验证（`--profile agent` 强制渲染像素）：render_telemetry_mismatch（只认当前 reveal 步可见对象的 frame）/ edge_ink 行峰值 / hollow_object（逐对象 payload 墨迹，排除自身卡片填色 `paint_fill`），页面几何来自 frame v2 遥测而非硬编码常量。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。发布构建器把它复制到模板项目的 `scripts/` |
+| `scripts/slide-check.py` | 版面遥测几何引擎（schema v4，fail-closed 解析：缺字段 / 未知枚举 / 旧 schema 一律 exit 2）：并集面积覆盖指标（container/visual/payload + declared_payload）、fit 四态数值不变量、帧状态机（steps 1..N / handout 末帧 / 孤儿帧 / 重复 id 皆 error）、empty_shell / underfilled_card（只认 measured payload）、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame / sparse_frame）、rules 叶级校验、每条诊断带 action、统一 severity 政策表、`--profile agent|human`、`--dump-features`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 恒零）；遥测为空非零退出。仅用于开发仓库 QA |
+| `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema，随后执行几何检查和像素交叉验证（`--profile agent` 强制渲染像素）：render_telemetry_mismatch（只认当前 reveal 步可见对象的 frame）/ edge_ink 行峰值 / hollow_object（逐对象 payload 墨迹，排除自身卡片填色 `paint_fill`），页面几何来自 frame v2 遥测而非硬编码常量。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。仅用于开发仓库 QA |
 | `scripts/gen-previews` | 重新生成 README preview PNG（基线更新走 `scripts/adopt-baseline`，不要用 `--with-baseline` 的本地渲染当基线） |
 | `scripts/render-visuals` | 在目标目录旁完整渲染视觉回归 PNG staging，成功后替换脚本拥有的 PNG 集；内部传 `--input visual-ci=true` 以固定日期并使用 CI 可安装字体 |
 | `scripts/compare-png` | 无 ImageMagick 依赖的 PNG 像素比较器，可输出 diff PNG |
 | `scripts/adopt-baseline` | 从最近一次 visual-regression run 下载 `visual-current` artifact 全量覆盖视觉基线（需 gh CLI 已登录） |
-| `scripts/build-universe-package` | 从干净的已提交 Git ref 提取官方包白名单，把终端用户 QA 工具装入 `template/scripts/`，保留执行权限并输出树哈希；生成物是 `typst/packages` PR 分支的唯一来源 |
+| `scripts/build-universe-package` | 从干净的已提交 Git ref 提取最小官方包白名单；目录结构沿用 0.3.0，仅新增 `src/layout.typ`，不复制开发脚本、测试或内部文档 |
 | `scripts/check-theme-contrast` | 解析 `src/themes.typ` 并检查主题对比度 |
 | `.github/workflows/visual-regression.yml` | 用 Typst 0.14.0 编译公开入口，检查 Universe 包形状，并在 0.14.2 环境编译示例、运行测试、检查主题对比度、渲染视觉基线并比较 |
 | `tests/fixtures/` | 自定义主题、目录标题、字体参数等编译验证 fixture |
 | `tests/visual-baseline/` | CI 视觉回归基线 PNG |
-| `LICENSE` / `LICENSE-MIT-0` | 代码与文档沿用 MIT；`template/` 使用 MIT-0，初始化项目可修改和分发且无需署名或附带许可证文本 |
+| `LICENSE` | MIT，沿用 0.3.0 与上游 |
 
 ## 工作规则（项目层面）
 
@@ -78,7 +78,7 @@
 - **改完必编译**：任何对 `xwysyy.typ` / `src/*.typ` / 示例 / 模板脚手架的修改完成后，至少跑 `typst compile --root . examples/slides-sky.typ && typst compile --root . examples/slides-sunset.typ && typst compile --root . examples/note.typ && typst compile --root . examples/dual-source.typ && typst compile --root . --input mode=note examples/dual-source.typ /tmp/xwysyy-dual-note.pdf`。改主题、脚本或预览时还要跑 `scripts/check-theme-contrast` 与 `scripts/render-visuals /tmp/xwysyy-visual-current && scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current`。
 - **改语义布局层必验遥测**：改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check` 后跑 `scripts/xwysyy-check examples/layout-demo.typ; python3 -m unittest discover -s tests && typst compile --root . tests/fixtures/layout-dual.typ /tmp/layout-dual.pdf && typst compile --root . --input mode=note tests/fixtures/layout-dual.typ /tmp/layout-note.pdf`（demo 含故意的 bad 页，检查退出码非零属预期；CI 的 `Python regression tests` 步骤跑同一套单测，其中已含 panic fixtures、handout 覆盖率与像素真阳性）。改阈值后必须确认 demo 的 10 个 good 页仍全过、6 个 bad 页仍被捕获（阈值以真实测量的 good 页为锚校准，不要放水让 bad 页蒙混）。发版前另跑 `scripts/xwysyy-check examples/layout-demo.typ --pixels` 做像素级交叉验证。
 - **视觉基线以 CI 环境为准**：`tests/visual-baseline/` 的判定基准是 workflow 钉死的 CI 字体环境。本机多装字体时，落在示例字体栈之外的字形（含中文的行内代码、⬦ 列表标记等）走系统回退，本地 `compare-png` 会对少数页报已知差异，属正常。更新基线：视觉改动 push 后等 CI 跑完，跑 `scripts/adopt-baseline`（自动下载该 run 的 `visual-current` artifact 全量覆盖 `tests/visual-baseline`），review 后补 `test:` 提交；不要用本地渲染图当基线。
-- **Universe 发布以源仓库为权威**：先在本仓库修正并验证，再用 `scripts/build-universe-package <output> --ref <commit-or-tag>` 生成官方包目录。`typst/packages` PR 分支只接收该目录，不手工维护副本。reviewer 要求的修改先回写本仓库，再重新生成。`typst.toml` 的 `compiler` 是最低版本，修改后必须通过 workflow 的 `minimum-compiler` job。
+- **Universe 发布使用最小子集**：开发仓库保留测试、示例、QA 脚本和内部文档。`scripts/build-universe-package <output> --ref <commit-or-tag>` 只复制与 0.3.0 相同的发布结构，并自然包含新增的 `src/layout.typ`；`typst/packages` PR 分支不接收 `scripts/`、`tests/`、`docs/`、示例或维护文件。`typst.toml` 的 `compiler` 是最低版本，修改后必须通过 workflow 的 `minimum-compiler` job。
 - **文档同步 SOP**：按改动类型查表同步文档，不再维护行号引用。
 
   | 改了什么 | 必须同步 |

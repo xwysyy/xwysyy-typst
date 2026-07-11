@@ -44,12 +44,13 @@ jobs:
         run: |
           mkdir -p /tmp/xwysyy-package-path/preview/xwysyy
           scripts/build-universe-package /tmp/xwysyy-package-path/preview/xwysyy/0.4.0 --ref HEAD
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/LICENSE
           test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/xwysyy.typ
           test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/xwysyy-extras.typ
-          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/LICENSE-MIT-0
-          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/docs/LAYOUT.md
-          test -x /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/template/scripts/xwysyy-check
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/src/layout.typ
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/template/main.typ
           test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/scripts
+          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/docs
           test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/examples
           test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/tests
 
@@ -63,9 +64,7 @@ jobs:
       - name: Initialize and check the packaged template
         run: |
           typst init --package-path /tmp/xwysyy-package-path @preview/xwysyy:0.4.0 /tmp/xwysyy-init
-          test -x /tmp/xwysyy-init/scripts/xwysyy-check
           typst compile --root /tmp/xwysyy-init --package-path /tmp/xwysyy-package-path /tmp/xwysyy-init/main.typ /tmp/xwysyy-init.pdf
-          TYPST_PACKAGE_PATH=/tmp/xwysyy-package-path /tmp/xwysyy-init/scripts/xwysyy-check /tmp/xwysyy-init/main.typ
 
   render:
     runs-on: ubuntu-latest

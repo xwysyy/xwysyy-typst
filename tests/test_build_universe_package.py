@@ -17,9 +17,10 @@ VALID_MANIFEST = """\
 name = "xwysyy"
 version = "0.4.0"
 entrypoint = "xwysyy.typ"
-license = "MIT AND MIT-0"
+license = "MIT"
+disciplines = ["computer-science"]
 compiler = "0.14.0"
-exclude = ["/docs/LAYOUT.md"]
+exclude = []
 
 [template]
 path = "template"
@@ -37,7 +38,7 @@ VALID_README = """\
 
 ## License
 
-Files in `template/` use [MIT-0](./LICENSE-MIT-0).
+[MIT](./LICENSE)
 """
 
 PACKAGE_SUBPATH_README = (
@@ -59,7 +60,6 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         files: dict[str, str | bytes] = {
             "LICENSE": "MIT\n",
-            "LICENSE-MIT-0": "MIT-0\n",
             "README.md": VALID_README,
             "typst.toml": VALID_MANIFEST,
             "thumbnail.png": b"PNG",
@@ -67,10 +67,6 @@ class BuildUniversePackageTests(unittest.TestCase):
             "xwysyy-extras.typ": "",
             "src/main.typ": "",
             "template/main.typ": '#import "@preview/xwysyy:0.4.0": *\n',
-            "docs/LAYOUT.md": "# Layout\n",
-            "scripts/compare-png": "#!/bin/sh\n",
-            "scripts/slide-check.py": "#!/usr/bin/env python3\n",
-            "scripts/xwysyy-check": "#!/bin/sh\n",
         }
         for relative, content in files.items():
             path = self.repo / relative
@@ -81,9 +77,9 @@ class BuildUniversePackageTests(unittest.TestCase):
                 path.write_text(content, encoding="utf-8")
 
         target = self.repo / "scripts" / BUILDER.name
+        target.parent.mkdir(parents=True)
         shutil.copy2(BUILDER, target)
-        for name in ("compare-png", "slide-check.py", "xwysyy-check", BUILDER.name):
-            (self.repo / "scripts" / name).chmod(0o755)
+        target.chmod(0o755)
 
         self.git("init", "--quiet")
         self.git("add", ".")
@@ -135,11 +131,24 @@ class BuildUniversePackageTests(unittest.TestCase):
         self.assertIn("tree-sha256:", result.stdout)
         self.assertTrue((self.output / "xwysyy.typ").is_file())
         self.assertTrue((self.output / "xwysyy-extras.typ").is_file())
-        checker_mode = (
-            self.output / "template" / "scripts" / "xwysyy-check"
-        ).stat().st_mode
-        self.assertTrue(checker_mode & 0o111)
-        self.assertFalse((self.output / "scripts").exists())
+        files = {
+            path.relative_to(self.output).as_posix()
+            for path in self.output.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(
+            files,
+            {
+                "LICENSE",
+                "README.md",
+                "src/main.typ",
+                "template/main.typ",
+                "thumbnail.png",
+                "typst.toml",
+                "xwysyy-extras.typ",
+                "xwysyy.typ",
+            },
+        )
         self.assertEqual(list(self.base.glob(".package.staging-*")), [])
 
     def test_invalid_manifest_table_is_reported_without_traceback(self) -> None:
@@ -176,19 +185,19 @@ class BuildUniversePackageTests(unittest.TestCase):
         self.assertIn("package.entrypoint must be a relative package path", result.stderr)
         self.assertFalse(self.output.exists())
 
-    def test_domain_specific_discipline_is_rejected(self) -> None:
+    def test_0_3_discipline_is_preserved(self) -> None:
         self.commit_file(
             "typst.toml",
             VALID_MANIFEST.replace(
-                'license = "MIT AND MIT-0"',
-                'license = "MIT AND MIT-0"\ndisciplines = ["computer-science"]',
+                'disciplines = ["computer-science"]\n',
+                "",
             ),
         )
 
         result = self.build()
 
         self.assertEqual(result.returncode, 2, process_output(result))
-        self.assertIn("disciplines must be omitted or empty", result.stderr)
+        self.assertIn("disciplines must be computer-science", result.stderr)
         self.assertFalse(self.output.exists())
 
     def test_compiler_field_is_the_tested_minimum(self) -> None:

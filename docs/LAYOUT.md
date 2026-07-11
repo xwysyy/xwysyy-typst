@@ -22,6 +22,8 @@ checker `scripts/slide-check.py` 读 `typst query` 的输出（按 `schema` 字�
 
 统一 CLI `scripts/xwysyy-check` 一条命令跑完整个闭环：一次 `typst query "metadata"` 同时拿到全部四种 schema，跑几何检查；`--pixels` 时再渲染 PNG 做像素交叉验证。**`--profile agent` 强制启用像素**：几何层对 declared payload 明确不背书，不渲染就无法闭环。`scripts/slide-check.py` 保留为可独立调用的几何引擎（输入是现成的 JSON 时用它）。
 
+checker 只保留在源码仓库，不随 Universe 包发布。以下命令从对应版本的仓库根目录运行；正常导入包和编译模板不依赖 checker。
+
 ```bash
 scripts/xwysyy-check deck.typ                 # 几何检查（human profile）
 scripts/xwysyy-check deck.typ --profile agent # 几何 + 像素 + agent 契约（像素强制）
@@ -319,4 +321,4 @@ scripts/xwysyy-check deck.typ --profile agent --format json
 
 两个使用面：AI 走上面的契约（agent profile 把内容充实度类诊断全部当 error，且强制像素验证）；人类维护者可以用 `tuning` 微调数值、用默认 human profile 把覆盖率当 warning 处理。
 
-通过 Universe 包安装时，检查工具位于包缓存内（Linux 默认 `~/.cache/typst/packages/preview/xwysyy/<version>/scripts/`）；克隆仓库使用则直接跑 `scripts/xwysyy-check`。
+需要 checker 时，克隆对应版本的源码仓库并从仓库根目录运行 `scripts/xwysyy-check`。

@@ -3,15 +3,14 @@ name = "xwysyy"
 version = "0.4.0"
 entrypoint = "xwysyy.typ"
 authors = ["xwysyy"]
-license = "MIT AND MIT-0"
+license = "MIT"
 description = "Create academic slides and notes with touying."
 repository = "https://github.com/xwysyy/xwysyy-typst"
 keywords = ["slides", "presentation", "academic", "touying", "theme"]
 categories = ["presentation", "components"]
+disciplines = ["computer-science"]
 compiler = "0.14.0"
-# The linked layout manual remains visible on Universe but is not needed by
-# the compiler. Template QA tools stay included because typst init copies them.
-exclude = ["/docs/LAYOUT.md"]
+exclude = []
 
 [template]
 path = "template"
