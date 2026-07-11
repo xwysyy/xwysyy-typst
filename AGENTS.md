@@ -27,7 +27,7 @@
 | `src/elements.typ` | 共享 show-chain `xwysyy-elements`（slide 共用）+ `info` + `textbox` |
 | `src/note.typ` | 笔记入口 `xwysyy-note`（A4，主题无关，show 规则独立） |
 | `src/slides.typ` | slide 入口 `xwysyy-pre` + 双产物入口 `xwysyy-doc` + 6 种版式（`xwysyy-slide`、`title-slide`、`outline-slide`、`new-section-slide`、`image-slide`、`end-slide`）。`outline-slide` 自动过滤 `<touying:hidden>` 标签且 >5 章自动两列，`title: auto` 按 `text.lang` 输出 `Contents` / `目录`。`frozen-counters` 默认冻结 `figure` 和 `math.equation` 计数器 |
-| `src/layout.typ` | 语义布局层 + 版面遥测 v3：`duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`，共用 `_alloc-column`/`_fit-row` 分配器（item min/pref/max/grow + gap min/pref，fit 四态 normal/compressed/tight/overflow，不变量 overflow⇒body_overflow>0；stretch 视觉硬下限 0.28H），note 模式线性降级。所有槽位收 typed items（`visual(fit: "stretch"|"natural")`/`card`/`takeaway`/`plain`，sizing 声明不推断）；必填槽位 none / 渲染为空 / grid<2 列 / stat 缺 value·label / reveal-from 越界 / tuning key·类型·区间违规一律 panic。对象带 frame/preferred/payload(二维)/paint 四框 + 逐轴 sizing；每个真实渲染 subslide 发 `<xwysyy-frame>` 映射（handout 覆盖率安全）。分步展示用 `reveal: true`（callback 式 `utils.uncover`，完整记录末帧导出）；**组件内容里禁用 `#pause`**（marks 进不了 `context`/`layout` 闭包，touying 会 panic）。**新增组件不要把 `context {}` 套在产出 slide 的调用外层**（touying 会 panic，颜色改在内容层用 `context`）。AI 生成契约见 `docs/LAYOUT.md` |
+| `src/layout.typ` | 语义布局层 + 版面遥测 v4：`duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`，共用 `_alloc-column`/`_fit-row` 分配器（item min/pref/max/grow + gap min/pref，fit 四态 normal/compressed/tight/overflow，不变量 overflow⇒body_overflow>0；stretch 视觉硬下限 0.28H），note 模式线性降级。所有槽位收 typed items（`visual(fit: "stretch"|"natural")`/`card`/`takeaway`/`plain`，sizing 声明不推断）；必填槽位 none / 渲染为空 / grid<2 列 / stat 缺 value·label / reveal-from 越界 / tuning key·类型·区间违规一律 panic。对象带 frame/preferred/payload(二维)/paint 四框 + 逐轴 sizing；每个真实渲染 subslide 发 `<xwysyy-frame>` 映射（handout 覆盖率安全）。分步展示用 `reveal: true`（callback 式 `utils.uncover`，完整记录末帧导出）；**组件内容里禁用 `#pause`**（marks 进不了 `context`/`layout` 闭包，touying 会 panic）。**新增组件不要把 `context {}` 套在产出 slide 的调用外层**（touying 会 panic，颜色改在内容层用 `context`）。AI 生成契约见 `docs/LAYOUT.md` |
 | `src/extras.typ` | `touying-reducer` 包装的 `cetz-canvas` / `fletcher-diagram` + theorion 全套环境导出 |
 | `examples/slides-sky.typ` | sky 主题演示 deck |
 | `examples/slides-sunset.typ` | sunset 主题演示 deck |
@@ -35,7 +35,7 @@
 | `examples/theme-preview.typ` | 可通过 `--input theme=<name>` 渲染任意内置主题的预览 deck |
 | `examples/dual-source.typ` | `xwysyy-doc` 双产物示例；默认编译 deck，`--input mode=note` 编译 A4 讲义 |
 | `examples/layout-demo.typ` | 语义布局层演示：10 个 good 样例（8 组件 + 纯文本 stack + reveal）+ 6 个 checker 应捕获的 bad 样例（低密度 / 小图 / 列失衡 / 空壳卡片 / 双重溢出） |
-| `docs/LAYOUT.md` | 语义布局层设计文档 + 组件 API + 遥测 schema v3 + checker 诊断表 + AI 生成契约；保留在开发仓库，Universe README 链接对应版本标签 |
+| `docs/LAYOUT.md` | 语义布局层设计文档 + 组件 API + 遥测 schema v4 + checker 诊断表 + AI 生成契约；保留在开发仓库，Universe README 链接对应版本标签 |
 | `tests/fixtures/layout-dual.typ` | 组件双产物 fixture：slides 与 `--input mode=note` 都要编译过 |
 | `tests/fixtures/layout-fit.typ` | fit 态回归 fixture：sidebar tight 窗口、stretch 视觉饿死型 overflow（不变量 body_overflow>0）、间隙压缩型 compressed |
 | `tests/fixtures/layout-handout.typ` | handout 覆盖率回归：手写页在 handout 折叠后仍须报 telemetry_gap（靠 `<xwysyy-frame>` 真实页码） |
