@@ -200,6 +200,22 @@ class BuildUniversePackageTests(unittest.TestCase):
         self.assertIn("disciplines must be computer-science", result.stderr)
         self.assertFalse(self.output.exists())
 
+    def test_single_mit_license_is_enforced(self) -> None:
+        self.assertEqual(
+            {path.name for path in ROOT.glob("LICENSE*")},
+            {"LICENSE"},
+        )
+        self.commit_file(
+            "typst.toml",
+            VALID_MANIFEST.replace('license = "MIT"', 'license = "MIT AND MIT-0"'),
+        )
+
+        result = self.build()
+
+        self.assertEqual(result.returncode, 2, process_output(result))
+        self.assertIn("license must be MIT", result.stderr)
+        self.assertFalse(self.output.exists())
+
     def test_compiler_field_is_the_tested_minimum(self) -> None:
         self.commit_file(
             "typst.toml",
