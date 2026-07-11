@@ -13,7 +13,7 @@
 
 ## 必读
 
-- `docs/LAYOUT.md` — 语义布局层契约（schema v3）：typed items、声明式 sizing、fit 四态、遥测字段、checker 诊断表与 AI 生成契约。凡是生成 slide 内容或改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check`，先读它。
+- `docs/LAYOUT.md` — 语义布局层契约（schema v4）：typed items、声明式 sizing、fit 四态、遥测字段、checker 诊断表与 AI 生成契约。凡是生成 slide 内容或改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check`，先读它。
 
 本项目尚无 `docs/project-memo.md`（跨任务铁律 / 偏好沉淀）；当跨会话信号 >=2 条同类时再按 `~/.claude/rules/dev-protocols.md § Project Memo Protocol` 升级创建。
 
@@ -44,10 +44,11 @@
 | `tests/fixtures/adversarial/` | 外部审查实锤的假绿反例（自动 id 空白首帧、空 stretch 视觉），集成测试断言它们必须 fail |
 | `tests/fixtures/extras-entry.typ` | 可选模块本地回归：通过 `xwysyy-extras()` 导入 cetz / fletcher / theorion 代表性公开定义；主 CI 与最低编译器 CI 都必须编译通过 |
 | `tests/fixtures/package-entry.typ` | Universe 消费边界回归：经 `@preview/xwysyy:0.4.0` 的真实包解析器调用 `xwysyy-extras()`，由 package-shape job 用 staging 目录编译 |
+| `tests/fixtures/readme-quick-start.typ` | README 主快速开始示例的逐字镜像；测试先断言与 README code block 一致，再由 package-shape job 经真实包解析器编译 |
 | `tests/test_build_universe_package.py` | 发布 staging CLI 回归：真实临时 Git 仓库覆盖正常发布、manifest 类型与路径约束、README 契约、失败后无半成品 |
 | `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机 + rules 叶级校验）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures 两种产物、页头缩放遥测） |
 | `examples/refs.bib` | 笔记演示用 BibTeX |
-| `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *` |
+| `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *`；发布构建器把三个 QA 工具装入 staging 的 `template/scripts/`，因此 `typst init` 后可直接运行 `scripts/xwysyy-check` |
 | `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
 | `typst.toml` | 包清单：name/version/entrypoint/template/exclude，发版时同步 CHANGELOG |
 | `CHANGELOG.md` | 版本变更记录，遵循 Keep a Changelog 格式 |
@@ -56,18 +57,18 @@
 | `docs/CUSTOMIZATION.md` | 自定义指南 + 配合 touying 0.7.x 高级特性 |
 | `docs/THEME-GENERATOR.md` | AI 生成主题字典提示词，默认指导用户直接传给 `theme` 参数 |
 | `docs/DUAL-OUTPUT-DESIGN.md` | `xwysyy-doc` 入口形态、note 模式降级规则、pause 语义和共享组件设计 |
-| `scripts/slide-check.py` | 版面遥测几何引擎（schema v4，fail-closed 解析：缺字段 / 未知枚举 / 旧 schema 一律 exit 2）：并集面积覆盖指标（container/visual/payload + declared_payload）、fit 四态数值不变量、帧状态机（steps 1..N / handout 末帧 / 孤儿帧 / 重复 id 皆 error）、empty_shell / underfilled_card（只认 measured payload）、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame / sparse_frame）、rules 叶级校验、每条诊断带 action、统一 severity 政策表、`--profile agent|human`、`--dump-features`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 恒零）；遥测为空非零退出。随 Universe 包发布 |
-| `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema → 几何检查 → 像素交叉验证（`--profile agent` 强制渲染像素）：render_telemetry_mismatch（只认当前 reveal 步可见对象的 frame）/ edge_ink 行峰值 / hollow_object（逐对象 payload 墨迹，排除自身卡片填色 `paint_fill`），页面几何来自 frame v2 遥测而非硬编码常量。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。随 Universe 包发布 |
+| `scripts/slide-check.py` | 版面遥测几何引擎（schema v4，fail-closed 解析：缺字段 / 未知枚举 / 旧 schema 一律 exit 2）：并集面积覆盖指标（container/visual/payload + declared_payload）、fit 四态数值不变量、帧状态机（steps 1..N / handout 末帧 / 孤儿帧 / 重复 id 皆 error）、empty_shell / underfilled_card（只认 measured payload）、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame / sparse_frame）、rules 叶级校验、每条诊断带 action、统一 severity 政策表、`--profile agent|human`、`--dump-features`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 恒零）；遥测为空非零退出。发布构建器把它复制到模板项目的 `scripts/` |
+| `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema，随后执行几何检查和像素交叉验证（`--profile agent` 强制渲染像素）：render_telemetry_mismatch（只认当前 reveal 步可见对象的 frame）/ edge_ink 行峰值 / hollow_object（逐对象 payload 墨迹，排除自身卡片填色 `paint_fill`），页面几何来自 frame v2 遥测而非硬编码常量。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。发布构建器把它复制到模板项目的 `scripts/` |
 | `scripts/gen-previews` | 重新生成 README preview PNG（基线更新走 `scripts/adopt-baseline`，不要用 `--with-baseline` 的本地渲染当基线） |
 | `scripts/render-visuals` | 渲染视觉回归 PNG 集；内部传 `--input visual-ci=true` 以使用 CI 可安装字体 |
 | `scripts/compare-png` | 无 ImageMagick 依赖的 PNG 像素比较器，可输出 diff PNG |
 | `scripts/adopt-baseline` | 从最近一次 visual-regression run 下载 `visual-current` artifact 全量覆盖视觉基线（需 gh CLI 已登录） |
-| `scripts/build-universe-package` | 从干净的已提交 Git ref 提取官方包白名单，保留执行权限并输出树哈希；生成物是 `typst/packages` PR 分支的唯一来源 |
+| `scripts/build-universe-package` | 从干净的已提交 Git ref 提取官方包白名单，把终端用户 QA 工具装入 `template/scripts/`，保留执行权限并输出树哈希；生成物是 `typst/packages` PR 分支的唯一来源 |
 | `scripts/check-theme-contrast` | 解析 `src/themes.typ` 并检查主题对比度 |
 | `.github/workflows/visual-regression.yml` | 用 Typst 0.14.0 编译公开入口，检查 Universe 包形状，并在 0.14.2 环境编译示例、运行测试、检查主题对比度、渲染视觉基线并比较 |
 | `tests/fixtures/` | 自定义主题、目录标题、字体参数等编译验证 fixture |
 | `tests/visual-baseline/` | CI 视觉回归基线 PNG |
-| `LICENSE` | MIT，沿用上游 |
+| `LICENSE` / `LICENSE-MIT-0` | 代码与文档沿用 MIT；`template/` 使用 MIT-0，初始化项目可修改和分发且无需署名或附带许可证文本 |
 
 ## 工作规则（项目层面）
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -16,6 +17,9 @@ VALID_MANIFEST = """\
 name = "xwysyy"
 version = "0.4.0"
 entrypoint = "xwysyy.typ"
+license = "MIT AND MIT-0"
+compiler = "0.14.0"
+exclude = ["/docs/LAYOUT.md"]
 
 [template]
 path = "template"
@@ -30,6 +34,10 @@ VALID_README = """\
 #import "@preview/xwysyy:0.4.0": *
 #import xwysyy-extras(): *
 ```
+
+## License
+
+Files in `template/` use [MIT-0](./LICENSE-MIT-0).
 """
 
 PACKAGE_SUBPATH_README = (
@@ -47,6 +55,7 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         files: dict[str, str | bytes] = {
             "LICENSE": "MIT\n",
+            "LICENSE-MIT-0": "MIT-0\n",
             "README.md": VALID_README,
             "typst.toml": VALID_MANIFEST,
             "thumbnail.png": b"PNG",
@@ -122,8 +131,11 @@ class BuildUniversePackageTests(unittest.TestCase):
         self.assertIn("tree-sha256:", result.stdout)
         self.assertTrue((self.output / "xwysyy.typ").is_file())
         self.assertTrue((self.output / "xwysyy-extras.typ").is_file())
-        checker_mode = (self.output / "scripts" / "xwysyy-check").stat().st_mode
+        checker_mode = (
+            self.output / "template" / "scripts" / "xwysyy-check"
+        ).stat().st_mode
         self.assertTrue(checker_mode & 0o111)
+        self.assertFalse((self.output / "scripts").exists())
         self.assertEqual(list(self.base.glob(".package.staging-*")), [])
 
     def test_invalid_manifest_table_is_reported_without_traceback(self) -> None:
@@ -160,6 +172,33 @@ class BuildUniversePackageTests(unittest.TestCase):
         self.assertIn("package.entrypoint must be a relative package path", result.stderr)
         self.assertFalse(self.output.exists())
 
+    def test_domain_specific_discipline_is_rejected(self) -> None:
+        self.commit_file(
+            "typst.toml",
+            VALID_MANIFEST.replace(
+                'license = "MIT AND MIT-0"',
+                'license = "MIT AND MIT-0"\ndisciplines = ["computer-science"]',
+            ),
+        )
+
+        result = self.build()
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("disciplines must be omitted or empty", result.stderr)
+        self.assertFalse(self.output.exists())
+
+    def test_compiler_field_is_the_tested_minimum(self) -> None:
+        self.commit_file(
+            "typst.toml",
+            VALID_MANIFEST.replace('compiler = "0.14.0"', 'compiler = "0.14.2"'),
+        )
+
+        result = self.build()
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("compiler must be the tested minimum 0.14.0", result.stderr)
+        self.assertFalse(self.output.exists())
+
     def test_failed_verification_leaves_no_partial_output(self) -> None:
         self.commit_file("README.md", VALID_README + "typst compile examples/demo.typ\n")
 
@@ -186,6 +225,19 @@ class BuildUniversePackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("repo-only example command", result.stderr)
         self.assertFalse(self.output.exists())
+
+
+class RepositoryReleaseContractTests(unittest.TestCase):
+    def test_readme_quick_start_matches_compiled_fixture(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        blocks = re.findall(r"```typst\n(.*?)\n```", readme, flags=re.DOTALL)
+        matches = [block for block in blocks if "My Presentation Title" in block]
+
+        self.assertEqual(len(matches), 1)
+        fixture = (ROOT / "tests/fixtures/readme-quick-start.typ").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual(matches[0] + "\n", fixture)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import io
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -19,6 +20,7 @@ import tomllib
 REPO = pathlib.Path(__file__).resolve().parent.parent
 PACKAGE_PATHS = (
     "LICENSE",
+    "LICENSE-MIT-0",
     "README.md",
     "typst.toml",
     "thumbnail.png",
@@ -31,11 +33,12 @@ PACKAGE_PATHS = (
     "scripts/slide-check.py",
     "scripts/xwysyy-check",
 )
-EXECUTABLES = (
+SOURCE_TOOLS = (
     "scripts/compare-png",
     "scripts/slide-check.py",
     "scripts/xwysyy-check",
 )
+TEMPLATE_TOOLS = tuple(f"template/{path}" for path in SOURCE_TOOLS)
 FORBIDDEN_README = (
     (
         r"(?m)^[ \t]*(?:\$[ \t]+)?typst (?:compile|query)[^\n]*\bexamples/",
@@ -108,6 +111,14 @@ def validate_manifest(
         raise BuildError("[template] must be a table")
     if package.get("name") != "xwysyy":
         raise BuildError("typst.toml package name must be xwysyy")
+    if package.get("license") != "MIT AND MIT-0":
+        raise BuildError("typst.toml package license must be MIT AND MIT-0")
+    if package.get("disciplines") not in (None, []):
+        raise BuildError("typst.toml disciplines must be omitted or empty")
+    if package.get("compiler") != "0.14.0":
+        raise BuildError("typst.toml compiler must be the tested minimum 0.14.0")
+    if package.get("exclude") != ["/docs/LAYOUT.md"]:
+        raise BuildError("typst.toml exclude must contain only /docs/LAYOUT.md")
     version = package.get("version")
     if not isinstance(version, str) or not version:
         raise BuildError("typst.toml package version is missing")
@@ -169,6 +180,20 @@ def extract(raw: bytes, output: pathlib.Path) -> None:
             target.chmod(member.mode & 0o777)
 
 
+def install_template_tools(output: pathlib.Path) -> None:
+    for source_relative, target_relative in zip(SOURCE_TOOLS, TEMPLATE_TOOLS):
+        source = output / source_relative
+        target = output / target_relative
+        if not source.is_file():
+            raise BuildError(f"source package tool is missing: {source_relative}")
+        if target.exists() or target.is_symlink():
+            raise BuildError(f"template package tool already exists: {target_relative}")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        source.unlink()
+    (output / "scripts").rmdir()
+
+
 def verify_output(
     output: pathlib.Path,
     version: str,
@@ -177,13 +202,16 @@ def verify_output(
     required = (
         pathlib.PurePosixPath("README.md"),
         pathlib.PurePosixPath("LICENSE"),
+        pathlib.PurePosixPath("LICENSE-MIT-0"),
         pathlib.PurePosixPath("typst.toml"),
         *manifest_files,
     )
     missing = [str(path) for path in required if not (output / path).is_file()]
     if missing:
         raise BuildError("required package files are missing: " + ", ".join(missing))
-    non_executable = [path for path in EXECUTABLES if not os.access(output / path, os.X_OK)]
+    non_executable = [
+        path for path in TEMPLATE_TOOLS if not os.access(output / path, os.X_OK)
+    ]
     if non_executable:
         raise BuildError("package tools are not executable: " + ", ".join(non_executable))
 
@@ -199,6 +227,8 @@ def verify_output(
     readme = (output / "README.md").read_text(encoding="utf-8")
     if "#import xwysyy-extras(): *" not in readme:
         raise BuildError("README.md must document the xwysyy-extras() loader import")
+    if "[MIT-0](./LICENSE-MIT-0)" not in readme or "`template/`" not in readme:
+        raise BuildError("README.md must document the template MIT-0 license")
     for pattern, description in FORBIDDEN_README:
         if re.search(pattern, readme):
             raise BuildError(f"README.md contains a {description}")
@@ -242,6 +272,7 @@ def main() -> int:
         ) as temporary:
             staging = pathlib.Path(temporary)
             extract(raw, staging)
+            install_template_tools(staging)
             count, size, tree_hash = verify_output(
                 staging, version, manifest_files
             )

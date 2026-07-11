@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://typst.app/universe/package/xwysyy"><img src="https://img.shields.io/badge/Typst%20Universe-available-239dad.svg" alt="Typst Universe"></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="#license"><img src="https://img.shields.io/badge/License-MIT%20%2B%20MIT--0-blue.svg" alt="Licenses: MIT and MIT-0"></a>
   <a href="https://typst.app"><img src="https://img.shields.io/badge/Typst-%E2%89%A5%200.14.0-239dad.svg" alt="Typst"></a>
   <a href="https://github.com/touying-typ/touying"><img src="https://img.shields.io/badge/touying-0.7.4-blueviolet.svg" alt="touying"></a>
   <a href="#-主题"><img src="https://img.shields.io/badge/Themes-6%20built--in-ff69b4.svg" alt="Themes"></a>
@@ -23,7 +23,7 @@
 - handout、`#speaker-note`、pdfpc 导出都有可复制命令和固定标签的源码示例。
 - `xwysyy-doc` 默认生成 16:9 deck，使用 `--input mode=note` 生成 A4 讲义。
 - 八个语义版式组件（`duo-slide`、`grid-slide`、`figure-slide`、`stat-slide` 等）编译期测量每个块、填满优先分配空间并导出版面遥测，不再手写 `#v()` 间距。
-- 随包发布的 QA 检查器（`scripts/xwysyy-check`）把一次编译变成数值化版面诊断（每条带可执行修法）并做像素交叉验证，agent profile 是 AI 生成 deck 的交付门禁。
+- Universe 模板自带 `scripts/xwysyy-check`，它把一次编译变成数值化版面诊断（每条带可执行修法）并做像素交叉验证；agent profile 是 AI 生成 deck 的交付门禁。
 
 ## 预览
 
@@ -176,7 +176,7 @@ typst compile main.typ
 #import xwysyy-extras(): *
 ```
 
-版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain` / `metric`），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v4 遥测（每对象带分配框、自然外框、区分测量与声明来源的二维 payload 框、卡片色块框与填色）。`scripts/xwysyy-check` 一条命令把遥测转成数值化版面诊断（每条带可执行的 action），并用真实渲染像素与遥测交叉验证（`--pixels`，`--profile agent` 下恒开）。AI 生成幻灯片时用它们替代手写 `#v()` 间距。分步展示用组件的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见 [`docs/LAYOUT.md`](docs/LAYOUT.md)。
+版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain` / `metric`），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v4 遥测（每对象带分配框、自然外框、区分测量与声明来源的二维 payload 框、卡片色块框与填色）。通过 `typst init` 创建的项目自带 `scripts/xwysyy-check`；运行 `scripts/xwysyy-check main.typ --profile agent` 可生成数值化诊断并用真实渲染像素交叉验证遥测。分步展示用组件的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见 [`docs/LAYOUT.md`](docs/LAYOUT.md)。
 
 ## Handout 与讲者备注
 
@@ -253,4 +253,6 @@ typst compile --input mode=note main.typ notes.pdf
 
 ## License
 
-[MIT](./LICENSE)
+`template/` 以外的文件使用 [MIT](./LICENSE) 许可证。`template/` 内的文件
+使用 [MIT-0](./LICENSE-MIT-0) 许可证；从模板创建的项目可以修改和重新
+分发，无需署名或附带许可证文本。
