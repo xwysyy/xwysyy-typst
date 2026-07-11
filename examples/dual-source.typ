@@ -3,6 +3,7 @@
 #let visual-ci = sys.inputs.at("visual-ci", default: "false") == "true"
 #let visual-font = if visual-ci { ("Liberation Serif", "Noto Serif CJK SC") } else { ("Times New Roman", "Noto Serif CJK SC") }
 #let visual-code-font = if visual-ci { ("DejaVu Sans Mono", "Noto Sans Mono CJK SC") } else { ("Maple Mono", "Noto Sans Mono CJK SC") }
+#let visual-date = if visual-ci { datetime(year: 2026, month: 7, day: 10) } else { datetime.today() }
 
 #show: xwysyy-doc.with(
   theme: "forest",
@@ -11,7 +12,7 @@
   title: [One Source, Two Outputs],
   subtitle: [Deck by default, A4 notes with --input mode=note],
   author: " ",
-  date: datetime.today(),
+  date: visual-date,
   institution: " ",
 )
 

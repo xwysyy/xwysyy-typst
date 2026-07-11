@@ -301,10 +301,10 @@ Regenerate README preview PNGs:
 scripts/gen-previews
 ```
 
-Regenerate previews and visual baselines:
+Adopt a completed GitHub Actions render as the visual baseline:
 
 ```bash
-scripts/gen-previews --with-baseline
+scripts/adopt-baseline <run-id>
 ```
 
 Render the visual regression set manually:
@@ -314,7 +314,7 @@ scripts/render-visuals /tmp/xwysyy-visual-current
 scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current --diff-dir /tmp/xwysyy-diffs
 ```
 
-The preview and visual scripts pass `--input visual-ci=true`. The examples then use Liberation Serif, Noto Serif CJK SC, and DejaVu Sans Mono so local baselines match the GitHub Actions font environment.
+The preview and visual scripts pass `--input visual-ci=true`. The visual examples use the fixed date `2026-07-10` together with Liberation Serif, Noto Serif CJK SC, and DejaVu Sans Mono, so repeated renders have stable inputs. `render-visuals` builds the complete set in a temporary sibling directory and publishes it only after every compile succeeds. Publication replaces only the PNG families owned by the script and preserves unrelated files in the target directory.
 
 The GitHub Actions workflow runs:
 

@@ -106,6 +106,10 @@ def _diag_types(report):
     return [d.type for d in report.diagnostics]
 
 
+def _process_output(proc):
+    return f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+
+
 def _analyze(record, frames=None, profile="human", rules=None):
     rec = sc.parse_record(record)
     raw = _frames_for(record) if frames is None else frames
@@ -636,10 +640,15 @@ class HeaderTests(unittest.TestCase):
 
 
 class RulesTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.tmp = pathlib.Path(temporary.name)
+
     def _rules(self, payload):
-        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
-            json.dump(payload, f)
-        return f.name
+        path = self.tmp / "rules.json"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return str(path)
 
     def test_unknown_rule_rejected(self):
         with self.assertRaises(sc.TelemetryError):
@@ -689,10 +698,19 @@ class SplitRecordsTests(unittest.TestCase):
 
 
 class CliExitCodeTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.tmp = pathlib.Path(temporary.name)
+
+    def _write_json(self, name, payload):
+        path = self.tmp / name
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return str(path)
+
     def _run(self, payload, *args):
-        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
-            json.dump(payload, f)
-        return subprocess.run([sys.executable, str(CHECKER), f.name, *args],
+        telemetry = self._write_json("telemetry.json", payload)
+        return subprocess.run([sys.executable, str(CHECKER), telemetry, *args],
                               capture_output=True, text=True)
 
     def _payload(self, rec):
@@ -700,43 +718,48 @@ class CliExitCodeTests(unittest.TestCase):
 
     def test_error_exits_one(self):
         rec = _rec(fit=_fit("overflow", required=1.2, body_overflow=0.2))
-        self.assertEqual(self._run(self._payload(rec)).returncode, 1)
+        proc = self._run(self._payload(rec))
+        self.assertEqual(proc.returncode, 1, msg=_process_output(proc))
 
     def test_clean_exits_zero(self):
         proc = self._run(self._payload(_rec()))
-        self.assertEqual(proc.returncode, 0, msg=proc.stdout + proc.stderr)
+        self.assertEqual(proc.returncode, 0, msg=_process_output(proc))
 
     def test_strict_warning_exits_one(self):
         rec = _rec(fit=_fit("compressed", required=0.9, gap_ratio=0.5))
-        self.assertEqual(self._run(self._payload(rec)).returncode, 0)
-        self.assertEqual(self._run(self._payload(rec), "--strict").returncode, 1)
+        normal = self._run(self._payload(rec))
+        strict = self._run(self._payload(rec), "--strict")
+        self.assertEqual(normal.returncode, 0, msg=_process_output(normal))
+        self.assertEqual(strict.returncode, 1, msg=_process_output(strict))
 
     def test_advisory_always_zero(self):
         rec = _rec(fit=_fit("overflow", required=1.2, body_overflow=0.2))
-        self.assertEqual(self._run(self._payload(rec), "--advisory").returncode, 0)
+        proc = self._run(self._payload(rec), "--advisory")
+        self.assertEqual(proc.returncode, 0, msg=_process_output(proc))
 
     def test_empty_telemetry_exits_one(self):
-        self.assertEqual(self._run([]).returncode, 1)
-        self.assertEqual(self._run([], "--advisory").returncode, 0)
+        normal = self._run([])
+        advisory = self._run([], "--advisory")
+        self.assertEqual(normal.returncode, 1, msg=_process_output(normal))
+        self.assertEqual(advisory.returncode, 0, msg=_process_output(advisory))
 
     def test_old_schema_exits_two(self):
         rec = _rec()
         rec["schema"] = "xwysyy-slide-layout/v3"
         proc = self._run([rec])
-        self.assertEqual(proc.returncode, 2)
+        self.assertEqual(proc.returncode, 2, msg=_process_output(proc))
         self.assertIn("expected", proc.stderr)
 
     def test_broken_rules_exit_two(self):
-        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
-            json.dump({"nonsense": 1}, f)
-        proc = self._run(self._payload(_rec()), "--rules", f.name)
-        self.assertEqual(proc.returncode, 2)
+        rules = self._write_json("rules.json", {"nonsense": 1})
+        proc = self._run(self._payload(_rec()), "--rules", rules)
+        self.assertEqual(proc.returncode, 2, msg=_process_output(proc))
         self.assertIn("unknown rule", proc.stderr)
 
     def test_orphan_frame_exits_one(self):
         rec = _rec()
         proc = self._run(self._payload(rec) + [_frame("ghost", page=9)])
-        self.assertEqual(proc.returncode, 1)
+        self.assertEqual(proc.returncode, 1, msg=_process_output(proc))
         self.assertIn("orphan_frame", proc.stdout)
 
 
@@ -784,7 +807,7 @@ class TypstIntegrationTests(unittest.TestCase):
             types = [d["type"] for d in slides[k]["diagnostics"]]
             self.assertIn(dtype, types, msg=f"{k}: {types}")
         # deliberate mistakes include errors, so the run exits non-zero
-        self.assertEqual(proc.returncode, 1)
+        self.assertEqual(proc.returncode, 1, msg=_process_output(proc))
         # coverage: every content page carries telemetry
         self.assertEqual(slides["<deck>"]["metrics"]["missing_pages"], [])
         # archetypes survive the pipeline
@@ -814,7 +837,7 @@ class TypstIntegrationTests(unittest.TestCase):
             proc = self._xcheck(deck, "--profile", "agent", *extra)
             slides = self._slides(proc)
             self.assertIn(2, slides["<deck>"]["metrics"]["missing_pages"], msg=str(extra))
-            self.assertEqual(proc.returncode, 1, msg=str(extra))
+            self.assertEqual(proc.returncode, 1, msg=f"{extra}\n{_process_output(proc)}")
 
     def test_pixel_stage_catches_escape_and_edge(self):
         proc = self._xcheck(FIXTURES / "layout-pixel.typ", "--pixels", "--ppi", "54")
@@ -832,7 +855,7 @@ class TypstIntegrationTests(unittest.TestCase):
         all_types = [d["type"] for s in slides.values() for d in s["diagnostics"]]
         self.assertIn("empty_frame", all_types)
         self.assertNotIn("orphan_frame", all_types)
-        self.assertEqual(proc.returncode, 1)
+        self.assertEqual(proc.returncode, 1, msg=_process_output(proc))
 
     def test_adversarial_empty_stretch_fails_pixels(self):
         # GPT review P0#2: an empty stretch visual claims a full-frame payload;
@@ -842,7 +865,7 @@ class TypstIntegrationTests(unittest.TestCase):
         slides = self._slides(proc)
         types = [d["type"] for d in slides["<pixels>"]["diagnostics"]]
         self.assertIn("hollow_object", types)
-        self.assertEqual(proc.returncode, 1)
+        self.assertEqual(proc.returncode, 1, msg=_process_output(proc))
 
     def test_panic_fixtures_fail_to_compile(self):
         expectations = {
@@ -872,7 +895,11 @@ class TypstIntegrationTests(unittest.TestCase):
             proc = subprocess.run(
                 ["typst", "compile", "--root", str(REPO), str(panic_dir / name), str(out)],
                 capture_output=True, text=True)
-            self.assertNotEqual(proc.returncode, 0, msg=f"{name} compiled but must panic")
+            self.assertNotEqual(
+                proc.returncode,
+                0,
+                msg=f"{name} compiled but must panic\n{_process_output(proc)}",
+            )
             self.assertIn(needle, proc.stderr, msg=f"{name}: {proc.stderr[:400]}")
 
     def test_note_mode_panics_match_slides_mode(self):
@@ -884,22 +911,14 @@ class TypstIntegrationTests(unittest.TestCase):
                 ["typst", "compile", "--root", str(REPO), "--input", "mode=note",
                  str(FIXTURES / "panic" / name), str(out)],
                 capture_output=True, text=True)
-            self.assertNotEqual(proc.returncode, 0, msg=f"{name} note build must panic")
+            self.assertNotEqual(
+                proc.returncode,
+                0,
+                msg=f"{name} note build must panic\n{_process_output(proc)}",
+            )
 
     def test_header_shrink_telemetry(self):
-        deck = pathlib.Path(self.tmp.name) / "long-title.typ"
-        deck.write_text(
-            f'#import "{REPO}/xwysyy.typ": *\n'
-            '#show: xwysyy-pre.with(aspect-ratio: "4-3", theme: "sky",\n'
-            '  config-info(title: [T], author: " ", institution: " "))\n'
-            "= S\n"
-            "== A very long slide title that keeps going and wraps onto a second line in four by three\n"
-            "Body.\n"
-            "#stack-slide(items: ([*A.* one], [*B.* two]))\n",
-            encoding="utf-8")
-        proc = subprocess.run(
-            [sys.executable, str(XCHECK), str(deck), "--root", "/", "--format", "json"],
-            capture_output=True, text=True)
+        proc = self._xcheck(FIXTURES / "header-shrink.typ")
         self.assertTrue(proc.stdout, msg=proc.stderr)
         slides = {s["id"]: s for s in json.loads(proc.stdout)["slides"]}
         types = [d["type"] for d in slides["<headers>"]["diagnostics"]]

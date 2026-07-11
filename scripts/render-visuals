@@ -3,6 +3,7 @@ import argparse
 import pathlib
 import subprocess
 import sys
+import tempfile
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -14,27 +15,24 @@ def run(cmd):
     subprocess.run(cmd, cwd=ROOT, check=True)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Render the visual regression PNG set.")
-    parser.add_argument("output", type=pathlib.Path)
-    args = parser.parse_args()
-
-    output = args.output
-    output.mkdir(parents=True, exist_ok=True)
-
+def render_set(output):
     visual_input = ("--input", "visual-ci=true")
     jobs = (
-        ("examples/slides-sky.typ", output / "slides-sky-{p}.png", visual_input),
-        ("examples/slides-sunset.typ", output / "slides-sunset-{p}.png", visual_input),
-        ("examples/note.typ", output / "note-{p}.png", visual_input),
-        ("examples/dual-source.typ", output / "dual-source-slides-{p}.png", visual_input),
-        ("examples/dual-source.typ", output / "dual-source-note-{p}.png", ("--input", "mode=note", *visual_input)),
-        ("examples/layout-demo.typ", output / "layout-demo-{p}.png", visual_input),
+        ("examples/slides-sky.typ", "slides-sky-{p}.png", visual_input),
+        ("examples/slides-sunset.typ", "slides-sunset-{p}.png", visual_input),
+        ("examples/note.typ", "note-{p}.png", visual_input),
+        ("examples/dual-source.typ", "dual-source-slides-{p}.png", visual_input),
+        ("examples/dual-source.typ", "dual-source-note-{p}.png", ("--input", "mode=note", *visual_input)),
+        ("examples/layout-demo.typ", "layout-demo-{p}.png", visual_input),
     )
+    targets = []
     for source, target, extra in jobs:
-        run(("typst", "compile", "--root", ".", *extra, source, "-f", "png", str(target)))
+        targets.append(target)
+        run(("typst", "compile", "--root", ".", *extra, source, "-f", "png", str(output / target)))
 
     for theme in THEMES:
+        target = f"theme-{theme}-{{p}}.png"
+        targets.append(target)
         run((
             "typst",
             "compile",
@@ -46,8 +44,45 @@ def main():
             "examples/theme-preview.typ",
             "-f",
             "png",
-            str(output / f"theme-{theme}-{{p}}.png"),
+            str(output / target),
         ))
+    return targets
+
+
+def publish(staging, output, targets):
+    patterns = [target.replace("{p}", "*") for target in targets]
+    missing = [target for target, pattern in zip(targets, patterns)
+               if not any(staging.glob(pattern))]
+    if missing:
+        raise RuntimeError(f"render produced no pages for: {', '.join(missing)}")
+
+    output.mkdir(parents=True, exist_ok=True)
+    stale = sorted({path for pattern in patterns for path in output.glob(pattern)})
+    invalid = [path for path in stale if not path.is_file() and not path.is_symlink()]
+    if invalid:
+        raise RuntimeError(f"owned visual output is not a file: {invalid[0]}")
+    for path in stale:
+        path.unlink()
+    for path in sorted(staging.glob("*.png")):
+        path.replace(output / path.name)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Render the visual regression PNG set.")
+    parser.add_argument("output", type=pathlib.Path)
+    args = parser.parse_args()
+
+    output = args.output.expanduser().resolve()
+    if output.exists() and not output.is_dir():
+        parser.error(f"output is not a directory: {output}")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix=f".{output.name}.render-",
+        dir=output.parent,
+    ) as tmp_name:
+        staging = pathlib.Path(tmp_name)
+        targets = render_set(staging)
+        publish(staging, output, targets)
 
     return 0
 
@@ -57,3 +92,6 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except subprocess.CalledProcessError as exc:
         raise SystemExit(exc.returncode)
+    except RuntimeError as exc:
+        print(f"render-visuals: {exc}", file=sys.stderr)
+        raise SystemExit(1)

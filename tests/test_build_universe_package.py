@@ -45,6 +45,10 @@ PACKAGE_SUBPATH_README = (
 )
 
 
+def process_output(result: subprocess.CompletedProcess[str]) -> str:
+    return f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+
+
 class BuildUniversePackageTests(unittest.TestCase):
     def setUp(self) -> None:
         temporary = tempfile.TemporaryDirectory()
@@ -126,7 +130,7 @@ class BuildUniversePackageTests(unittest.TestCase):
     def test_valid_package_is_published_after_verification(self) -> None:
         result = self.build()
 
-        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.returncode, 0, process_output(result))
         self.assertIn("built @preview/xwysyy:0.4.0", result.stdout)
         self.assertIn("tree-sha256:", result.stdout)
         self.assertTrue((self.output / "xwysyy.typ").is_file())
@@ -155,7 +159,7 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         result = self.build()
 
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 2, process_output(result))
         self.assertIn("[package] must be a table", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
         self.assertFalse(self.output.exists())
@@ -168,7 +172,7 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         result = self.build()
 
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 2, process_output(result))
         self.assertIn("package.entrypoint must be a relative package path", result.stderr)
         self.assertFalse(self.output.exists())
 
@@ -183,7 +187,7 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         result = self.build()
 
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 2, process_output(result))
         self.assertIn("disciplines must be omitted or empty", result.stderr)
         self.assertFalse(self.output.exists())
 
@@ -195,7 +199,7 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         result = self.build()
 
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 2, process_output(result))
         self.assertIn("compiler must be the tested minimum 0.14.0", result.stderr)
         self.assertFalse(self.output.exists())
 
@@ -204,7 +208,7 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         result = self.build()
 
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 2, process_output(result))
         self.assertIn("repo-only example command", result.stderr)
         self.assertFalse(self.output.exists())
 
@@ -213,7 +217,7 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         result = self.build()
 
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 2, process_output(result))
         self.assertIn("unsupported package subpath import", result.stderr)
         self.assertFalse(self.output.exists())
 
@@ -222,7 +226,7 @@ class BuildUniversePackageTests(unittest.TestCase):
 
         result = self.build()
 
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 2, process_output(result))
         self.assertIn("repo-only example command", result.stderr)
         self.assertFalse(self.output.exists())
 
