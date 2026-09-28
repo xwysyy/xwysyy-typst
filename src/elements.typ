@@ -37,17 +37,8 @@
     }
   }
 
-  // Image shadow disabled (layout+measure incompatible with touying slides)
-  // #show image: it => {
-  //   layout(size => {
-  //     let w = measure(it).width
-  //     let h = measure(it).height
-  //     block(width: w, height: h, {
-  //       place(dx: 1.5pt, dy: 1.5pt, block(width: w, height: h, fill: luma(210), radius: 1pt))
-  //       place(dx: 0pt, dy: 0pt, it)
-  //     })
-  //   })
-  // }
+  // No image shadow: wrapping images in a box sized by measure() collapses
+  // percentage-width images to zero size.
 
   // Figure captions — smaller
   #show figure.caption: it => {
