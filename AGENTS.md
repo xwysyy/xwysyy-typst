@@ -38,7 +38,7 @@
 | `tests/fixtures/adversarial/` | 外部审查实锤的假绿反例（自动 id 空白首帧、空 stretch 视觉），集成测试断言它们必须 fail |
 | `tests/fixtures/readme-quick-start.typ` | README 主快速开始示例的逐字镜像；测试先断言与 README code block 一致，再由 package-shape job 经真实包解析器编译 |
 | `tests/test_build_universe_package.py` | 发布 staging CLI 回归：真实临时 Git 仓库覆盖正常发布、manifest 类型与路径约束、README 契约、失败后无半成品 |
-| `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机 + rules 叶级校验）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures、页头缩放遥测、标题页日期覆盖） |
+| `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures、页头缩放遥测、标题页日期覆盖） |
 | `tests/test_render_visuals.py` | 视觉渲染发布回归：成功时完整替换脚本拥有的 PNG 集，编译失败时保留上一套完整输出，无关文件不受影响 |
 | `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *` |
 | `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
