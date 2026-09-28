@@ -22,7 +22,7 @@
 | 文件 | 作用 |
 |------|------|
 | `xwysyy.typ` | facade entry，re-export `src/*.typ` 子模块（touying API 经 `src/slides.typ` 一并导出）+ 包级 `physica` import。用户写 `#import "xwysyy.typ": *` 一次拿全 API |
-| `src/themes.typ` | `themes` 字典（sky / sunset / forest / midnight / violet / graphite）+ 主题字段校验 `_resolve-theme` + 顶层色变量（`sea` / `sky` / `skyl` / `skyll` / `paper`）+ `_theme-state` + 颜色宏（`red`/`bred`/`yellow`/`byellow`） |
+| `src/themes.typ` | `themes` 字典（sky / sunset / forest / midnight / violet / graphite）+ 主题字段校验 `_resolve-theme` + 顶层色变量（`sea` / `sky` / `skyll` / `paper`）+ `_theme-state` + 颜色宏（`red`/`bred`/`yellow`/`byellow`） |
 | `src/elements.typ` | show-chain `xwysyy-elements` + `info` + `textbox` |
 | `src/slides.typ` | slide 入口 `xwysyy-pre` + 6 种版式（`xwysyy-slide`、`title-slide`、`outline-slide`、`new-section-slide`、`image-slide`、`end-slide`）。`outline-slide` 自动过滤 `<touying:hidden>` 标签且 >5 章自动两列，`title: auto` 按 `text.lang` 输出 `Contents` / `目录`。`frozen-counters` 默认冻结 `figure` 和 `math.equation` 计数器 |
 | `src/layout.typ` | 语义布局层 + 版面遥测 v4：`duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`，共用 `_alloc-column`/`_fit-row` 分配器（item min/pref/max/grow + gap min/pref，fit 四态 normal/compressed/tight/overflow，不变量 overflow⇒body_overflow>0；stretch 视觉硬下限 0.28H）。所有槽位收 typed items（`visual(fit: "stretch"|"natural")`/`card`/`takeaway`/`plain`，sizing 声明不推断）；必填槽位 none / 渲染为空 / grid<2 列 / stat 缺 value·label / reveal-from 越界 / tuning key·类型·区间违规一律 panic。对象带 frame/preferred/payload(二维)/paint 四框 + 逐轴 sizing；每个真实渲染 subslide 发 `<xwysyy-frame>` 映射（handout 覆盖率安全）。分步展示用 `reveal: true`（callback 式 `utils.uncover`，完整记录末帧导出）；**组件内容里禁用 `#pause`**（marks 进不了 `context`/`layout` 闭包，touying 会 panic）。**新增组件不要把 `context {}` 套在产出 slide 的调用外层**（touying 会 panic，颜色改在内容层用 `context`）。AI 生成契约见 `docs/LAYOUT.md` |
@@ -74,13 +74,13 @@
   | 改了什么 | 必须同步 |
   |---------|---------|
   | 新增/删除/改名公开函数 | README 组件速查 + USAGE 版式/组件章节 + AGENTS 关键文件表 |
-	  | 改主题色字段 | README 主题配色表 + CUSTOMIZATION §1 + THEME-GENERATOR |
+	  | 改主题色字段 | README 主题配色表（中英）+ USAGE 字段说明 + THEME-GENERATOR 提示词 |
 	  | 改 show rule 行为 | USAGE §7 show 规则速览 |
 	  | 改 example deck 结构 | 重新生成 preview PNG + README 预览表 |
 	  | 改 CI / preview / release 脚本 | CUSTOMIZATION 维护命令 + AGENTS 关键文件表 |
 	  | 纯内部重构（不改公开 API） | 无 |
 	  | 发版 | typst.toml version + git tag |
-- **主题色变量是契约**：`themes` 字典中每套主题必含 6 个字段 `sea` / `sky` / `skyl` / `skyll` / `paper` / `page-fill`（`_resolve-theme` 逐一校验，缺字段 panic）；`header-text` 是可选字段，非 `none` 时覆盖内容页 open header 的标题颜色（默认 `sea`），6 套内置主题均为 `header-text: none`；`header-fill` 字段已删除，不要再写进主题字典。这些字段既是颜色定义，也通过 `config-colors` 映射到 touying 的语义槽（`neutral-dark = sea` 等）；`config-store` 还携带 `heading-font` 与 `header-color`（由 `header-text` 回退到 `sea` 解析而来）供 header 使用。改名要同步改 `xwysyy-pre` 内 `config-colors(...)` 调用，否则下游 slide 组件会拿到错误颜色。运行时通过 `_theme-state`（state）向 `textbox` 等组件传播主题色。
+- **主题色变量是契约**：`themes` 字典中每套主题必含 5 个字段 `sea` / `sky` / `skyll` / `paper` / `page-fill`（`_resolve-theme` 逐一校验，缺字段 panic）；`header-text` 是可选字段，非 `none` 时覆盖内容页 open header 的标题颜色（默认 `sea`），6 套内置主题均为 `header-text: none`；`header-fill` 字段已删除，不要再写进主题字典。这些字段既是颜色定义，也通过 `config-colors` 映射到 touying 的语义槽（`neutral-dark = sea` 等）；`config-store` 还携带 `heading-font` 与 `header-color`（由 `header-text` 回退到 `sea` 解析而来）供 header 使用。改名要同步改 `xwysyy-pre` 内 `config-colors(...)` 调用，否则下游 slide 组件会拿到错误颜色。运行时通过 `_theme-state`（state）向 `textbox` 等组件传播主题色。
 - **函数命名前缀**：当前所有公开主题函数前缀为 `xwysyy-`（`xwysyy-pre`、`xwysyy-slide`、`xwysyy-elements`）。新增函数沿用此前缀；`title-slide` / `outline-slide` / `textbox` / `end-slide` 等通用 helper 不带前缀。
 - **typst + touying 边界 bug**：不要使用 `config-info(author: [])`（空 content），touying 会把空 content 处理成 none，并触发内部类型检查失败。空作者用 `author: " "` 绕开，不要回退到 `[]`。
 - **不要随便引入 typst package**：依赖只有 `@preview/touying:0.7.4` 与 `@preview/physica:0.9.8`。新增依赖前先评估是否可在 `src/` 子模块内手写实现。
@@ -98,7 +98,7 @@
 
 ## 改主题的常见动线
 
-- **改色 / 新增主题**：普通用户直接传 theme 字典；维护内置主题时编辑 `src/themes.typ` 顶部 `themes` 字典，新增一个 key 即可。每个主题需包含 `sea`/`sky`/`skyl`/`skyll`/`paper`/`page-fill` 共 6 个必需字段，可选 `header-text` 覆盖 header 标题色，改完跑 `scripts/check-theme-contrast` 和 `scripts/gen-previews`，基线待 CI 跑完用 `scripts/adopt-baseline` 采纳。
+- **改色 / 新增主题**：普通用户直接传 theme 字典；维护内置主题时编辑 `src/themes.typ` 顶部 `themes` 字典，新增一个 key 即可。每个主题需包含 `sea`/`sky`/`skyll`/`paper`/`page-fill` 共 5 个必需字段，可选 `header-text` 覆盖 header 标题色，改完跑 `scripts/check-theme-contrast` 和 `scripts/gen-previews`，基线待 CI 跑完用 `scripts/adopt-baseline` 采纳。
 - **改字体 / 语言**：优先通过 `xwysyy-pre(font: ..., code-font: ..., lang: ...)` 参数设置。改默认字号才编辑 `src/slides.typ` 内 `set text(... size: 5.5mm)`。
 - **改 slide 顶部 / 底部装饰**：编辑 `src/slides.typ` 内 `_kinded-slide` 的 `header(self)` / `footer(self)` 函数（`xwysyy-slide` 是它的公开包装）。header 是开放式（无底色块）：标题用 `config-store` 的 `heading-font`，bold、1.45em，颜色取 `header-color`（主题 `header-text` 覆盖，默认 `sea`），下方一条全宽 0.12em 细线，填充从标题色经 `sky` 向右渐隐、到 92% 宽度处完全透明的渐变；header 块 `inset` 顶部 1.1em，配套的页面顶部 margin 在 `xwysyy-pre` 的 `config-page` 里是 4.35em，两者要一起调。footer 只剩右下角页码（无背景/边框）。
 - **新增页面版式**：在 `src/slides.typ` 里仿照 `end-slide` / `image-slide` 写一个 `touying-slide-wrapper` 即可。**必须用 `utils.merge-dicts(self, config-page(...))`，不要用 `show: touying-slides.with(...)`**——后者在 touying 0.7.x 会产生 ghost slide（参见 `title-slide` 实现）。

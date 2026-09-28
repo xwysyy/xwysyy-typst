@@ -4,7 +4,6 @@
   sky: (
     sea: rgb("#3b60a0"),
     sky: rgb("#bdd0f1"),
-    skyl: rgb("#eff3ff"),
     skyll: rgb("#f4f9ff"),
     paper: rgb("#f5f6f8"),
     header-text: none,
@@ -13,7 +12,6 @@
   sunset: (
     sea: rgb("#970014"),
     sky: rgb("#D8A6A2"),
-    skyl: rgb("#fdf0f0"),
     skyll: rgb("#FFF8F6"),
     paper: rgb("#f5f6f8"),
     header-text: none,
@@ -22,7 +20,6 @@
   forest: (
     sea: rgb("#1f5d45"),
     sky: rgb("#a8d5ba"),
-    skyl: rgb("#e9f5ee"),
     skyll: rgb("#f5fbf7"),
     paper: rgb("#f7faf8"),
     header-text: none,
@@ -31,7 +28,6 @@
   midnight: (
     sea: rgb("#1f2a44"),
     sky: rgb("#8fa8d8"),
-    skyl: rgb("#edf2fb"),
     skyll: rgb("#f7faff"),
     paper: rgb("#f7f8fb"),
     header-text: none,
@@ -40,7 +36,6 @@
   violet: (
     sea: rgb("#5a3e85"),
     sky: rgb("#c7b7e8"),
-    skyl: rgb("#f2ecfb"),
     skyll: rgb("#faf7ff"),
     paper: rgb("#f8f6fb"),
     header-text: none,
@@ -49,7 +44,6 @@
   graphite: (
     sea: rgb("#31343a"),
     sky: rgb("#b9c0c9"),
-    skyl: rgb("#f0f2f4"),
     skyll: rgb("#f8f9fa"),
     paper: rgb("#f7f7f5"),
     header-text: none,
@@ -61,7 +55,6 @@
 #let _theme-required-fields = (
   "sea",
   "sky",
-  "skyl",
   "skyll",
   "paper",
   "page-fill",
@@ -85,7 +78,6 @@
 // Default theme colors (sky)
 #let sea = themes.sky.sea
 #let sky = themes.sky.sky
-#let skyl = themes.sky.skyl
 #let skyll = themes.sky.skyll
 #let paper = themes.sky.paper
 

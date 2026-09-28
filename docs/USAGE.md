@@ -106,7 +106,6 @@ Direct dictionary:
 #let forest = (
   sea: rgb("#1f5d45"),
   sky: rgb("#a8d5ba"),
-  skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
   page-fill: white,
@@ -115,7 +114,7 @@ Direct dictionary:
 #show: xwysyy-pre.with(theme: forest, ...)
 ```
 
-The dictionary must include all six fields: `sea`, `sky`, `skyl`, `skyll`, `paper`, and `page-fill`. An optional `header-text` field overrides the header title color; when it is absent or `none`, the title uses `sea`. All built-in themes ship `header-text: none`.
+The dictionary must include all five fields: `sea`, `sky`, `skyll`, `paper`, and `page-fill`. An optional `header-text` field overrides the header title color; when it is absent or `none`, the title uses `sea`. All built-in themes ship `header-text: none`.
 
 If a field is missing, compilation fails with the missing field name.
 
@@ -340,4 +339,4 @@ The query output is JSON with page overlays and note text.
 | Layout items | `visual`, `card`, `takeaway`, `plain`, `metric` |
 | Components | `textbox`, `info` |
 | Highlight macros | `red`, `bred`, `yellow`, `byellow` |
-| Theme values | `themes`, `sea`, `sky`, `skyl`, `skyll`, `paper` |
+| Theme values | `themes`, `sea`, `sky`, `skyll`, `paper` |

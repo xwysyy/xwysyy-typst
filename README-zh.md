@@ -112,7 +112,6 @@ typst compile main.typ
 #let my-theme = (
   sea: rgb("#1f5d45"),
   sky: rgb("#a8d5ba"),
-  skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
   header-text: none,
@@ -125,13 +124,12 @@ typst compile main.typ
 )
 ```
 
-主题必须提供 6 个字段，`header-text` 可选：
+主题必须提供 5 个字段，`header-text` 可选：
 
 | 字段 | 用途 |
 |------|------|
 | `sea` | 主深色，用于 header 标题、链接、表格首行和目录徽章 |
 | `sky` | 强调色，也是 header 分隔线的淡出端 |
-| `skyl` | 浅色背景 |
 | `skyll` | 代码块、表格数据行和 textbox 底色 |
 | `paper` | 深色背景上的文字 |
 | `header-text` | 可选，覆盖 header 标题颜色，`none` 回退到 `sea` |

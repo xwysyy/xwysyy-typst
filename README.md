@@ -112,7 +112,6 @@ Pass a custom dictionary directly:
 #let my-theme = (
   sea: rgb("#1f5d45"),
   sky: rgb("#a8d5ba"),
-  skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
   header-text: none,
@@ -125,13 +124,12 @@ Pass a custom dictionary directly:
 )
 ```
 
-Six fields are required; `header-text` is optional:
+Five fields are required; `header-text` is optional:
 
 | Field | Purpose |
 |-------|---------|
 | `sea` | Primary dark color for the header title, links, table heads, and badges |
 | `sky` | Accent color, also the fade-out end of the header rule |
-| `skyl` | Light background color |
 | `skyll` | Code block, table row, and textbox fill |
 | `paper` | Text on dark backgrounds |
 | `header-text` | Optional header title color override, `none` falls back to `sea` |

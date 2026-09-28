@@ -27,7 +27,6 @@ Most users should pass a dictionary directly:
 #let forest = (
   sea: rgb("#1f5d45"),
   sky: rgb("#a8d5ba"),
-  skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
   page-fill: white,
@@ -36,20 +35,7 @@ Most users should pass a dictionary directly:
 #show: xwysyy-pre.with(theme: forest, ...)
 ```
 
-The dictionary must contain 6 fields:
-
-| Field | Used For |
-|------|----------|
-| `sea` | Default header title color, links, table head, outline badge |
-| `sky` | Header rule gradient tail and secondary marks |
-| `skyl` | Reserved light color |
-| `skyll` | Textbox, code block, and zebra-row fill |
-| `paper` | Text on dark backgrounds |
-| `page-fill` | Slide page fill |
-
-An optional `header-text` field overrides the header title color; when it is absent or `none`, the title uses `sea`. All built-in themes ship `header-text: none`.
-
-Missing required fields fail compilation and name the missing field.
+The fields and their roles are listed in the [README theme table](../README.md#themes). Missing required fields fail compilation and name the missing field.
 
 ### Vendor A Theme Into The Package
 

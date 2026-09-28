@@ -24,14 +24,13 @@ Return a complete Typst dictionary named with an English lowercase name:
 #let my-theme = (
   sea: rgb("#______"),
   sky: rgb("#______"),
-  skyl: rgb("#______"),
   skyll: rgb("#______"),
   paper: rgb("#______"),
   page-fill: rgb("#______"),
 )
 ```
 
-These six fields are required. You may add an optional `header-text` field: when it is not `none`, it overrides the header title color; the default title color is `sea`.
+These five fields are required. You may add an optional `header-text` field: when it is not `none`, it overrides the header title color; the default title color is `sea`.
 
 ## Fields
 
@@ -39,7 +38,6 @@ These six fields are required. You may add an optional `header-text` field: when
 |------|-------------|
 | `sea` | Main dark color: default header title color, table header, links, outline badges |
 | `sky` | Accent color: header rule gradient tail |
-| `skyl` | Light background |
 | `skyll` | Lightest component fill: code blocks, zebra rows, textboxes |
 | `paper` | Text on dark backgrounds |
 | `page-fill` | Slide page background |
@@ -49,7 +47,7 @@ These six fields are required. You may add an optional `header-text` field: when
 
 1. `paper` on `sea` must satisfy WCAG AA contrast, at least 4.5:1.
 2. The header title color (`header-text` falling back to `sea`) on `page-fill` must satisfy WCAG AA contrast, at least 4.5:1.
-3. `sea`, `sky`, `skyl`, and `skyll` should form a clear dark-to-light ramp.
+3. `sea`, `sky`, and `skyll` should form a clear dark-to-light ramp.
 4. `page-fill` must be visually separable from `skyll`, so code blocks and textboxes are visible.
 5. Keep color temperature coherent. Warm main colors should use warm light backgrounds; cold main colors should use cold light backgrounds.
 
@@ -61,7 +59,6 @@ sky:
 #let sky-theme = (
   sea: rgb("#3b60a0"),
   sky: rgb("#bdd0f1"),
-  skyl: rgb("#eff3ff"),
   skyll: rgb("#f4f9ff"),
   paper: rgb("#f5f6f8"),
   header-text: none,
@@ -75,7 +72,6 @@ sunset:
 #let sunset-theme = (
   sea: rgb("#970014"),
   sky: rgb("#D8A6A2"),
-  skyl: rgb("#fdf0f0"),
   skyll: rgb("#FFF8F6"),
   paper: rgb("#f5f6f8"),
   header-text: none,
@@ -89,7 +85,6 @@ forest:
 #let forest-theme = (
   sea: rgb("#1f5d45"),
   sky: rgb("#a8d5ba"),
-  skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
   header-text: none,
@@ -115,7 +110,6 @@ Paste the dictionary into your deck:
 #let forest = (
   sea: rgb("#1f5d45"),
   sky: rgb("#a8d5ba"),
-  skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
   page-fill: white,
@@ -136,40 +130,9 @@ Compile:
 typst compile main.typ
 ```
 
-## Vendor Path For Maintainers
+## Register A Named Theme
 
-If you maintain a fork and want a named theme, add the dictionary to `src/themes.typ`:
-
-```typst
-#let themes = (
-  sky: (...),
-  sunset: (...),
-  forest: (
-    sea: rgb("#1f5d45"),
-    sky: rgb("#a8d5ba"),
-    skyl: rgb("#e9f5ee"),
-    skyll: rgb("#f5fbf7"),
-    paper: rgb("#f7faf8"),
-    header-text: none,
-    page-fill: white,
-  ),
-)
-```
-
-Then use:
-
-```typst
-#show: xwysyy-pre.with(theme: "forest", ...)
-```
-
-After changing built-in themes, run:
-
-```bash
-scripts/check-theme-contrast
-scripts/gen-previews
-```
-
-Then push, wait for the visual-regression run, and adopt its renders as the visual baseline with `scripts/adopt-baseline`.
+To add a generated theme to `src/themes.typ` as a named built-in theme in a fork, follow [Vendor A Theme Into The Package](CUSTOMIZATION.md#vendor-a-theme-into-the-package).
 
 ## Tune An Existing Theme
 
@@ -182,7 +145,6 @@ Based on this xwysyy theme, adjust the main color to [your description].
 #let forest = (
   sea: rgb("#1f5d45"),
   sky: rgb("#a8d5ba"),
-  skyl: rgb("#e9f5ee"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
   page-fill: white,

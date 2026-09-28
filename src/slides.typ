@@ -335,7 +335,6 @@
     ),
     config-colors(
       primary: t.sky,
-      neutral-light: t.skyl,
       neutral-lighter: t.skyll,
       neutral-lightest: t.paper,
       neutral-dark: t.sea,
