@@ -53,7 +53,6 @@
 // Capture alignment references before any parameter named `top` / `bottom` /
 // `left` shadows them inside a component body.
 #let _atop = top
-#let _abottom = bottom
 #let _aleft = left
 #let _acenter = center
 #let _ahorizon = horizon
@@ -70,7 +69,7 @@
 // becoming blank margin.
 #let _MARGIN-TOP = 0.07
 #let _MARGIN-BOT = 0.09
-#let _FILL = 1.0 - 0.07 - 0.09
+#let _FILL = 1.0 - _MARGIN-TOP - _MARGIN-BOT
 // A card row occupies at least this fraction of the body height, so a row of
 // short cards reads as substantial cards rather than tiles floating in space.
 #let _CARD-FILL-MIN = 0.60
@@ -569,21 +568,17 @@
   }
 }
 
-// Column container for slot rendering.  Cards draw the theme's rounded skyll
-// box; `calign` controls where content sits inside a fixed-height box.
-#let _card-box(cw, h, fill, body, cardp, calign: _ahorizon) = {
+// Card container for slot rendering: the theme's rounded skyll box; `calign`
+// controls where content sits inside a fixed-height box.
+#let _card-box(cw, h, fill, body, calign: _ahorizon) = {
   let inner = if h == auto { body } else { align(calign, body) }
-  if cardp {
-    block(width: cw, height: h, fill: fill, inset: _CARD-PAD, radius: 0.4em, inner)
-  } else {
-    block(width: cw, height: h, inner)
-  }
+  block(width: cw, height: h, fill: fill, inset: _CARD-PAD, radius: 0.4em, inner)
 }
 
 // Render one typed item into its allocated slot.
 #let _render-item(it, w, h, fill, calign: _ahorizon) = {
   if _painted(it) {
-    _card-box(w, h, fill, it.body, true, calign: calign)
+    _card-box(w, h, fill, it.body, calign: calign)
   } else {
     block(width: w, height: h, align(_acenter + calign, it.body))
   }
@@ -680,7 +675,7 @@
       )
       if self.subslide == rep {
         _emit(sid, "duo", "column", here().position().page, rep, objects, relations,
-          alloc.fit, (mode: mode, gap_fraction: g / H, tuned: tuning.len() > 0))
+          alloc.fit, (mode: mode, tuned: tuning.len() > 0))
         if debug { _debug-layer(objects, W, H) }
       }
     })
@@ -752,7 +747,7 @@
           painted: _painted(it), paint-fill: cfill.to-hex()),
       )
       _emit(sid, "focus", "single", here().position().page, 1, objects, (), fit,
-        (center_y: tn.at("center-y"), intent: "focus", tuned: tuning.len() > 0))
+        (intent: "focus", tuned: tuning.len() > 0))
       if debug { _debug-layer(objects, W, H) }
     })
   })
@@ -839,8 +834,7 @@
       }
       if self.subslide == rep {
         _emit(sid, "stack", "column", here().position().page, rep, objects, relations,
-          alloc.fit, (mode: mode, count: n, tuned: tuning.len() > 0,
-            gap_fraction: if n > 1 { alloc.gaps.at(0) / H } else { 0.0 }))
+          alloc.fit, (mode: mode, tuned: tuning.len() > 0))
         if debug { _debug-layer(objects, W, H) }
       }
     })
@@ -915,15 +909,9 @@
           relations.push(_rel(sid + ":" + str(i - 1), oid, "peer", "horizontal", "gutter"))
         }
       }
-      let nmax = naturals.fold(0pt, (a, h) => calc.max(a, h))
-      let nmin = naturals.fold(nmax, (a, h) => calc.min(a, h))
       if self.subslide == rep {
-        _emit(sid, "grid", "row", here().position().page, rep, objects, relations, row.fit, (
-          count: n,
-          gutter: gutter,
-          natural_height_variance: (nmax - nmin) / H,
-          tuned: tuning.len() > 0,
-        ))
+        _emit(sid, "grid", "row", here().position().page, rep, objects, relations, row.fit,
+          (tuned: tuning.len() > 0))
         if debug { _debug-layer(objects, W, H) }
       }
     })
@@ -1000,11 +988,8 @@
         _rel(sid + ":left", sid + ":right", "contrast", "horizontal", "gutter"),
       )
       if self.subslide == rep {
-        _emit(sid, "compare", "row", here().position().page, rep, objects, relations, row.fit, (
-          gutter: gutter,
-          natural_height_variance: calc.abs(ls.spec.pref - rs.spec.pref) / H,
-          tuned: tuning.len() > 0,
-        ))
+        _emit(sid, "compare", "row", here().position().page, rep, objects, relations, row.fit,
+          (tuned: tuning.len() > 0))
         if debug { _debug-layer(objects, W, H) }
       }
     })
@@ -1132,8 +1117,6 @@
       }
       if self.subslide == rep {
         _emit(sid, "stat", "row", here().position().page, rep, objects, relations, row.fit, (
-          count: n,
-          gutter: gutter,
           value_scales: scales,
           tuned: tuning.len() > 0,
         ))
@@ -1272,8 +1255,7 @@
       }
       if self.subslide == rep {
         _emit(sid, "figure", "column", here().position().page, rep, objects, relations,
-          alloc.fit, (mode: mode, has_caption: cap != none, has_takeaway: ki != none,
-            tuned: tuning.len() > 0))
+          alloc.fit, (mode: mode, tuned: tuning.len() > 0))
         if debug { _debug-layer(objects, W, H) }
       }
     })
@@ -1384,7 +1366,7 @@
       )
       let relations = (_rel(sid + ":label", sid + ":body", "labels", "horizontal", "gutter"),)
       _emit(sid, "sidebar", "row", here().position().page, 1, objects, relations, row.fit,
-        (label_width: lwn, gutter: gutter, tuned: tuning.len() > 0))
+        (tuned: tuning.len() > 0))
       if debug { _debug-layer(objects, W, H) }
     })
   })
