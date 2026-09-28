@@ -25,9 +25,6 @@ jobs:
         run: |
           typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf
           typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf
-          typst compile --root . examples/note.typ /tmp/note.pdf
-          typst compile --root . examples/dual-source.typ /tmp/dual-source.pdf
-          typst compile --root . --input mode=note examples/dual-source.typ /tmp/dual-source-note.pdf
           typst compile --root . examples/layout-demo.typ /tmp/layout-demo.pdf
           typst compile --root . tests/fixtures/extras-entry.typ /tmp/extras-entry.pdf
 
@@ -86,10 +83,7 @@ jobs:
         run: |
           typst compile --root . --input visual-ci=true examples/slides-sky.typ
           typst compile --root . --input visual-ci=true examples/slides-sunset.typ
-          typst compile --root . --input visual-ci=true examples/note.typ
           typst compile --root . --input visual-ci=true examples/theme-preview.typ
-          typst compile --root . --input visual-ci=true examples/dual-source.typ
-          typst compile --root . --input visual-ci=true --input mode=note examples/dual-source.typ dual-source-note.pdf
           typst compile --root . --input visual-ci=true --input handout=true examples/slides-sky.typ slides-sky-handout.pdf
           typst compile --root . --input visual-ci=true examples/layout-demo.typ
 
@@ -107,8 +101,6 @@ jobs:
           typst compile --root . tests/fixtures/outline-zh.typ /tmp/outline-zh.pdf
           typst compile --root . tests/fixtures/outline-agenda.typ /tmp/outline-agenda.pdf
           typst compile --root . tests/fixtures/font-override.typ /tmp/font-override.pdf
-          typst compile --root . tests/fixtures/layout-dual.typ /tmp/layout-dual-slides.pdf
-          typst compile --root . --input mode=note tests/fixtures/layout-dual.typ /tmp/layout-dual-note.pdf
           typst compile --root . --input visual-ci=true tests/fixtures/layout-fit.typ /tmp/layout-fit.pdf
           typst compile --root . --input visual-ci=true tests/fixtures/layout-handout.typ /tmp/layout-handout.pdf
           typst compile --root . --input visual-ci=true --input handout=true tests/fixtures/layout-handout.typ /tmp/layout-handout-collapsed.pdf

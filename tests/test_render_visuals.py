@@ -86,10 +86,7 @@ class RenderVisualsTests(unittest.TestCase):
         self.assertEqual(
             names,
             {
-                "dual-source-note-1.png",
-                "dual-source-slides-1.png",
                 "layout-demo-1.png",
-                "note-1.png",
                 "slides-sky-1.png",
                 "slides-sunset-1.png",
                 "theme-forest-1.png",

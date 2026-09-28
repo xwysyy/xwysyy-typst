@@ -47,11 +47,6 @@ def main():
         copy_page(tmp, "slides-sunset", 5, "preview-sunset-p5-05.png")
         copy_page(tmp, "slides-sunset", 8, "preview-sunset-p8-08.png")
 
-        run(("typst", "compile", "--root", ".", *visual_input, "examples/note.typ", "-f", "png", str(tmp / "note-{p}.png")))
-        copy_page(tmp, "note", 1, "preview-note-p1-1.png")
-        copy_page(tmp, "note", 2, "preview-note-p2-2.png")
-        copy_page(tmp, "note", 3, "preview-note-p3-3.png")
-
         for theme in THEMES:
             run((
                 "typst",

@@ -12,16 +12,15 @@
   <a href="https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/README-zh.md">中文</a> | <b>English</b>
 </p>
 
-Academic presentation and note-taking templates built on [touying](https://github.com/touying-typ/touying). The package covers slide decks, handouts, speaker notes, and A4 notes from one Typst source. The visual theme is derived from [Carlos-Mero/may](https://github.com/Carlos-Mero/may) under MIT.
+Academic presentation templates built on [touying](https://github.com/touying-typ/touying). The package covers slide decks, handouts, speaker notes, and pdfpc metadata. The visual theme is derived from [Carlos-Mero/may](https://github.com/Carlos-Mero/may) under MIT.
 
 ## Features
 
 - Universe template support: `typst init @preview/xwysyy:0.4.0` creates a ready-to-compile deck.
 - Six built-in themes: `sky`, `sunset`, `forest`, `midnight`, `violet`, and `graphite`.
 - Custom theme dictionaries can be passed directly to `theme`, so users can customize colors without forking the package.
-- `font`, `code-font`, and `lang` are shared between slide and note mode; slides additionally take `heading-font` for the header title.
+- `xwysyy-pre` takes `font`, `code-font`, and `lang`, plus `heading-font` for the header title.
 - Touying handout mode, `#speaker-note`, and pdfpc export are documented with tagged source examples.
-- `xwysyy-doc` compiles one source as a 16:9 deck by default and as A4 notes with `--input mode=note`.
 - Eight semantic layout components (`duo-slide`, `grid-slide`, `figure-slide`, `stat-slide`, ...) measure every block at compile time, distribute space fill-first, and export layout telemetry without hand-written `#v()` spacing.
 
 ## Preview
@@ -47,10 +46,6 @@ Rendered previews are generated from the [tagged source examples](https://github
 | Sunset cover | Sunset components |
 |:---:|:---:|
 | ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-sunset-p1-01.png) | ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-sunset-p5-05.png) |
-
-| Note title | Note code | Note table |
-|:---:|:---:|:---:|
-| ![Note mode title and TOC](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-note-p1-1.png) | ![Note mode lists and code](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-note-p2-2.png) | ![Note mode tables and quotes](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-note-p3-3.png) |
 
 ## Quick Start
 
@@ -147,7 +142,6 @@ Six fields are required; `header-text` is optional:
 | Category | API | Usage |
 |----------|-----|-------|
 | Slide entry | `xwysyy-pre` | `#show: xwysyy-pre.with(theme: "sky", ...)` |
-| Dual-output entry | `xwysyy-doc` | default deck, `--input mode=note` for A4 notes |
 | Title slide | `title-slide` | `#title-slide()` |
 | Outline | `outline-slide` | `#outline-slide()` auto-collects section headings |
 | Content slide | `xwysyy-slide` | `== Title` auto-triggers |
@@ -165,7 +159,6 @@ Six fields are required; `header-text` is optional:
 | Text box | `textbox` | `#textbox[Content]` or `#textbox([Col 1], [Col 2])` |
 | Highlight | `red` / `bred` | `#red[text]` / `#bred[bold red]` |
 | Highlight | `yellow` / `byellow` | `#yellow[text]` / `#byellow[bold yellow]` |
-| Note entry | `xwysyy-note` | `#show: xwysyy-note.with(title: [...])` |
 | Extensions loader | `xwysyy-extras()` | lazily loads cetz, fletcher, and theorion integrations |
 
 Optional drawing and theorem integrations load only when `xwysyy-extras()` is called, so the core import keeps its smaller dependency set:
@@ -207,32 +200,6 @@ Export pdfpc metadata:
 
 ```bash
 typst query main.typ --field value --one "<pdfpc-file>" > slides.pdfpc
-```
-
-## One Source, Two Outputs
-
-Use `xwysyy-doc` when one source should produce both deck and notes:
-
-```typst
-#import "@preview/xwysyy:0.4.0": *
-
-#show: xwysyy-doc.with(
-  title: [One Source, Two Outputs],
-  subtitle: [Deck and A4 notes],
-  theme: "forest",
-)
-```
-
-Compile the deck:
-
-```bash
-typst compile main.typ slides.pdf
-```
-
-Compile the A4 notes:
-
-```bash
-typst compile --input mode=note main.typ notes.pdf
 ```
 
 ## Requirements

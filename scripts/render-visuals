@@ -20,9 +20,6 @@ def render_set(output):
     jobs = (
         ("examples/slides-sky.typ", "slides-sky-{p}.png", visual_input),
         ("examples/slides-sunset.typ", "slides-sunset-{p}.png", visual_input),
-        ("examples/note.typ", "note-{p}.png", visual_input),
-        ("examples/dual-source.typ", "dual-source-slides-{p}.png", visual_input),
-        ("examples/dual-source.typ", "dual-source-note-{p}.png", ("--input", "mode=note", *visual_input)),
         ("examples/layout-demo.typ", "layout-demo-{p}.png", visual_input),
     )
     targets = []

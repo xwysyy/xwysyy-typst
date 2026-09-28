@@ -86,7 +86,7 @@ Each contrast ratio must be at least 4.5:1. The script requires the parsed field
 
 ## 2. Fonts And Language
 
-Slide mode and note mode share parameter names:
+`xwysyy-pre` takes font and language parameters:
 
 ```typst
 #show: xwysyy-pre.with(
@@ -97,21 +97,11 @@ Slide mode and note mode share parameter names:
 )
 ```
 
-```typst
-#show: xwysyy-note.with(
-  font: ("Libertinus Serif",),
-  code-font: "DejaVu Sans Mono",
-  lang: "zh",
-)
-```
-
 Defaults:
 
 | Entry | `font` | `heading-font` | `code-font` | `lang` |
 |-------|--------|----------------|-------------|--------|
 | `xwysyy-pre` | `("Times New Roman", "Noto Serif CJK SC")` | `("Libertinus Sans", "Noto Sans CJK SC")` | `("Maple Mono", "Noto Sans Mono CJK SC")` | `"en"` |
-| `xwysyy-note` | `("Times New Roman", "Noto Serif CJK SC")` | none | `("Maple Mono", "Noto Sans Mono CJK SC")` | `"en"` |
-| `xwysyy-doc` | Same as slide mode | Same as slide mode | Same as slide mode | `"en"` |
 
 `heading-font` is used by the open header on content slides. The CJK entries in the `code-font` default keep CJK text inside code on a real mono font instead of the Unifont bitmap fallback.
 
@@ -203,11 +193,9 @@ New slide layouts should follow the existing pattern:
 
 Use `utils.merge-dicts(self, config-page(...))` inside the wrapper. This avoids ghost slides in touying 0.7.x.
 
-If the layout should work with `xwysyy-doc`, add a `mode=note` degradation branch similar to `image-slide` or `end-slide`.
-
 ## 6. Show Rules
 
-Slide show rules live in `src/elements.typ` inside `xwysyy-elements`.
+Show rules live in `src/elements.typ` inside `xwysyy-elements`.
 
 Important split:
 
@@ -220,8 +208,6 @@ Arrow replacements use math mode. Each rule is wrapped in a guard that skips tex
 #show "-->": non-code([$-->$])
 #show "->": non-code([$->$])
 ```
-
-Note mode show rules live in `src/note.typ` and are independent from slide themes.
 
 ## 7. Handout Mode
 
@@ -268,32 +254,7 @@ pdfpc export:
 typst query --root . examples/slides-sky.typ --field value --one "<pdfpc-file>" > slides-sky.pdfpc
 ```
 
-## 9. One Source, Two Outputs
-
-Use `xwysyy-doc` for a source that compiles as slides or notes:
-
-```typst
-#show: xwysyy-doc.with(
-  title: [One Source, Two Outputs],
-  theme: "forest",
-)
-```
-
-Deck:
-
-```bash
-typst compile --root . examples/dual-source.typ dual-slides.pdf
-```
-
-Notes:
-
-```bash
-typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
-```
-
-`xwysyy-doc` keeps the slide API available and converts slide-only layouts according to [USAGE.md §6](./USAGE.md#6-dual-output-entry-xwysyy-doc).
-
-## 10. Visual Regression And Previews
+## 9. Visual Regression And Previews
 
 Regenerate README preview PNGs:
 
@@ -318,7 +279,7 @@ The preview and visual scripts pass `--input visual-ci=true`. The visual example
 
 The GitHub Actions workflow runs:
 
-1. Compile all examples, including handout and note output.
+1. Compile all examples, including handout output.
 2. Check theme contrast.
 3. Render the visual set.
 4. Compare against `tests/visual-baseline`.
@@ -326,22 +287,19 @@ The GitHub Actions workflow runs:
 
 Pure documentation pull requests are ignored by the visual workflow through `paths-ignore`.
 
-## 11. Upgrade Checks
+## 10. Upgrade Checks
 
 When changing `src/*.typ`, examples, template, themes, or scripts, run:
 
 ```bash
 typst compile --root . examples/slides-sky.typ
 typst compile --root . examples/slides-sunset.typ
-typst compile --root . examples/note.typ
-typst compile --root . examples/dual-source.typ
-typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
 scripts/check-theme-contrast
 scripts/render-visuals /tmp/xwysyy-visual-current
 scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current
 ```
 
-## 12. Universe Release Staging
+## 11. Universe Release Staging
 
 The source repository is the authority for every published package version. Commit and validate release changes here before creating the `typst/packages` branch. The package copy must not receive manual fixes.
 

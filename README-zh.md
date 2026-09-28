@@ -12,16 +12,15 @@
   <b>中文</b> | <a href="https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/README.md">English</a>
 </p>
 
-`xwysyy` 是基于 [touying](https://github.com/touying-typ/touying) 的学术演示与笔记模板。它支持 slide、handout、讲者备注、pdfpc 元数据，以及同一份 Typst 源码生成 16:9 deck 和 A4 讲义。视觉主题派生自 [Carlos-Mero/may](https://github.com/Carlos-Mero/may)，许可证为 MIT。
+`xwysyy` 是基于 [touying](https://github.com/touying-typ/touying) 的学术演示模板。它支持 slide、handout、讲者备注和 pdfpc 元数据。视觉主题派生自 [Carlos-Mero/may](https://github.com/Carlos-Mero/may)，许可证为 MIT。
 
 ## 特性
 
 - 支持 Universe 模板：`typst init @preview/xwysyy:0.4.0` 直接生成可编译 deck。
 - 内置 6 套主题：`sky`、`sunset`、`forest`、`midnight`、`violet`、`graphite`。
 - `theme` 可直接接收自定义配色字典，用户不需要 fork 包源码。
-- slide 与 note 模式共享 `font`、`code-font`、`lang` 参数；slide 模式另有 `heading-font` 控制 header 标题字体。
+- `xwysyy-pre` 接受 `font`、`code-font`、`lang` 参数，另有 `heading-font` 控制 header 标题字体。
 - handout、`#speaker-note`、pdfpc 导出都有可复制命令和固定标签的源码示例。
-- `xwysyy-doc` 默认生成 16:9 deck，使用 `--input mode=note` 生成 A4 讲义。
 - 八个语义版式组件（`duo-slide`、`grid-slide`、`figure-slide`、`stat-slide` 等）编译期测量每个块、填满优先分配空间并导出版面遥测，不再手写 `#v()` 间距。
 
 ## 预览
@@ -47,10 +46,6 @@
 | Sunset 封面 | Sunset 组件 |
 |:---:|:---:|
 | ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-sunset-p1-01.png) | ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-sunset-p5-05.png) |
-
-| 笔记标题 | 笔记代码 | 笔记表格 |
-|:---:|:---:|:---:|
-| ![Note mode title and TOC](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-note-p1-1.png) | ![Note mode lists and code](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-note-p2-2.png) | ![Note mode tables and quotes](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-note-p3-3.png) |
 
 ## 快速开始
 
@@ -147,7 +142,6 @@ typst compile main.typ
 | 类别 | API | 用法 |
 |------|-----|------|
 | Slide 入口 | `xwysyy-pre` | `#show: xwysyy-pre.with(theme: "sky", ...)` |
-| 双产物入口 | `xwysyy-doc` | 默认 deck，`--input mode=note` 生成 A4 讲义 |
 | 封面 | `title-slide` | `#title-slide()` |
 | 目录 | `outline-slide` | `#outline-slide()` 自动收集章节标题 |
 | 内容页 | `xwysyy-slide` | `== 标题` 自动触发 |
@@ -165,7 +159,6 @@ typst compile main.typ
 | 文本框 | `textbox` | `#textbox[内容]` 或 `#textbox([列 1], [列 2])` |
 | 标红 | `red` / `bred` | `#red[文字]` / `#bred[粗体标红]` |
 | 标黄 | `yellow` / `byellow` | `#yellow[文字]` / `#byellow[粗体标黄]` |
-| 笔记入口 | `xwysyy-note` | `#show: xwysyy-note.with(title: [...])` |
 | 可选扩展加载器 | `xwysyy-extras()` | 按需加载 cetz、fletcher、theorion 集成 |
 
 只有调用 `xwysyy-extras()` 时才会加载绘图与定理环境，因此核心导入仍保持较小的依赖集合：
@@ -207,32 +200,6 @@ typst compile --input handout=true main.typ slides-handout.pdf
 
 ```bash
 typst query main.typ --field value --one "<pdfpc-file>" > slides.pdfpc
-```
-
-## 一份源码，两种产物
-
-需要同一份源码同时生成 slide 和 A4 讲义时使用 `xwysyy-doc`：
-
-```typst
-#import "@preview/xwysyy:0.4.0": *
-
-#show: xwysyy-doc.with(
-  title: [One Source, Two Outputs],
-  subtitle: [Deck and A4 notes],
-  theme: "forest",
-)
-```
-
-编译 deck：
-
-```bash
-typst compile main.typ slides.pdf
-```
-
-编译 A4 讲义：
-
-```bash
-typst compile --input mode=note main.typ notes.pdf
 ```
 
 ## 环境要求

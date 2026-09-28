@@ -63,7 +63,7 @@ metric(value, label)            // stat-slide 的指标条目
 
 stretch 视觉的正确填法：占位图 `rect(width: 100%, height: 100%)`，真实图片 `image("f.png", width: 100%, height: 100%, fit: "contain")`。natural 视觉用 `image("f.png", width: 100%)`。百分比尺寸的内容**必须**包 `visual(...)`：文本槽收到测量宽度为零的内容（percent 宽媒体和 spacer 的测量签名相同）直接 panic，只有 visual 槽允许以槽宽登记 payload，且标记为 `declared`、由像素层验证。
 
-校验都发生在编译期，失败即 panic：必填槽位为 `none`；visual 内容完全渲染为空；文本槽内容无可测量宽度（spacer、空字符串）或无可测量高度（裸线条）；`grid` 少于 2 列（单块用 `stack` 或 `focus`）；`grid` / `compare` 列里放 `visual(fit: "stretch")`（行版式按自然高度排版）；`figure` 的 takeaway 槽放 stretch visual；`stat` 的条目不是 `metric(...)` 或 value / label 渲染为空；`focus` / `sidebar` 收到 `reveal-from`（它们没有展示步骤）；`sidebar` 槽位收到 typed item（它自己画卡片）；`reveal-from` 不是 `[1, 步数]` 内的整数；`tuning` 的 key 拼错、类型不对或超出允许区间；`visual` 的 `fit` 不是 `"stretch"` / `"natural"`；role 不在封闭集合内；`xwysyy-slide` 收到 `kind` 参数（豁免页只能由 `outline-slide` / `title-slide` 等自己的版式产生）；`image-slide` 没有传图。这些校验在 slides 与 note 两种产物下一致执行（note 模式用名义宽度做同样的空内容断言）。
+校验都发生在编译期，失败即 panic：必填槽位为 `none`；visual 内容完全渲染为空；文本槽内容无可测量宽度（spacer、空字符串）或无可测量高度（裸线条）；`grid` 少于 2 列（单块用 `stack` 或 `focus`）；`grid` / `compare` 列里放 `visual(fit: "stretch")`（行版式按自然高度排版）；`figure` 的 takeaway 槽放 stretch visual；`stat` 的条目不是 `metric(...)` 或 value / label 渲染为空；`focus` / `sidebar` 收到 `reveal-from`（它们没有展示步骤）；`sidebar` 槽位收到 typed item（它自己画卡片）；`reveal-from` 不是 `[1, 步数]` 内的整数；`tuning` 的 key 拼错、类型不对或超出允许区间；`visual` 的 `fit` 不是 `"stretch"` / `"natural"`；role 不在封闭集合内；`xwysyy-slide` 收到 `kind` 参数（豁免页只能由 `outline-slide` / `title-slide` 等自己的版式产生）；`image-slide` 没有传图。
 
 已知边界：槽位内容里的 `place(...)` 脱离文档流，几何遥测测不到它；`hide(...)` 保留完整布局尺寸，几何层也看不出来——两者都由像素层兜底（stray ink 与逐对象 hollow 检查）。
 
@@ -132,7 +132,7 @@ stretch 视觉吸收全部富余；没有 stretch 视觉时所有 `card` 均摊�
 
 ### grid-slide
 
-N 个等高对等列（N ≥ 2，单块请用 stack / focus）。纯内容按 `card()` 包装成等高主题卡片，列高取最大自然高（至少 0.6H）。相邻列带 `peer` 关系，checker 校验 gutter。`reveal: true` 时第 i 列从第 i 个 subslide 浮现。行版式按自然高度排版，列里不接受 `visual(fit: "stretch")`（在 note / slides 两种产物下都 panic）。`tuning`：`gutter`（0.04，[0, 0.2]）。
+N 个等高对等列（N ≥ 2，单块请用 stack / focus）。纯内容按 `card()` 包装成等高主题卡片，列高取最大自然高（至少 0.6H）。相邻列带 `peer` 关系，checker 校验 gutter。`reveal: true` 时第 i 列从第 i 个 subslide 浮现。行版式按自然高度排版，列里放 `visual(fit: "stretch")` 会在编译期 panic。`tuning`：`gutter`（0.04，[0, 0.2]）。
 
 ```typst
 #grid-slide(
@@ -189,10 +189,6 @@ N 个等高对等列（N ≥ 2，单块请用 stack / focus）。纯内容按 `c
   body: [编译期测真高，按节奏分配留白，导出遥测。],
 )
 ```
-
-### 双产物降级
-
-所有组件在 `--input mode=note`（即 `xwysyy-doc` 的笔记产物）下自动退化为线性内容：duo 变成上块接下块，grid / compare 变成并排文本框，stack 变成堆叠块，reveal 折叠为完整内容，不输出绝对坐标。槽位校验（typed item 合法性、tuning、空内容断言）在两种产物下一致执行：note 编译得过而 slides 编译崩的源文件不存在。
 
 ## 遥测 schema v4
 

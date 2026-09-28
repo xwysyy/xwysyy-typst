@@ -234,7 +234,7 @@ One body creates one full-width box. Multiple bodies create equal-height columns
 )
 ```
 
-`textbox` reads `_theme-state`; slide mode uses the active theme and note mode uses the theme selected by `xwysyy-doc` or the default `sky` state.
+`textbox` reads `_theme-state`, so it uses the active slide theme.
 
 ### 4.2 `info`
 
@@ -253,93 +253,7 @@ Renders a left label and right description with flexible space between them.
 | `yellow(body)` | Yellow text |
 | `byellow(body)` | Larger yellow text with a light stroke |
 
-## 5. Note Entry: `xwysyy-note`
-
-```typst
-#let xwysyy-note(
-  doc,
-  title: none,
-  subtitle: none,
-  font: ("Times New Roman", "Noto Serif CJK SC"),
-  code-font: ("Maple Mono", "Noto Sans Mono CJK SC"),
-  base-size: 10pt,
-  lang: "en",
-)
-```
-
-`xwysyy-note` is an A4 document entry with independent gray-scale show rules:
-
-```typst
-#show: xwysyy-note.with(
-  title: "My Notes",
-  subtitle: "2026",
-  font: ("Libertinus Serif",),
-  code-font: "DejaVu Sans Mono",
-)
-```
-
-It sets A4 paper, 2 cm margins, numbered headings, gray table styles, gray code blocks, fixed blue links, and `>|` quote decoration.
-
-## 6. Dual Output Entry: `xwysyy-doc`
-
-`xwysyy-doc` routes one source to slides or notes. The default mode is `slides`; `--input mode=note` switches to A4 notes.
-
-### Signature
-
-```typst
-#let xwysyy-doc(
-  aspect-ratio: "16-9",
-  theme: "sky",
-  font: ("Times New Roman", "Noto Serif CJK SC"),
-  heading-font: ("Libertinus Sans", "Noto Sans CJK SC"),
-  code-font: ("Maple Mono", "Noto Sans Mono CJK SC"),
-  lang: "en",
-  base-size: 10pt,
-  title: none,
-  subtitle: none,
-  author: " ",
-  date: none,
-  institution: " ",
-  ..args,
-  body,
-)
-```
-
-### Example
-
-```typst
-#show: xwysyy-doc.with(
-  title: [One Source, Two Outputs],
-  subtitle: [Deck and A4 notes],
-  theme: "forest",
-)
-```
-
-Compile slides:
-
-```bash
-typst compile --root . examples/dual-source.typ dual-slides.pdf
-```
-
-Compile notes:
-
-```bash
-typst compile --root . --input mode=note examples/dual-source.typ dual-note.pdf
-```
-
-### Note-Mode Degradation Rules
-
-| Slide API | Note-mode behavior |
-|-----------|--------------------|
-| `title-slide` | Skipped because `xwysyy-note` renders the title block |
-| `outline-slide` | Converted to `#outline(title: ..., depth: 1)` |
-| `new-section-slide` | Skipped; the original level-one heading remains in the note |
-| `xwysyy-slide` | Explicit calls render an optional heading and body |
-| `image-slide` | Converted to a figure when `img` is present |
-| `end-slide` | Converted to a centered ending block |
-| `#pause` | Note output keeps the complete content and does not create subslides |
-
-## 7. Handouts
+## 5. Handouts
 
 Touying handout mode is available through `config-common(handout: true)`. `examples/slides-sky.typ` exposes a command-line switch:
 
@@ -366,7 +280,7 @@ typst compile --root . --input handout=true examples/slides-sky.typ slides-hando
 
 Touying options such as `handout-subslides` and the `<touying:handout>` label can be passed through `config-common(...)` because `xwysyy-pre` forwards `..args` to `touying-slides`.
 
-## 8. Speaker Notes And pdfpc
+## 6. Speaker Notes And pdfpc
 
 `xwysyy.typ` re-exports touying, so `#speaker-note` is available after importing xwysyy:
 
@@ -397,9 +311,9 @@ typst query --root . examples/slides-sky.typ --field value --one "<pdfpc-file>" 
 
 The query output is JSON with page overlays and note text.
 
-## 9. Show Rules
+## 7. Show Rules
 
-`xwysyy-elements` applies only in slide mode:
+`xwysyy-elements` applies these rules:
 
 | Rule | Behavior |
 |------|----------|
@@ -414,9 +328,7 @@ The query output is JSON with page overlays and note text.
 | Arrow string rules | `->`, `=>`, `<=>`, and related patterns render as math arrows; text already set in the `code-font` first family is skipped, so code content stays literal |
 | `set table` and `show table.cell` | Seamless `sea` header row with bold `paper` text, zebra body rows (`skyll` on even rows), and `table.hline` defaulting to `0.5pt + sea.lighten(30%)` |
 
-`xwysyy-note` has its own A4-focused show rules.
-
-## 10. Optional Extras
+## 8. Optional Extras
 
 The same loader API works during local development:
 
@@ -442,11 +354,11 @@ When passing custom `frozen-counters`, include the defaults:
 )
 ```
 
-## 11. API Index
+## 9. API Index
 
 | Category | API |
 |----------|-----|
-| Entries | `xwysyy-pre`, `xwysyy-doc`, `xwysyy-note`, `xwysyy-extras()` |
+| Entries | `xwysyy-pre`, `xwysyy-extras()` |
 | Slide layouts | `title-slide`, `outline-slide`, `xwysyy-slide`, `new-section-slide`, `image-slide`, `end-slide` |
 | Components | `textbox`, `info` |
 | Highlight macros | `red`, `bred`, `yellow`, `byellow` |

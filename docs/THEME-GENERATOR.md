@@ -1,6 +1,6 @@
 # AI Theme Generator
 
-Use this prompt with a multimodal model and your reference material. The output is a Typst dictionary that can be passed directly to `xwysyy-pre(theme: ...)` or `xwysyy-doc(theme: ...)`.
+Use this prompt with a multimodal model and your reference material. The output is a Typst dictionary that can be passed directly to `xwysyy-pre(theme: ...)`.
 
 ## Supported Inputs
 

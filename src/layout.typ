@@ -48,7 +48,6 @@
 
 #import "@preview/touying:0.7.4": utils
 #import "slides.typ": xwysyy-slide
-#import "elements.typ": textbox
 #import "themes.typ": _theme-state
 
 // Capture alignment references before any parameter named `top` / `bottom` /
@@ -59,7 +58,6 @@
 #let _acenter = center
 #let _ahorizon = horizon
 
-#let _note-mode() = sys.inputs.at("mode", default: "slides") == "note"
 #let _clamp(x, lo, hi) = calc.min(calc.max(x, lo), hi)
 
 // Optical center sits slightly above the geometric center so a centered group
@@ -89,8 +87,6 @@
 #let _STAT-SCALE-MIN = 0.6
 // Measurement epsilon: below this a dimension counts as zero.
 #let _EPS-L = 0.01pt
-// Nominal measurement width for note-mode content validation.
-#let _NOTE-W = 20em
 
 #let _MODES = ("compact", "balanced", "separated")
 #let _check-mode(mode) = {
@@ -207,10 +203,9 @@
 
 #let _KINDS = ("visual", "card", "takeaway", "plain")
 
-// Central item validation, run in BOTH note and slides mode before any
-// branching.  The constructor marker is not trusted: a hand-built dictionary
-// with an unknown kind, fit, or role fails here instead of silently taking
-// some other code path.  `stretch: false` marks slots sized by their natural
+// Central item validation, run up front in every component.  The constructor
+// marker is not trusted: a hand-built dictionary with an unknown kind, fit, or
+// role fails here instead of silently taking some other code path.  `stretch: false` marks slots sized by their natural
 // height; `reveal: false` marks components without reveal steps, which must
 // reject `reveal-from` instead of ignoring it.
 #let _validate-item(comp, slot, it, stretch: true, reveal: true) = {
@@ -404,18 +399,6 @@
     }
   }
   (mu: mu, mc: mc)
-}
-
-// Note-mode content validation: the same panics as slides mode, against a
-// nominal width, so a deck cannot compile as a note while its slides build
-// is broken.  Declared-stretch content legitimately measures zero (percent
-// sizing) and is skipped here — its evidence comes from the pixel check.
-#let _note-assert(comp, slot, it) = {
-  if not _stretchy(it) {
-    context {
-      let _ = _assert-measurable(comp, slot, it.kind, it.body, _NOTE-W.to-absolute())
-    }
-  }
 }
 
 // Measure a natural item for a slot of width `w`.  Returns the outer size the
@@ -644,72 +627,63 @@
   let bi = _validate-item("duo-slide", "bottom", _as-item(bottom, "card"))
   let steps = _steps("duo-slide", (ti, bi), reveal, 2)
   let rep = calc.max(..steps, 1)
-  if _note-mode() {
-    xwysyy-slide(title: title)[
-      #_note-assert("duo-slide", "top", ti)
-      #_note-assert("duo-slide", "bottom", bi)
-      #block(ti.body)
-      #if _painted(bi) { textbox(bi.body) } else { block(bi.body) }
-    ]
-  } else {
-    xwysyy-slide(title: title, repeat: rep, self => context {
-      let cfill = _theme-state.get().skyll
-      layout(size => {
-        let W = size.width
-        let H = size.height
-        let sid = _sid(id, "duo")
-        _frame-mark(sid, self, size)
-        let twn = tn.at("top-width")
-        let bwn = tn.at("bottom-width")
-        let tw = W * twn
-        let bw = W * bwn
-        let gap = H * _mode-gap(mode)
-        let ts = _item-slot("duo-slide", "top", ti, tw, H)
-        let bs = _item-slot("duo-slide", "bottom", bi, bw, H)
-        let alloc = _alloc-column((ts.spec, bs.spec), ((min: gap * _GAP-MIN, pref: gap),), H)
-        let th = alloc.heights.at(0)
-        let bh = alloc.heights.at(1)
-        let g = alloc.gaps.at(0)
-        let y0 = alloc.y0
+  xwysyy-slide(title: title, repeat: rep, self => context {
+    let cfill = _theme-state.get().skyll
+    layout(size => {
+      let W = size.width
+      let H = size.height
+      let sid = _sid(id, "duo")
+      _frame-mark(sid, self, size)
+      let twn = tn.at("top-width")
+      let bwn = tn.at("bottom-width")
+      let tw = W * twn
+      let bw = W * bwn
+      let gap = H * _mode-gap(mode)
+      let ts = _item-slot("duo-slide", "top", ti, tw, H)
+      let bs = _item-slot("duo-slide", "bottom", bi, bw, H)
+      let alloc = _alloc-column((ts.spec, bs.spec), ((min: gap * _GAP-MIN, pref: gap),), H)
+      let th = alloc.heights.at(0)
+      let bh = alloc.heights.at(1)
+      let g = alloc.gaps.at(0)
+      let y0 = alloc.y0
 
-        place(_atop + _aleft, dx: (W - tw) / 2, dy: y0,
-          _from(self, steps.at(0), _render-item(ti, tw, th, cfill)))
-        place(_atop + _aleft, dx: (W - bw) / 2, dy: y0 + th + g,
-          _from(self, steps.at(1), _render-item(bi, bw, bh, cfill)))
+      place(_atop + _aleft, dx: (W - tw) / 2, dy: y0,
+        _from(self, steps.at(0), _render-item(ti, tw, th, cfill)))
+      place(_atop + _aleft, dx: (W - bw) / 2, dy: y0 + th + g,
+        _from(self, steps.at(1), _render-item(bi, bw, bh, cfill)))
 
-        let objects = (
-          _obj(sid + ":top", ti.kind, ti.role, sid,
-            (1.0 - twn) / 2, y0 / H, twn, th / H,
-            pref-h: ts.spec.pref / H,
-            pay-w: if ts.stretch { none } else { ts.pay-w / W },
-            pay-h: if ts.stretch { none } else { ts.pay-h / H },
-            pay-src: ts.src, over-x: ts.over-x,
-            pad-x: ts.pad / W, pad-y: ts.pad / H,
-            halign: if ts.painted { "left" } else { "center" },
-            painted: ts.painted, paint-fill: cfill.to-hex(),
-            visible-from: steps.at(0)),
-          _obj(sid + ":bottom", bi.kind, bi.role, sid,
-            (1.0 - bwn) / 2, (y0 + th + g) / H, bwn, bh / H,
-            pref-h: bs.spec.pref / H,
-            pay-w: if bs.stretch { none } else { bs.pay-w / W },
-            pay-h: if bs.stretch { none } else { bs.pay-h / H },
-            pay-src: bs.src, over-x: bs.over-x,
-            pad-x: bs.pad / W, pad-y: bs.pad / H,
-            halign: if bs.painted { "left" } else { "center" },
-            painted: bs.painted, paint-fill: cfill.to-hex(),
-            visible-from: steps.at(1)),
-        )
-        let relations = (
-          _rel(sid + ":top", sid + ":bottom", relation, "vertical", _mode-proximity(mode)),
-        )
-        if self.subslide == rep {
-          _emit(sid, "duo", "column", here().position().page, rep, objects, relations,
-            alloc.fit, (mode: mode, gap_fraction: g / H, tuned: tuning.len() > 0))
-          if debug { _debug-layer(objects, W, H) }
-        }
-      })
+      let objects = (
+        _obj(sid + ":top", ti.kind, ti.role, sid,
+          (1.0 - twn) / 2, y0 / H, twn, th / H,
+          pref-h: ts.spec.pref / H,
+          pay-w: if ts.stretch { none } else { ts.pay-w / W },
+          pay-h: if ts.stretch { none } else { ts.pay-h / H },
+          pay-src: ts.src, over-x: ts.over-x,
+          pad-x: ts.pad / W, pad-y: ts.pad / H,
+          halign: if ts.painted { "left" } else { "center" },
+          painted: ts.painted, paint-fill: cfill.to-hex(),
+          visible-from: steps.at(0)),
+        _obj(sid + ":bottom", bi.kind, bi.role, sid,
+          (1.0 - bwn) / 2, (y0 + th + g) / H, bwn, bh / H,
+          pref-h: bs.spec.pref / H,
+          pay-w: if bs.stretch { none } else { bs.pay-w / W },
+          pay-h: if bs.stretch { none } else { bs.pay-h / H },
+          pay-src: bs.src, over-x: bs.over-x,
+          pad-x: bs.pad / W, pad-y: bs.pad / H,
+          halign: if bs.painted { "left" } else { "center" },
+          painted: bs.painted, paint-fill: cfill.to-hex(),
+          visible-from: steps.at(1)),
+      )
+      let relations = (
+        _rel(sid + ":top", sid + ":bottom", relation, "vertical", _mode-proximity(mode)),
+      )
+      if self.subslide == rep {
+        _emit(sid, "duo", "column", here().position().page, rep, objects, relations,
+          alloc.fit, (mode: mode, gap_fraction: g / H, tuned: tuning.len() > 0))
+        if debug { _debug-layer(objects, W, H) }
+      }
     })
-  }
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -737,57 +711,50 @@
   ))
   let it = _validate-item("focus-slide", "body", _as-item(body, "card"),
     stretch: false, reveal: false)
-  if _note-mode() {
-    xwysyy-slide(title: title)[
-      #_note-assert("focus-slide", "body", it)
-      #if _painted(it) { textbox(it.body) } else { block(it.body) }
-    ]
-  } else {
-    xwysyy-slide(title: title, self => context {
-      let cfill = _theme-state.get().skyll
-      layout(size => {
-        let W = size.width
-        let H = size.height
-        let sid = _sid(id, "focus")
-        _frame-mark(sid, self, size)
-        let wn = tn.at("width")
-        let cw = W * wn
-        let m = _measure-item("focus-slide", "body", it, cw)
-        let hr = m.outer / H
-        let fit = if hr <= _FILL {
-          (state: "normal", required_height_ratio: hr, gap_ratio: 1.0,
-           margin_deficit_ratio: 0.0, body_overflow_ratio: 0.0)
-        } else if hr <= 1.0 {
-          (state: "tight", required_height_ratio: hr, gap_ratio: 1.0,
-           margin_deficit_ratio: hr - _FILL, body_overflow_ratio: 0.0)
-        } else {
-          (state: "overflow", required_height_ratio: hr, gap_ratio: 1.0,
-           margin_deficit_ratio: 1.0 - _FILL, body_overflow_ratio: hr - 1.0)
-        }
-        let y = if fit.state == "normal" {
-          _clamp(tn.at("center-y") - hr / 2, _MARGIN-TOP,
-            calc.max(1.0 - _MARGIN-BOT - hr, _MARGIN-TOP))
-        } else if fit.state == "tight" { (1.0 - hr) / 2 } else { 0.0 }
+  xwysyy-slide(title: title, self => context {
+    let cfill = _theme-state.get().skyll
+    layout(size => {
+      let W = size.width
+      let H = size.height
+      let sid = _sid(id, "focus")
+      _frame-mark(sid, self, size)
+      let wn = tn.at("width")
+      let cw = W * wn
+      let m = _measure-item("focus-slide", "body", it, cw)
+      let hr = m.outer / H
+      let fit = if hr <= _FILL {
+        (state: "normal", required_height_ratio: hr, gap_ratio: 1.0,
+         margin_deficit_ratio: 0.0, body_overflow_ratio: 0.0)
+      } else if hr <= 1.0 {
+        (state: "tight", required_height_ratio: hr, gap_ratio: 1.0,
+         margin_deficit_ratio: hr - _FILL, body_overflow_ratio: 0.0)
+      } else {
+        (state: "overflow", required_height_ratio: hr, gap_ratio: 1.0,
+         margin_deficit_ratio: 1.0 - _FILL, body_overflow_ratio: hr - 1.0)
+      }
+      let y = if fit.state == "normal" {
+        _clamp(tn.at("center-y") - hr / 2, _MARGIN-TOP,
+          calc.max(1.0 - _MARGIN-BOT - hr, _MARGIN-TOP))
+      } else if fit.state == "tight" { (1.0 - hr) / 2 } else { 0.0 }
 
-        place(_atop + _aleft, dx: (W - cw) / 2, dy: H * y,
-          _render-item(it, cw, m.outer, cfill))
+      place(_atop + _aleft, dx: (W - cw) / 2, dy: H * y,
+        _render-item(it, cw, m.outer, cfill))
 
-        let objects = (
-          _obj(sid + ":focus", it.kind, it.role, sid,
-            (1.0 - wn) / 2, y, wn, hr,
-            pref-h: hr,
-            pay-w: m.pay-w / W, pay-h: m.pay-h / H,
-            pay-src: m.src, over-x: m.over-x,
-            pad-x: m.pad / W, pad-y: m.pad / H,
-            halign: if _painted(it) { "left" } else { "center" },
-            painted: _painted(it), paint-fill: cfill.to-hex()),
-        )
-        _emit(sid, "focus", "single", here().position().page, 1, objects, (), fit,
-          (center_y: tn.at("center-y"), intent: "focus", tuned: tuning.len() > 0))
-        if debug { _debug-layer(objects, W, H) }
-      })
+      let objects = (
+        _obj(sid + ":focus", it.kind, it.role, sid,
+          (1.0 - wn) / 2, y, wn, hr,
+          pref-h: hr,
+          pay-w: m.pay-w / W, pay-h: m.pay-h / H,
+          pay-src: m.src, over-x: m.over-x,
+          pad-x: m.pad / W, pad-y: m.pad / H,
+          halign: if _painted(it) { "left" } else { "center" },
+          painted: _painted(it), paint-fill: cfill.to-hex()),
+      )
+      _emit(sid, "focus", "single", here().position().page, 1, objects, (), fit,
+        (center_y: tn.at("center-y"), intent: "focus", tuned: tuning.len() > 0))
+      if debug { _debug-layer(objects, W, H) }
     })
-  }
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -822,70 +789,61 @@
   }
   let steps = _steps("stack-slide", its, reveal, n)
   let rep = calc.max(..steps, 1)
-  if _note-mode() {
-    xwysyy-slide(title: title)[
-      #for (i, it) in its.enumerate() {
-        _note-assert("stack-slide", "items[" + str(i) + "]", it)
-        if _painted(it) { textbox(it.body) } else { block(it.body) }
-      }
-    ]
-  } else {
-    xwysyy-slide(title: title, repeat: rep, self => context {
-      let cfill = _theme-state.get().skyll
-      layout(size => {
-        let W = size.width
-        let H = size.height
-        let sid = _sid(id, "stack")
-        _frame-mark(sid, self, size)
-        let wn = tn.at("width")
-        let bw = W * wn
-        let slots = its.enumerate().map(((i, it)) =>
-          _item-slot("stack-slide", "items[" + str(i) + "]", it, bw, H))
-        // Grow policy: stretch visuals absorb free space; without one, the
-        // cards share it so a pure-text stack reads as tall cards.
-        let has-stretch = slots.any(s => s.stretch)
-        let specs = slots.enumerate().map(((i, s)) => {
-          if s.stretch { s.spec }
-          else if not has-stretch and its.at(i).kind == "card" {
-            (min: s.spec.min, pref: s.spec.pref, max: none, grow: 1.0)
-          } else { s.spec }
-        })
-        let gap = H * _mode-gap(mode)
-        let alloc = _alloc-column(specs, ((min: gap * _GAP-MIN, pref: gap),) * (n - 1), H)
-
-        let objects = ()
-        let relations = ()
-        let cy = alloc.y0
-        for (i, it) in its.enumerate() {
-          let h = alloc.heights.at(i)
-          let s = slots.at(i)
-          place(_atop + _aleft, dx: (W - bw) / 2, dy: cy,
-            _from(self, steps.at(i), _render-item(it, bw, h, cfill)))
-          let oid = sid + ":" + str(i)
-          objects.push(_obj(oid, it.kind, it.role, sid,
-            (1.0 - wn) / 2, cy / H, wn, h / H,
-            pref-h: specs.at(i).pref / H,
-            pay-w: if s.stretch { none } else { s.pay-w / W },
-            pay-h: if s.stretch { none } else { s.pay-h / H },
-            pay-src: s.src, over-x: s.over-x,
-            pad-x: s.pad / W, pad-y: s.pad / H,
-            halign: if s.painted { "left" } else { "center" },
-            painted: s.painted, paint-fill: cfill.to-hex(),
-            visible-from: steps.at(i)))
-          if i > 0 {
-            relations.push(_rel(sid + ":" + str(i - 1), oid, relation, "vertical", _mode-proximity(mode)))
-          }
-          cy = cy + h + if i < n - 1 { alloc.gaps.at(i) } else { 0pt }
-        }
-        if self.subslide == rep {
-          _emit(sid, "stack", "column", here().position().page, rep, objects, relations,
-            alloc.fit, (mode: mode, count: n, tuned: tuning.len() > 0,
-              gap_fraction: if n > 1 { alloc.gaps.at(0) / H } else { 0.0 }))
-          if debug { _debug-layer(objects, W, H) }
-        }
+  xwysyy-slide(title: title, repeat: rep, self => context {
+    let cfill = _theme-state.get().skyll
+    layout(size => {
+      let W = size.width
+      let H = size.height
+      let sid = _sid(id, "stack")
+      _frame-mark(sid, self, size)
+      let wn = tn.at("width")
+      let bw = W * wn
+      let slots = its.enumerate().map(((i, it)) =>
+        _item-slot("stack-slide", "items[" + str(i) + "]", it, bw, H))
+      // Grow policy: stretch visuals absorb free space; without one, the
+      // cards share it so a pure-text stack reads as tall cards.
+      let has-stretch = slots.any(s => s.stretch)
+      let specs = slots.enumerate().map(((i, s)) => {
+        if s.stretch { s.spec }
+        else if not has-stretch and its.at(i).kind == "card" {
+          (min: s.spec.min, pref: s.spec.pref, max: none, grow: 1.0)
+        } else { s.spec }
       })
+      let gap = H * _mode-gap(mode)
+      let alloc = _alloc-column(specs, ((min: gap * _GAP-MIN, pref: gap),) * (n - 1), H)
+
+      let objects = ()
+      let relations = ()
+      let cy = alloc.y0
+      for (i, it) in its.enumerate() {
+        let h = alloc.heights.at(i)
+        let s = slots.at(i)
+        place(_atop + _aleft, dx: (W - bw) / 2, dy: cy,
+          _from(self, steps.at(i), _render-item(it, bw, h, cfill)))
+        let oid = sid + ":" + str(i)
+        objects.push(_obj(oid, it.kind, it.role, sid,
+          (1.0 - wn) / 2, cy / H, wn, h / H,
+          pref-h: specs.at(i).pref / H,
+          pay-w: if s.stretch { none } else { s.pay-w / W },
+          pay-h: if s.stretch { none } else { s.pay-h / H },
+          pay-src: s.src, over-x: s.over-x,
+          pad-x: s.pad / W, pad-y: s.pad / H,
+          halign: if s.painted { "left" } else { "center" },
+          painted: s.painted, paint-fill: cfill.to-hex(),
+          visible-from: steps.at(i)))
+        if i > 0 {
+          relations.push(_rel(sid + ":" + str(i - 1), oid, relation, "vertical", _mode-proximity(mode)))
+        }
+        cy = cy + h + if i < n - 1 { alloc.gaps.at(i) } else { 0pt }
+      }
+      if self.subslide == rep {
+        _emit(sid, "stack", "column", here().position().page, rep, objects, relations,
+          alloc.fit, (mode: mode, count: n, tuned: tuning.len() > 0,
+            gap_fraction: if n > 1 { alloc.gaps.at(0) / H } else { 0.0 }))
+        if debug { _debug-layer(objects, W, H) }
+      }
     })
-  }
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -894,8 +852,8 @@
 //
 // Columns take typed items; plain content is coerced to card().  Row layouts
 // are sized by their natural height, so stretch visuals are rejected up
-// front (in both note and slides mode).  Consecutive columns carry a `peer`
-// relation so the checker validates the gutter.
+// front.  Consecutive columns carry a `peer` relation so the checker
+// validates the gutter.
 
 #let grid-slide(
   title: auto,
@@ -917,68 +875,58 @@
   }
   let steps = _steps("grid-slide", its, reveal, n)
   let rep = calc.max(..steps, 1)
-  if _note-mode() {
-    xwysyy-slide(title: title)[
-      #for (i, it) in its.enumerate() {
-        _note-assert("grid-slide", "columns[" + str(i) + "]", it)
+  xwysyy-slide(title: title, repeat: rep, self => context {
+    let cfill = _theme-state.get().skyll
+    layout(size => {
+      let W = size.width
+      let H = size.height
+      let sid = _sid(id, "grid")
+      _frame-mark(sid, self, size)
+      let gutter = tn.at("gutter")
+      let cwn = (1.0 - gutter * (n - 1)) / n
+      if cwn <= 0.0 {
+        panic("grid-slide: gutter " + repr(gutter) + " leaves no width for " + repr(n) + " columns")
       }
-      #grid(columns: (1fr,) * n, column-gutter: 1em,
-        ..its.map(it => if _painted(it) { textbox(it.body) } else { it.body }))
-    ]
-  } else {
-    xwysyy-slide(title: title, repeat: rep, self => context {
-      let cfill = _theme-state.get().skyll
-      layout(size => {
-        let W = size.width
-        let H = size.height
-        let sid = _sid(id, "grid")
-        _frame-mark(sid, self, size)
-        let gutter = tn.at("gutter")
-        let cwn = (1.0 - gutter * (n - 1)) / n
-        if cwn <= 0.0 {
-          panic("grid-slide: gutter " + repr(gutter) + " leaves no width for " + repr(n) + " columns")
-        }
-        let cw = W * cwn
-        let slots = its.enumerate().map(((i, it)) =>
-          _item-slot("grid-slide", "columns[" + str(i) + "]", it, cw, H))
-        let naturals = slots.map(s => s.spec.pref)
-        let row = _fit-row(naturals, H)
+      let cw = W * cwn
+      let slots = its.enumerate().map(((i, it)) =>
+        _item-slot("grid-slide", "columns[" + str(i) + "]", it, cw, H))
+      let naturals = slots.map(s => s.spec.pref)
+      let row = _fit-row(naturals, H)
 
-        let objects = ()
-        let relations = ()
-        for (i, it) in its.enumerate() {
-          let s = slots.at(i)
-          let xn = i * (cwn + gutter)
-          place(_atop + _aleft, dx: W * xn, dy: row.y,
-            _from(self, steps.at(i), _render-item(it, cw, row.row, cfill)))
-          let oid = sid + ":" + str(i)
-          objects.push(_obj(oid, it.kind, it.role, sid,
-            xn, row.y / H, cwn, row.row / H,
-            pref-h: s.spec.pref / H,
-            pay-w: s.pay-w / W, pay-h: s.pay-h / H,
-            pay-src: s.src, over-x: s.over-x,
-            pad-x: s.pad / W, pad-y: s.pad / H,
-            halign: if s.painted { "left" } else { "center" },
-            painted: s.painted, paint-fill: cfill.to-hex(),
-            visible-from: steps.at(i)))
-          if i > 0 {
-            relations.push(_rel(sid + ":" + str(i - 1), oid, "peer", "horizontal", "gutter"))
-          }
+      let objects = ()
+      let relations = ()
+      for (i, it) in its.enumerate() {
+        let s = slots.at(i)
+        let xn = i * (cwn + gutter)
+        place(_atop + _aleft, dx: W * xn, dy: row.y,
+          _from(self, steps.at(i), _render-item(it, cw, row.row, cfill)))
+        let oid = sid + ":" + str(i)
+        objects.push(_obj(oid, it.kind, it.role, sid,
+          xn, row.y / H, cwn, row.row / H,
+          pref-h: s.spec.pref / H,
+          pay-w: s.pay-w / W, pay-h: s.pay-h / H,
+          pay-src: s.src, over-x: s.over-x,
+          pad-x: s.pad / W, pad-y: s.pad / H,
+          halign: if s.painted { "left" } else { "center" },
+          painted: s.painted, paint-fill: cfill.to-hex(),
+          visible-from: steps.at(i)))
+        if i > 0 {
+          relations.push(_rel(sid + ":" + str(i - 1), oid, "peer", "horizontal", "gutter"))
         }
-        let nmax = naturals.fold(0pt, (a, h) => calc.max(a, h))
-        let nmin = naturals.fold(nmax, (a, h) => calc.min(a, h))
-        if self.subslide == rep {
-          _emit(sid, "grid", "row", here().position().page, rep, objects, relations, row.fit, (
-            count: n,
-            gutter: gutter,
-            natural_height_variance: (nmax - nmin) / H,
-            tuned: tuning.len() > 0,
-          ))
-          if debug { _debug-layer(objects, W, H) }
-        }
-      })
+      }
+      let nmax = naturals.fold(0pt, (a, h) => calc.max(a, h))
+      let nmin = naturals.fold(nmax, (a, h) => calc.min(a, h))
+      if self.subslide == rep {
+        _emit(sid, "grid", "row", here().position().page, rep, objects, relations, row.fit, (
+          count: n,
+          gutter: gutter,
+          natural_height_variance: (nmax - nmin) / H,
+          tuned: tuning.len() > 0,
+        ))
+        if debug { _debug-layer(objects, W, H) }
+      }
     })
-  }
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -1008,67 +956,58 @@
   let ri = _validate-item("compare-slide", "right", _as-item(right, "card"), stretch: false)
   let steps = _steps("compare-slide", (li, ri), reveal, 2)
   let rep = calc.max(..steps, 1)
-  if _note-mode() {
-    xwysyy-slide(title: title)[
-      #_note-assert("compare-slide", "left", li)
-      #_note-assert("compare-slide", "right", ri)
-      #grid(columns: (1fr, 1fr), column-gutter: 1em,
-        ..(li, ri).map(it => if _painted(it) { textbox(it.body) } else { it.body }))
-    ]
-  } else {
-    xwysyy-slide(title: title, repeat: rep, self => context {
-      let cfill = _theme-state.get().skyll
-      layout(size => {
-        let W = size.width
-        let H = size.height
-        let sid = _sid(id, "compare")
-        _frame-mark(sid, self, size)
-        let gutter = tn.at("gutter")
-        let cwn = (1.0 - gutter) / 2
-        let cw = W * cwn
-        let ls = _item-slot("compare-slide", "left", li, cw, H)
-        let rs = _item-slot("compare-slide", "right", ri, cw, H)
-        let row = _fit-row((ls.spec.pref, rs.spec.pref), H)
+  xwysyy-slide(title: title, repeat: rep, self => context {
+    let cfill = _theme-state.get().skyll
+    layout(size => {
+      let W = size.width
+      let H = size.height
+      let sid = _sid(id, "compare")
+      _frame-mark(sid, self, size)
+      let gutter = tn.at("gutter")
+      let cwn = (1.0 - gutter) / 2
+      let cw = W * cwn
+      let ls = _item-slot("compare-slide", "left", li, cw, H)
+      let rs = _item-slot("compare-slide", "right", ri, cw, H)
+      let row = _fit-row((ls.spec.pref, rs.spec.pref), H)
 
-        place(_atop + _aleft, dx: 0pt, dy: row.y,
-          _from(self, steps.at(0), _render-item(li, cw, row.row, cfill, calign: _atop)))
-        place(_atop + _aleft, dx: W * (cwn + gutter), dy: row.y,
-          _from(self, steps.at(1), _render-item(ri, cw, row.row, cfill, calign: _atop)))
+      place(_atop + _aleft, dx: 0pt, dy: row.y,
+        _from(self, steps.at(0), _render-item(li, cw, row.row, cfill, calign: _atop)))
+      place(_atop + _aleft, dx: W * (cwn + gutter), dy: row.y,
+        _from(self, steps.at(1), _render-item(ri, cw, row.row, cfill, calign: _atop)))
 
-        let objects = (
-          _obj(sid + ":left", li.kind, li.role, sid,
-            0.0, row.y / H, cwn, row.row / H,
-            pref-h: ls.spec.pref / H,
-            pay-w: ls.pay-w / W, pay-h: ls.pay-h / H,
-            pay-src: ls.src, over-x: ls.over-x,
-            pad-x: ls.pad / W, pad-y: ls.pad / H,
-            calign: "top", halign: if ls.painted { "left" } else { "center" },
-            painted: ls.painted, paint-fill: cfill.to-hex(),
-            visible-from: steps.at(0)),
-          _obj(sid + ":right", ri.kind, ri.role, sid,
-            cwn + gutter, row.y / H, cwn, row.row / H,
-            pref-h: rs.spec.pref / H,
-            pay-w: rs.pay-w / W, pay-h: rs.pay-h / H,
-            pay-src: rs.src, over-x: rs.over-x,
-            pad-x: rs.pad / W, pad-y: rs.pad / H,
-            calign: "top", halign: if rs.painted { "left" } else { "center" },
-            painted: rs.painted, paint-fill: cfill.to-hex(),
-            visible-from: steps.at(1)),
-        )
-        let relations = (
-          _rel(sid + ":left", sid + ":right", "contrast", "horizontal", "gutter"),
-        )
-        if self.subslide == rep {
-          _emit(sid, "compare", "row", here().position().page, rep, objects, relations, row.fit, (
-            gutter: gutter,
-            natural_height_variance: calc.abs(ls.spec.pref - rs.spec.pref) / H,
-            tuned: tuning.len() > 0,
-          ))
-          if debug { _debug-layer(objects, W, H) }
-        }
-      })
+      let objects = (
+        _obj(sid + ":left", li.kind, li.role, sid,
+          0.0, row.y / H, cwn, row.row / H,
+          pref-h: ls.spec.pref / H,
+          pay-w: ls.pay-w / W, pay-h: ls.pay-h / H,
+          pay-src: ls.src, over-x: ls.over-x,
+          pad-x: ls.pad / W, pad-y: ls.pad / H,
+          calign: "top", halign: if ls.painted { "left" } else { "center" },
+          painted: ls.painted, paint-fill: cfill.to-hex(),
+          visible-from: steps.at(0)),
+        _obj(sid + ":right", ri.kind, ri.role, sid,
+          cwn + gutter, row.y / H, cwn, row.row / H,
+          pref-h: rs.spec.pref / H,
+          pay-w: rs.pay-w / W, pay-h: rs.pay-h / H,
+          pay-src: rs.src, over-x: rs.over-x,
+          pad-x: rs.pad / W, pad-y: rs.pad / H,
+          calign: "top", halign: if rs.painted { "left" } else { "center" },
+          painted: rs.painted, paint-fill: cfill.to-hex(),
+          visible-from: steps.at(1)),
+      )
+      let relations = (
+        _rel(sid + ":left", sid + ":right", "contrast", "horizontal", "gutter"),
+      )
+      if self.subslide == rep {
+        _emit(sid, "compare", "row", here().position().page, rep, objects, relations, row.fit, (
+          gutter: gutter,
+          natural_height_variance: calc.abs(ls.spec.pref - rs.spec.pref) / H,
+          tuned: tuning.len() > 0,
+        ))
+        if debug { _debug-layer(objects, W, H) }
+      }
     })
-  }
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -1122,93 +1061,85 @@
       panic("stat-slide: stats[" + str(i) + "] label renders empty")
     }
   }
-  if _note-mode() {
-    xwysyy-slide(title: title)[
-      #context { for (i, s) in stats.enumerate() { assert-metric(i, s) } }
-      #grid(columns: (1fr,) * n, column-gutter: 1em,
-        ..stats.map(s => textbox[#align(_acenter, strong(s.value)) #align(_acenter, s.label)]))
-    ]
-  } else {
-    xwysyy-slide(title: title, repeat: rep, self => context {
-      let t = _theme-state.get()
-      layout(size => {
-        let W = size.width
-        let H = size.height
-        let sid = _sid(id, "stat")
-        _frame-mark(sid, self, size)
-        for (i, s) in stats.enumerate() { assert-metric(i, s) }
-        let gutter = tn.at("gutter")
-        let cwn = (1.0 - gutter * (n - 1)) / n
-        if cwn <= 0.0 {
-          panic("stat-slide: gutter " + repr(gutter) + " leaves no width for " + repr(n) + " tiles")
-        }
-        let cw = W * cwn
-        let pad = _CARD-PAD.to-absolute()
-        let iw = cw - 2 * pad
-        // Fit each value to its tile: shrink down to the floor scale, below
-        // which the value wraps and the tile grows (reported by fit).
-        let scales = stats.map(s => {
-          let vw = measure(text(size: 2.6em, weight: 700, s.value)).width
-          if vw > iw and vw > 0pt { calc.max(iw / vw, _STAT-SCALE-MIN) } else { 1.0 }
-        })
-        let tile(i) = {
-          let s = stats.at(i)
-          align(_acenter + _ahorizon, stack(
-            spacing: 0.2em,
-            align(_acenter, text(size: 2.6em * scales.at(i), weight: 700, fill: t.sea, s.value)),
-            align(_acenter, text(size: 0.95em, fill: t.sea.lighten(12%), s.label)),
-          ))
-        }
-        // Payload width comes from the value and the label measured
-        // separately, never from the tile's forced full width.
-        let pays = range(n).map(i => {
-          let s = stats.at(i)
-          let vstyled = text(size: 2.6em * scales.at(i), weight: 700, s.value)
-          let vm = measure(vstyled)
-          let lm = measure(text(size: 0.95em, s.label))
-          let vc = measure(block(width: iw, vstyled))
-          (
-            w: calc.max(vm.width, lm.width),
-            h: measure(block(width: iw, tile(i))).height,
-            over-x: vm.width > iw + _EPS-L and vc.height <= vm.height + _EPS-L,
-          )
-        })
-        let naturals = pays.map(p => p.h + 2 * pad)
-        let row = _fit-row(naturals, H)
-
-        let objects = ()
-        let relations = ()
-        for i in range(n) {
-          let xn = i * (cwn + gutter)
-          place(_atop + _aleft, dx: W * xn, dy: row.y,
-            _from(self, steps.at(i),
-              block(width: cw, height: row.row, fill: t.skyll, inset: _CARD-PAD,
-                radius: 0.4em, align(_ahorizon, tile(i)))))
-          let oid = sid + ":" + str(i)
-          objects.push(_obj(oid, "card", "metric", sid,
-            xn, row.y / H, cwn, row.row / H,
-            pref-h: naturals.at(i) / H,
-            pay-w: calc.min(pays.at(i).w, iw) / W, pay-h: pays.at(i).h / H,
-            pay-src: "measured", over-x: pays.at(i).over-x,
-            pad-x: pad / W, pad-y: pad / H,
-            painted: true, paint-fill: t.skyll.to-hex(),
-            visible-from: steps.at(i)))
-          if i > 0 {
-            relations.push(_rel(sid + ":" + str(i - 1), oid, "peer", "horizontal", "gutter"))
-          }
-        }
-        if self.subslide == rep {
-          _emit(sid, "stat", "row", here().position().page, rep, objects, relations, row.fit, (
-            count: n,
-            gutter: gutter,
-            value_scales: scales,
-            tuned: tuning.len() > 0,
-          ))
-          if debug { _debug-layer(objects, W, H) }
-        }
+  xwysyy-slide(title: title, repeat: rep, self => context {
+    let t = _theme-state.get()
+    layout(size => {
+      let W = size.width
+      let H = size.height
+      let sid = _sid(id, "stat")
+      _frame-mark(sid, self, size)
+      for (i, s) in stats.enumerate() { assert-metric(i, s) }
+      let gutter = tn.at("gutter")
+      let cwn = (1.0 - gutter * (n - 1)) / n
+      if cwn <= 0.0 {
+        panic("stat-slide: gutter " + repr(gutter) + " leaves no width for " + repr(n) + " tiles")
+      }
+      let cw = W * cwn
+      let pad = _CARD-PAD.to-absolute()
+      let iw = cw - 2 * pad
+      // Fit each value to its tile: shrink down to the floor scale, below
+      // which the value wraps and the tile grows (reported by fit).
+      let scales = stats.map(s => {
+        let vw = measure(text(size: 2.6em, weight: 700, s.value)).width
+        if vw > iw and vw > 0pt { calc.max(iw / vw, _STAT-SCALE-MIN) } else { 1.0 }
       })
+      let tile(i) = {
+        let s = stats.at(i)
+        align(_acenter + _ahorizon, stack(
+          spacing: 0.2em,
+          align(_acenter, text(size: 2.6em * scales.at(i), weight: 700, fill: t.sea, s.value)),
+          align(_acenter, text(size: 0.95em, fill: t.sea.lighten(12%), s.label)),
+        ))
+      }
+      // Payload width comes from the value and the label measured
+      // separately, never from the tile's forced full width.
+      let pays = range(n).map(i => {
+        let s = stats.at(i)
+        let vstyled = text(size: 2.6em * scales.at(i), weight: 700, s.value)
+        let vm = measure(vstyled)
+        let lm = measure(text(size: 0.95em, s.label))
+        let vc = measure(block(width: iw, vstyled))
+        (
+          w: calc.max(vm.width, lm.width),
+          h: measure(block(width: iw, tile(i))).height,
+          over-x: vm.width > iw + _EPS-L and vc.height <= vm.height + _EPS-L,
+        )
+      })
+      let naturals = pays.map(p => p.h + 2 * pad)
+      let row = _fit-row(naturals, H)
+
+      let objects = ()
+      let relations = ()
+      for i in range(n) {
+        let xn = i * (cwn + gutter)
+        place(_atop + _aleft, dx: W * xn, dy: row.y,
+          _from(self, steps.at(i),
+            block(width: cw, height: row.row, fill: t.skyll, inset: _CARD-PAD,
+              radius: 0.4em, align(_ahorizon, tile(i)))))
+        let oid = sid + ":" + str(i)
+        objects.push(_obj(oid, "card", "metric", sid,
+          xn, row.y / H, cwn, row.row / H,
+          pref-h: naturals.at(i) / H,
+          pay-w: calc.min(pays.at(i).w, iw) / W, pay-h: pays.at(i).h / H,
+          pay-src: "measured", over-x: pays.at(i).over-x,
+          pad-x: pad / W, pad-y: pad / H,
+          painted: true, paint-fill: t.skyll.to-hex(),
+          visible-from: steps.at(i)))
+        if i > 0 {
+          relations.push(_rel(sid + ":" + str(i - 1), oid, "peer", "horizontal", "gutter"))
+        }
+      }
+      if self.subslide == rep {
+        _emit(sid, "stat", "row", here().position().page, rep, objects, relations, row.fit, (
+          count: n,
+          gutter: gutter,
+          value_scales: scales,
+          tuned: tuning.len() > 0,
+        ))
+        if debug { _debug-layer(objects, W, H) }
+      }
     })
-  }
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -1254,108 +1185,98 @@
   let cap = if caption == none { none } else {
     context text(size: 0.85em, fill: _theme-state.get().sea.lighten(12%), style: "italic", caption)
   }
-  if _note-mode() {
-    xwysyy-slide(title: title)[
-      #_note-assert("figure-slide", "fig", fi)
-      #if ki != none { _note-assert("figure-slide", "takeaway", ki) }
-      #align(_acenter, fi.body)
-      #if cap != none { align(_acenter, cap) }
-      #if ki != none { textbox(ki.body) }
-    ]
-  } else {
-    xwysyy-slide(title: title, repeat: rep, self => context {
-      let cfill = _theme-state.get().skyll
-      layout(size => {
-        let W = size.width
-        let H = size.height
-        let sid = _sid(id, "figure")
-        _frame-mark(sid, self, size)
-        let fwn = tn.at("figure-width")
-        let twn = tn.at("takeaway-width")
-        let fw = W * fwn
-        let tw = W * twn
-        let cap-gap = 0.5em.to-absolute()
-        let mode-gap = H * _mode-gap(mode)
+  xwysyy-slide(title: title, repeat: rep, self => context {
+    let cfill = _theme-state.get().skyll
+    layout(size => {
+      let W = size.width
+      let H = size.height
+      let sid = _sid(id, "figure")
+      _frame-mark(sid, self, size)
+      let fwn = tn.at("figure-width")
+      let twn = tn.at("takeaway-width")
+      let fw = W * fwn
+      let tw = W * twn
+      let cap-gap = 0.5em.to-absolute()
+      let mode-gap = H * _mode-gap(mode)
 
-        let fs = _item-slot("figure-slide", "fig", fi, fw, H)
-        let specs = (fs.spec,)
-        let gaps = ()
-        let cap-m = if cap != none {
-          let m = measure(block(width: fw, cap))
-          specs.push((min: m.height, pref: m.height, max: m.height, grow: 0.0))
-          // The caption gap is tight by design and not compressible.
-          gaps.push((min: cap-gap, pref: cap-gap))
-          m
-        } else { none }
-        let ks = if ki != none {
-          let s = _item-slot("figure-slide", "takeaway", ki, tw, H)
-          specs.push(s.spec)
-          gaps.push((min: mode-gap * _GAP-MIN, pref: mode-gap))
-          s
-        } else { none }
-        let alloc = _alloc-column(specs, gaps, H)
+      let fs = _item-slot("figure-slide", "fig", fi, fw, H)
+      let specs = (fs.spec,)
+      let gaps = ()
+      let cap-m = if cap != none {
+        let m = measure(block(width: fw, cap))
+        specs.push((min: m.height, pref: m.height, max: m.height, grow: 0.0))
+        // The caption gap is tight by design and not compressible.
+        gaps.push((min: cap-gap, pref: cap-gap))
+        m
+      } else { none }
+      let ks = if ki != none {
+        let s = _item-slot("figure-slide", "takeaway", ki, tw, H)
+        specs.push(s.spec)
+        gaps.push((min: mode-gap * _GAP-MIN, pref: mode-gap))
+        s
+      } else { none }
+      let alloc = _alloc-column(specs, gaps, H)
 
-        let objects = ()
-        let relations = ()
-        let cy = alloc.y0
-        let idx = 0
-        let fh = alloc.heights.at(idx)
+      let objects = ()
+      let relations = ()
+      let cy = alloc.y0
+      let idx = 0
+      let fh = alloc.heights.at(idx)
+      place(_atop + _aleft, dx: (W - fw) / 2, dy: cy,
+        _from(self, fig-step, _render-item(fi, fw, fh, cfill)))
+      objects.push(_obj(sid + ":figure", fi.kind, fi.role, sid,
+        (1.0 - fwn) / 2, cy / H, fwn, fh / H,
+        pref-h: fs.spec.pref / H,
+        pay-w: if fs.stretch { none } else { fs.pay-w / W },
+        pay-h: if fs.stretch { none } else { fs.pay-h / H },
+        pay-src: fs.src, over-x: fs.over-x,
+        pad-x: fs.pad / W, pad-y: fs.pad / H,
+        painted: fs.painted, paint-fill: cfill.to-hex(),
+        visible-from: fig-step))
+      cy = cy + fh
+      idx += 1
+      if cap != none {
+        cy = cy + alloc.gaps.at(idx - 1)
+        let ch = alloc.heights.at(idx)
         place(_atop + _aleft, dx: (W - fw) / 2, dy: cy,
-          _from(self, fig-step, _render-item(fi, fw, fh, cfill)))
-        objects.push(_obj(sid + ":figure", fi.kind, fi.role, sid,
-          (1.0 - fwn) / 2, cy / H, fwn, fh / H,
-          pref-h: fs.spec.pref / H,
-          pay-w: if fs.stretch { none } else { fs.pay-w / W },
-          pay-h: if fs.stretch { none } else { fs.pay-h / H },
-          pay-src: fs.src, over-x: fs.over-x,
-          pad-x: fs.pad / W, pad-y: fs.pad / H,
-          painted: fs.painted, paint-fill: cfill.to-hex(),
+          _from(self, fig-step, block(width: fw, align(_acenter, cap))))
+        let cm = measure(cap)
+        objects.push(_obj(sid + ":caption", "plain", "caption", sid,
+          (1.0 - fwn) / 2, cy / H, fwn, ch / H,
+          pref-h: ch / H,
+          pay-w: calc.min(cm.width, fw) / W, pay-h: cap-m.height / H,
+          pay-src: "measured",
+          over-x: cm.width > fw + _EPS-L and cap-m.height <= cm.height + _EPS-L,
           visible-from: fig-step))
-        cy = cy + fh
+        relations.push(_rel(sid + ":figure", sid + ":caption", "caption", "vertical", "tight"))
+        cy = cy + ch
         idx += 1
-        if cap != none {
-          cy = cy + alloc.gaps.at(idx - 1)
-          let ch = alloc.heights.at(idx)
-          place(_atop + _aleft, dx: (W - fw) / 2, dy: cy,
-            _from(self, fig-step, block(width: fw, align(_acenter, cap))))
-          let cm = measure(cap)
-          objects.push(_obj(sid + ":caption", "plain", "caption", sid,
-            (1.0 - fwn) / 2, cy / H, fwn, ch / H,
-            pref-h: ch / H,
-            pay-w: calc.min(cm.width, fw) / W, pay-h: cap-m.height / H,
-            pay-src: "measured",
-            over-x: cm.width > fw + _EPS-L and cap-m.height <= cm.height + _EPS-L,
-            visible-from: fig-step))
-          relations.push(_rel(sid + ":figure", sid + ":caption", "caption", "vertical", "tight"))
-          cy = cy + ch
-          idx += 1
-        }
-        if ki != none {
-          cy = cy + alloc.gaps.at(idx - 1)
-          let th = alloc.heights.at(idx)
-          place(_atop + _aleft, dx: (W - tw) / 2, dy: cy,
-            _from(self, tk-step, _render-item(ki, tw, th, cfill)))
-          let anchor = if cap != none { sid + ":caption" } else { sid + ":figure" }
-          objects.push(_obj(sid + ":takeaway", ki.kind, ki.role, sid,
-            (1.0 - twn) / 2, cy / H, twn, th / H,
-            pref-h: ks.spec.pref / H,
-            pay-w: ks.pay-w / W, pay-h: ks.pay-h / H,
-            pay-src: ks.src, over-x: ks.over-x,
-            pad-x: ks.pad / W, pad-y: ks.pad / H,
-            halign: if ks.painted { "left" } else { "center" },
-            painted: ks.painted, paint-fill: cfill.to-hex(),
-            visible-from: tk-step))
-          relations.push(_rel(anchor, sid + ":takeaway", "supports", "vertical", _mode-proximity(mode)))
-        }
-        if self.subslide == rep {
-          _emit(sid, "figure", "column", here().position().page, rep, objects, relations,
-            alloc.fit, (mode: mode, has_caption: cap != none, has_takeaway: ki != none,
-              tuned: tuning.len() > 0))
-          if debug { _debug-layer(objects, W, H) }
-        }
-      })
+      }
+      if ki != none {
+        cy = cy + alloc.gaps.at(idx - 1)
+        let th = alloc.heights.at(idx)
+        place(_atop + _aleft, dx: (W - tw) / 2, dy: cy,
+          _from(self, tk-step, _render-item(ki, tw, th, cfill)))
+        let anchor = if cap != none { sid + ":caption" } else { sid + ":figure" }
+        objects.push(_obj(sid + ":takeaway", ki.kind, ki.role, sid,
+          (1.0 - twn) / 2, cy / H, twn, th / H,
+          pref-h: ks.spec.pref / H,
+          pay-w: ks.pay-w / W, pay-h: ks.pay-h / H,
+          pay-src: ks.src, over-x: ks.over-x,
+          pad-x: ks.pad / W, pad-y: ks.pad / H,
+          halign: if ks.painted { "left" } else { "center" },
+          painted: ks.painted, paint-fill: cfill.to-hex(),
+          visible-from: tk-step))
+        relations.push(_rel(anchor, sid + ":takeaway", "supports", "vertical", _mode-proximity(mode)))
+      }
+      if self.subslide == rep {
+        _emit(sid, "figure", "column", here().position().page, rep, objects, relations,
+          alloc.fit, (mode: mode, has_caption: cap != none, has_takeaway: ki != none,
+            tuned: tuning.len() > 0))
+        if debug { _debug-layer(objects, W, H) }
+      }
     })
-  }
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -1397,84 +1318,73 @@
     }
     (mu: mu, mc: mc)
   }
-  if _note-mode() {
-    xwysyy-slide(title: title)[
-      #context {
-        let _ = assert-slot("label", label, _NOTE-W.to-absolute())
-        let _ = assert-slot("body", body, _NOTE-W.to-absolute())
+  xwysyy-slide(title: title, self => context {
+    let t = _theme-state.get()
+    layout(size => {
+      let W = size.width
+      let H = size.height
+      let sid = _sid(id, "sidebar")
+      _frame-mark(sid, self, size)
+      let lwn = tn.at("label-width")
+      let gutter = tn.at("gutter")
+      let bwn = 1.0 - lwn - gutter
+      if bwn <= 0.0 {
+        panic("sidebar-slide: label-width " + repr(lwn) + " + gutter leaves no body width")
       }
-      #strong(label) \
-      #body
-    ]
-  } else {
-    xwysyy-slide(title: title, self => context {
-      let t = _theme-state.get()
-      layout(size => {
-        let W = size.width
-        let H = size.height
-        let sid = _sid(id, "sidebar")
-        _frame-mark(sid, self, size)
-        let lwn = tn.at("label-width")
-        let gutter = tn.at("gutter")
-        let bwn = 1.0 - lwn - gutter
-        if bwn <= 0.0 {
-          panic("sidebar-slide: label-width " + repr(lwn) + " + gutter leaves no body width")
-        }
-        let lw = W * lwn
-        let bw = W * bwn
-        let pad = _CARD-PAD.to-absolute()
-        // The label is measured with the same styled content it is rendered
-        // with (bold via `set text`, not `strong`, whose show rule enlarges
-        // the run and would make the measurement disagree with the render).
-        let label-inner = {
-          set text(weight: "bold")
-          show raw: set text(fill: t.sea)
-          label
-        }
-        let lmm = assert-slot("label", label-inner, lw - 2 * pad)
-        let bmm = assert-slot("body", body, bw - 2 * pad)
-        let lh = lmm.mc.height + 2 * pad
-        let bh = bmm.mc.height + 2 * pad
-        let row = _fit-row((lh, bh), H)
+      let lw = W * lwn
+      let bw = W * bwn
+      let pad = _CARD-PAD.to-absolute()
+      // The label is measured with the same styled content it is rendered
+      // with (bold via `set text`, not `strong`, whose show rule enlarges
+      // the run and would make the measurement disagree with the render).
+      let label-inner = {
+        set text(weight: "bold")
+        show raw: set text(fill: t.sea)
+        label
+      }
+      let lmm = assert-slot("label", label-inner, lw - 2 * pad)
+      let bmm = assert-slot("body", body, bw - 2 * pad)
+      let lh = lmm.mc.height + 2 * pad
+      let bh = bmm.mc.height + 2 * pad
+      let row = _fit-row((lh, bh), H)
 
-        place(_atop + _aleft, dx: 0pt, dy: row.y,
-          block(width: lw, height: row.row, fill: t.sea, inset: pad, radius: 0.4em,
-            align(_ahorizon + _aleft, {
-              // Label text is light (paper) on the dark sea tab; inline code
-              // keeps its light chip but takes dark (sea) text so it stays
-              // readable instead of light-on-light.
-              set text(fill: t.paper)
-              label-inner
-            })))
-        place(_atop + _aleft, dx: W * (lwn + gutter), dy: row.y,
-          block(width: bw, height: row.row, fill: t.skyll, inset: pad, radius: 0.4em,
-            align(_ahorizon, body)))
+      place(_atop + _aleft, dx: 0pt, dy: row.y,
+        block(width: lw, height: row.row, fill: t.sea, inset: pad, radius: 0.4em,
+          align(_ahorizon + _aleft, {
+            // Label text is light (paper) on the dark sea tab; inline code
+            // keeps its light chip but takes dark (sea) text so it stays
+            // readable instead of light-on-light.
+            set text(fill: t.paper)
+            label-inner
+          })))
+      place(_atop + _aleft, dx: W * (lwn + gutter), dy: row.y,
+        block(width: bw, height: row.row, fill: t.skyll, inset: pad, radius: 0.4em,
+          align(_ahorizon, body)))
 
-        let objects = (
-          _obj(sid + ":label", "card", "label", sid,
-            0.0, row.y / H, lwn, row.row / H,
-            pref-h: lh / H,
-            pay-w: calc.min(lmm.mu.width, lw - 2 * pad) / W,
-            pay-h: lmm.mc.height / H,
-            pay-src: "measured",
-            over-x: lmm.mu.width > lw - 2 * pad + _EPS-L and lmm.mc.height <= lmm.mu.height + _EPS-L,
-            pad-x: pad / W, pad-y: pad / H,
-            halign: "left", painted: true, paint-fill: t.sea.to-hex()),
-          _obj(sid + ":body", "card", "content", sid,
-            lwn + gutter, row.y / H, bwn, row.row / H,
-            pref-h: bh / H,
-            pay-w: calc.min(bmm.mu.width, bw - 2 * pad) / W,
-            pay-h: bmm.mc.height / H,
-            pay-src: "measured",
-            over-x: bmm.mu.width > bw - 2 * pad + _EPS-L and bmm.mc.height <= bmm.mu.height + _EPS-L,
-            pad-x: pad / W, pad-y: pad / H,
-            halign: "left", painted: true, paint-fill: t.skyll.to-hex()),
-        )
-        let relations = (_rel(sid + ":label", sid + ":body", "labels", "horizontal", "gutter"),)
-        _emit(sid, "sidebar", "row", here().position().page, 1, objects, relations, row.fit,
-          (label_width: lwn, gutter: gutter, tuned: tuning.len() > 0))
-        if debug { _debug-layer(objects, W, H) }
-      })
+      let objects = (
+        _obj(sid + ":label", "card", "label", sid,
+          0.0, row.y / H, lwn, row.row / H,
+          pref-h: lh / H,
+          pay-w: calc.min(lmm.mu.width, lw - 2 * pad) / W,
+          pay-h: lmm.mc.height / H,
+          pay-src: "measured",
+          over-x: lmm.mu.width > lw - 2 * pad + _EPS-L and lmm.mc.height <= lmm.mu.height + _EPS-L,
+          pad-x: pad / W, pad-y: pad / H,
+          halign: "left", painted: true, paint-fill: t.sea.to-hex()),
+        _obj(sid + ":body", "card", "content", sid,
+          lwn + gutter, row.y / H, bwn, row.row / H,
+          pref-h: bh / H,
+          pay-w: calc.min(bmm.mu.width, bw - 2 * pad) / W,
+          pay-h: bmm.mc.height / H,
+          pay-src: "measured",
+          over-x: bmm.mu.width > bw - 2 * pad + _EPS-L and bmm.mc.height <= bmm.mu.height + _EPS-L,
+          pad-x: pad / W, pad-y: pad / H,
+          halign: "left", painted: true, paint-fill: t.skyll.to-hex()),
+      )
+      let relations = (_rel(sid + ":label", sid + ":body", "labels", "horizontal", "gutter"),)
+      _emit(sid, "sidebar", "row", here().position().page, 1, objects, relations, row.fit,
+        (label_width: lwn, gutter: gutter, tuned: tuning.len() > 0))
+      if debug { _debug-layer(objects, W, H) }
     })
-  }
+  })
 }

@@ -902,21 +902,6 @@ class TypstIntegrationTests(unittest.TestCase):
             )
             self.assertIn(needle, proc.stderr, msg=f"{name}: {proc.stderr[:400]}")
 
-    def test_note_mode_panics_match_slides_mode(self):
-        # The same authoring errors must fail the note build too (formerly the
-        # note branch returned before validation).
-        out = pathlib.Path(self.tmp.name) / "note.pdf"
-        for name in ("spacer-card.typ", "role-bad.typ", "metric-empty.typ"):
-            proc = subprocess.run(
-                ["typst", "compile", "--root", str(REPO), "--input", "mode=note",
-                 str(FIXTURES / "panic" / name), str(out)],
-                capture_output=True, text=True)
-            self.assertNotEqual(
-                proc.returncode,
-                0,
-                msg=f"{name} note build must panic\n{_process_output(proc)}",
-            )
-
     def test_header_shrink_telemetry(self):
         proc = self._xcheck(FIXTURES / "header-shrink.typ")
         self.assertTrue(proc.stdout, msg=proc.stderr)
