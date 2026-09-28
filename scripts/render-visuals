@@ -18,14 +18,14 @@ def run(cmd):
 def render_set(output):
     visual_input = ("--input", "visual-ci=true")
     jobs = (
-        ("examples/slides-sky.typ", "slides-sky-{p}.png", visual_input),
-        ("examples/slides-sunset.typ", "slides-sunset-{p}.png", visual_input),
-        ("examples/layout-demo.typ", "layout-demo-{p}.png", visual_input),
+        ("examples/slides-sky.typ", "slides-sky-{p}.png"),
+        ("examples/slides-sunset.typ", "slides-sunset-{p}.png"),
+        ("examples/layout-demo.typ", "layout-demo-{p}.png"),
     )
     targets = []
-    for source, target, extra in jobs:
+    for source, target in jobs:
         targets.append(target)
-        run(("typst", "compile", "--root", ".", *extra, source, "-f", "png", str(output / target)))
+        run(("typst", "compile", "--root", ".", *visual_input, source, "-f", "png", str(output / target)))
 
     for theme in THEMES:
         target = f"theme-{theme}-{{p}}.png"

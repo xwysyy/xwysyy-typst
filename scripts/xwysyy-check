@@ -243,7 +243,6 @@ def analyze_page(path: pathlib.Path, ppi: int, band_frac: float, tolerance: int,
         "edge_ink": {side: (edges[side] / edge_px[side] if edge_px[side] else 0.0) for side in edges},
         "edge_row_peak": {"left": window_peak(row_left, win), "right": window_peak(row_right, win)},
         "object_ink": object_ink,
-        "background": list(bg),
     }
 
 

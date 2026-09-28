@@ -384,13 +384,12 @@ class Diagnostic:
 
     def __post_init__(self) -> None:
         if not self.action:
-            self.action = ACTIONS.get(self.type, "review_manually")
+            self.action = ACTIONS[self.type]
 
 
-def _diag(profile: str, dtype: str, message: str, metrics: dict[str, Any], fix: str,
-          action: str = "") -> Diagnostic:
-    human, agent = SEVERITY.get(dtype, _WW)
-    return Diagnostic(agent if profile == "agent" else human, dtype, message, metrics, fix, action)
+def _diag(profile: str, dtype: str, message: str, metrics: dict[str, Any], fix: str) -> Diagnostic:
+    human, agent = SEVERITY[dtype]
+    return Diagnostic(agent if profile == "agent" else human, dtype, message, metrics, fix)
 
 
 @dataclass
@@ -668,7 +667,7 @@ def join_frames(records: list[Record], raw_frames: list[dict[str, Any]]) -> tupl
 # ---------------------------------------------------------------------------
 
 def _role_weight(role: str, rules: dict[str, Any]) -> float:
-    return float(rules["role_weights"].get(role, 1.0))
+    return float(rules["role_weights"][role])
 
 
 def _directed_gap(a: BBox, b: BBox, axis: str) -> tuple[float, float, bool]:
@@ -1143,7 +1142,7 @@ def coverage_report(records: list[Record], joined_frames: list[dict[str, Any]],
         diagnostics.append(_diag(profile, "page_count_unknown",
                                  "The physical page count was not provided; trailing bare pages are invisible.",
                                  {"max_manifest_page": known},
-                                 "Pass --page-count (or run xwysyy-check, which renders and counts pages)."))
+                                 "Pass --page-count, or run xwysyy-check with --pixels (forced by --profile agent) to count rendered pages."))
     total = page_count if page_count is not None else known
     unmanifested = [p for p in range(1, total + 1) if p not in manifest_pages]
     if unmanifested:
