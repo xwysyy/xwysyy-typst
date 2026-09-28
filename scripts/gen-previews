@@ -2,59 +2,30 @@
 import argparse
 import pathlib
 import shutil
-import subprocess
-import tempfile
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+BASELINE = ROOT / "tests" / "visual-baseline"
 ASSETS = ROOT / "assets"
 THEMES = ("sky", "sunset", "forest", "midnight", "violet", "graphite")
 
-
-def run(cmd):
-    print("+ " + " ".join(str(c) for c in cmd))
-    subprocess.run(cmd, cwd=ROOT, check=True)
-
-
-def copy_page(tmp, prefix, page, target):
-    source = tmp / f"{prefix}-{page}.png"
-    if not source.exists():
-        raise FileNotFoundError(source)
-    shutil.copyfile(source, ASSETS / target)
+# README preview asset <- CI-rendered baseline page.
+PREVIEWS = {
+    "preview-sky-p1-01.png": "slides-sky-1.png",
+    "preview-sky-p5-05.png": "slides-sky-7.png",
+    "preview-sunset-p1-01.png": "slides-sunset-1.png",
+    "preview-sunset-p5-05.png": "slides-sunset-6.png",
+    **{f"preview-theme-{theme}-p1-01.png": f"theme-{theme}-1.png" for theme in THEMES},
+}
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Regenerate README preview PNG assets.")
+    parser = argparse.ArgumentParser(description="Copy README preview PNGs from the adopted CI visual baseline.")
     parser.parse_args()
 
     ASSETS.mkdir(exist_ok=True)
-    visual_input = ("--input", "visual-ci=true")
-    with tempfile.TemporaryDirectory(prefix="xwysyy-previews-") as tmp_name:
-        tmp = pathlib.Path(tmp_name)
-
-        run(("typst", "compile", "--root", ".", *visual_input, "examples/slides-sky.typ", "-f", "png", str(tmp / "slides-sky-{p}.png")))
-        copy_page(tmp, "slides-sky", 1, "preview-sky-p1-01.png")
-        copy_page(tmp, "slides-sky", 6, "preview-sky-p5-05.png")
-
-        run(("typst", "compile", "--root", ".", *visual_input, "examples/slides-sunset.typ", "-f", "png", str(tmp / "slides-sunset-{p}.png")))
-        copy_page(tmp, "slides-sunset", 1, "preview-sunset-p1-01.png")
-        copy_page(tmp, "slides-sunset", 5, "preview-sunset-p5-05.png")
-
-        for theme in THEMES:
-            run((
-                "typst",
-                "compile",
-                "--root",
-                ".",
-                "--input",
-                f"theme={theme}",
-                *visual_input,
-                "examples/theme-preview.typ",
-                "-f",
-                "png",
-                str(tmp / f"theme-{theme}-{{p}}.png"),
-            ))
-            copy_page(tmp, f"theme-{theme}", 1, f"preview-theme-{theme}-p1-01.png")
+    for target, source in PREVIEWS.items():
+        shutil.copyfile(BASELINE / source, ASSETS / target)
 
     return 0
 
