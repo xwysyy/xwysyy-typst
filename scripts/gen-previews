@@ -25,8 +25,7 @@ def copy_page(tmp, prefix, page, target):
 
 def main():
     parser = argparse.ArgumentParser(description="Regenerate README preview PNG assets.")
-    parser.add_argument("--with-baseline", action="store_true", help="also update tests/visual-baseline")
-    args = parser.parse_args()
+    parser.parse_args()
 
     ASSETS.mkdir(exist_ok=True)
     visual_input = ("--input", "visual-ci=true")
@@ -35,17 +34,11 @@ def main():
 
         run(("typst", "compile", "--root", ".", *visual_input, "examples/slides-sky.typ", "-f", "png", str(tmp / "slides-sky-{p}.png")))
         copy_page(tmp, "slides-sky", 1, "preview-sky-p1-01.png")
-        copy_page(tmp, "slides-sky", 2, "preview-sky-p2-02.png")
-        copy_page(tmp, "slides-sky", 4, "preview-sky-p4-04.png")
         copy_page(tmp, "slides-sky", 6, "preview-sky-p5-05.png")
-        copy_page(tmp, "slides-sky", 9, "preview-sky-p8-08.png")
 
         run(("typst", "compile", "--root", ".", *visual_input, "examples/slides-sunset.typ", "-f", "png", str(tmp / "slides-sunset-{p}.png")))
         copy_page(tmp, "slides-sunset", 1, "preview-sunset-p1-01.png")
-        copy_page(tmp, "slides-sunset", 2, "preview-sunset-p2-02.png")
-        copy_page(tmp, "slides-sunset", 4, "preview-sunset-p4-04.png")
         copy_page(tmp, "slides-sunset", 5, "preview-sunset-p5-05.png")
-        copy_page(tmp, "slides-sunset", 8, "preview-sunset-p8-08.png")
 
         for theme in THEMES:
             run((
@@ -62,9 +55,6 @@ def main():
                 str(tmp / f"theme-{theme}-{{p}}.png"),
             ))
             copy_page(tmp, f"theme-{theme}", 1, f"preview-theme-{theme}-p1-01.png")
-
-    if args.with_baseline:
-        run(("python3", "scripts/render-visuals", "tests/visual-baseline"))
 
     return 0
 

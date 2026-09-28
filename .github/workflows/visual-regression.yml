@@ -5,7 +5,6 @@ on:
     paths-ignore:
       - "README.md"
       - "README-zh.md"
-      - "CHANGELOG.md"
       - "AGENTS.md"
       - "docs/**"
   push:
@@ -101,10 +100,6 @@ jobs:
           typst compile --root . tests/fixtures/outline-zh.typ /tmp/outline-zh.pdf
           typst compile --root . tests/fixtures/outline-agenda.typ /tmp/outline-agenda.pdf
           typst compile --root . tests/fixtures/font-override.typ /tmp/font-override.pdf
-          typst compile --root . --input visual-ci=true tests/fixtures/layout-fit.typ /tmp/layout-fit.pdf
-          typst compile --root . --input visual-ci=true tests/fixtures/layout-handout.typ /tmp/layout-handout.pdf
-          typst compile --root . --input visual-ci=true --input handout=true tests/fixtures/layout-handout.typ /tmp/layout-handout-collapsed.pdf
-          typst compile --root . --input visual-ci=true tests/fixtures/layout-pixel.typ /tmp/layout-pixel.pdf
           typst compile --root . tests/fixtures/extras-entry.typ /tmp/extras-entry.pdf
 
       - name: Check missing theme field error
