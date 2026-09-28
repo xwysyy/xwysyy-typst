@@ -222,7 +222,7 @@ Every page exports one metadata record labelled `<xwysyy-slide-layout>`:
   ],
   "fit": { "state": "normal", "required_height_ratio": 0.51, "gap_ratio": 1.0,
            "margin_deficit_ratio": 0, "body_overflow_ratio": 0 },
-  "extra": { "mode": "balanced", "gap_fraction": 0.13, "tuned": false }
+  "extra": { "mode": "balanced", "tuned": false }
 }
 ```
 
@@ -233,7 +233,7 @@ The four boxes divide the work as follows. `frame` is the container the componen
 Three companion records:
 
 - `<xwysyy-page>` (`{"kind": "content|title|section|end|image|outline", "page": n}`): exempt kinds can only be produced by the corresponding layout functions, and two manifests on one physical page are an error.
-- `<xwysyy-frame>` v2, one per actually rendered subslide: `id` / `step` / `steps` / `page` / `handout`, plus the physical pt geometry of `body` and `page_size`, which the pixel stage uses to convert coordinates instead of relying on hard-coded template constants.
+- `<xwysyy-frame>` v2, one per actually rendered subslide: `id` / `step` / `steps` / `page` / `handout`, plus the physical pt geometry of `body` (which the pixel stage uses to convert coordinates instead of relying on hard-coded template constants) and `page_size`.
 - `<xwysyy-header>` v2, one per content page: the title `scale`, horizontal `fits`, the actual title `height`, and vertical `fits_v`. An explicit line break or an oversized title hits the header band and reports an error.
 
 ## Checker Diagnostics
@@ -246,7 +246,7 @@ scripts/slide-check.py merged.json --page-count 21     # geometry engine for exi
 
 All coverage metrics use rectangle unions: `container_coverage` (union of frames), `visual_coverage` (union of paint and payload, the ink the eye sees), `payload_density` (union of **measured** payloads, the real content), `declared_payload` (union of declared payloads, for reference), and `payload_utilization` (the payload union as a share of the frame union). `low_density` looks at both visual_coverage and payload_density (when a page has no measured objects at all, the payload lower bound is left to the pixel stage); `over_dense` uses payload_density.
 
-Severity comes from one shared policy table: structural, identity, escape, and determinism diagnostics are always errors; content-sufficiency diagnostics (`empty_slide` / `sparse_frame` / `telemetry_gap` / `manifest_gap` / `tuning_used` / `page_count_unknown` / `hollow_object` / `edge_ink`) are raised to errors under `--profile agent`; aesthetic diagnostics stay warnings.
+Severity comes from one shared policy table: structural, identity, escape, and determinism diagnostics are always errors; content-sufficiency diagnostics (`sparse_frame` / `telemetry_gap` / `manifest_gap` / `tuning_used` / `page_count_unknown` / `hollow_object` / `edge_ink`) are raised to errors under `--profile agent`; aesthetic diagnostics stay warnings.
 
 | Diagnostic | Severity | Trigger | action |
 | --- | --- | --- | --- |
@@ -286,7 +286,7 @@ Severity comes from one shared policy table: structural, identity, escape, and d
 
 Parsing fails closed: a bbox with missing fields, paint with a negative size or without `paint_fill`, an unknown kind / role / state / payload_source, `visible_from` out of range, duplicate object ids within a record, relations that are not a list or whose kind / axis / proximity falls outside the closed set, and older schemas all exit as input errors (exit 2) and never produce a report filled with default values. A `--rules` override file is validated down to its leaves: scalars must be finite numbers (bools do not count as numbers), proximity ranges must be two-element lists with `0 <= lo <= hi`, and unknown rule names are rejected.
 
-Exit codes: 2 for corrupt input; 1 when any error diagnostic exists (warnings count too under `--strict`); always 0 with `--advisory`. Empty telemetry (a deck that uses no layout component at all) exits nonzero directly.
+Exit codes: 2 for corrupt input; 1 when any error diagnostic exists (warnings count too under `--strict`); `--advisory` turns 1 into 0 but still exits 2 for corrupt input. Empty telemetry (a deck that uses no layout component at all) exits nonzero directly.
 
 Thresholds are heuristic starting values anchored on the demo's good pages (every good page passes and each bad page hits its target), and they can be overridden with `--rules rules.json`. `--dump-features features.json` exports a flat per-page metric vector so that thresholds can later be calibrated from the distribution of past high-quality decks (use quantiles rather than means, and give focus its own distribution); do not reuse corpora sampled before the metrics themselves were corrected.
 

@@ -128,56 +128,13 @@ Typst web app users can pass fonts available in the web environment. Local CI us
 
 ## 4. Header And Footer
 
-Content slide header and footer are implemented in `src/slides.typ` inside `_kinded-slide`, which the public `xwysyy-slide` wraps.
+Content slide header and footer are the `header(self)` and `footer(self)` functions of `_kinded-slide` in `src/slides.typ`, which the public `xwysyy-slide` wraps. Edit them there; the source is the reference.
 
-The header is open: the slide title is set in `heading-font`, bold, at 1.45em, colored `sea` by default, and sits over a full-width 0.12em rule filled with a gradient running from the title color through `sky` and fading to fully transparent at 92% of the width. The page top margin is 4.35em.
+The header is open: the slide title is set in `heading-font`, bold, at 1.45em, colored `sea` by default, and sits over a full-width 0.12em rule filled with a gradient running from the title color through `sky` and fading to fully transparent at 92% of the width. The optional theme field `header-text` overrides the title color.
 
-Header:
+The header block has a 1.1em top inset, and the page top margin set in `xwysyy-pre` is 4.35em; change the two together. Because the margin is fixed, a long title shrinks to fit on one line, down to 0.65 of its size. The header exports the applied scale and whether the title fits horizontally and vertically as `<xwysyy-header>` telemetry, which the layout checker reports as `header_shrunk` / `header_overflow`; a customized header should keep emitting it.
 
-```typst
-let header(self) = {
-  block(
-    width: 100% + 2em,
-    inset: (x: 1em, top: 1.1em),
-    {
-      block(text(
-        font: self.store.heading-font,
-        fill: self.store.header-color,
-        weight: "bold",
-        size: 1.45em,
-        ...
-      ))
-      v(0.65em, weak: true)
-      rect(
-        width: 100%,
-        height: 0.12em,
-        radius: (left: 0.06em),
-        fill: gradient.linear(
-          (self.store.header-color, 0%),
-          (self.colors.primary, 42%),
-          (self.colors.primary.transparentize(100%), 92%),
-          (self.colors.primary.transparentize(100%), 100%),
-        ),
-      )
-    },
-  )
-}
-```
-
-Footer (page number in the bottom-right corner only):
-
-```typst
-let footer(self) = {
-  set align(bottom + right)
-  set text(fill: self.colors.neutral-dark, size: .9em)
-  block(
-    inset: (x: 0.5em, bottom: 0.4em),
-    context utils.slide-counter.display(),
-  )
-}
-```
-
-The optional theme field `header-text` overrides the title color.
+The footer shows only the page number in the bottom-right corner, in `neutral-dark` at 0.9em.
 
 ## 5. Add A Slide Layout
 
@@ -211,52 +168,11 @@ Arrow replacements use math mode. Each rule is wrapped in a guard that skips tex
 #show "->": non-code([$->$])
 ```
 
-## 7. Handout Mode
+## 7. Handouts, Speaker Notes, And pdfpc
 
-`xwysyy-pre` forwards `..args` to touying. You can pass handout config directly:
+`xwysyy-pre` forwards `..args` to touying, so handout mode, `#speaker-note`, second-screen notes, and pdfpc export work as in touying. See [USAGE §5 Handouts](USAGE.md#5-handouts) and [USAGE §6 Speaker Notes And pdfpc](USAGE.md#6-speaker-notes-and-pdfpc).
 
-```typst
-#show: xwysyy-pre.with(
-  config-common(handout: true),
-  ...
-)
-```
-
-`examples/slides-sky.typ` exposes a command-line switch:
-
-```bash
-typst compile --root . examples/slides-sky.typ slides.pdf
-typst compile --root . --input handout=true examples/slides-sky.typ slides-handout.pdf
-```
-
-Use touying's `handout-subslides` and `<touying:handout>` label through `config-common(...)`.
-
-## 8. Speaker Notes And pdfpc
-
-`xwysyy.typ` re-exports touying, so `#speaker-note` is available:
-
-```typst
-#speaker-note[
-  Emphasize the main failure case here.
-]
-```
-
-Second-screen notes:
-
-```typst
-#show: xwysyy-pre.with(
-  config-common(show-notes-on-second-screen: right),
-  ...
-)
-```
-
-pdfpc export:
-
-```bash
-typst query --root . examples/slides-sky.typ --field value --one "<pdfpc-file>" > slides-sky.pdfpc
-```
-
-## 9. Visual Regression And Previews
+## 8. Visual Regression And Previews
 
 Regenerate README preview PNGs:
 
@@ -264,9 +180,10 @@ Regenerate README preview PNGs:
 scripts/gen-previews
 ```
 
-Adopt a completed GitHub Actions render as the visual baseline:
+Adopt a completed GitHub Actions render as the visual baseline. Without an argument the script takes the latest visual-regression run on the current branch and refuses it unless that run rendered the local `HEAD`; pass a run id to adopt a specific run:
 
 ```bash
+scripts/adopt-baseline
 scripts/adopt-baseline <run-id>
 ```
 
@@ -289,7 +206,7 @@ The GitHub Actions workflow runs:
 
 Pure documentation pull requests are ignored by the visual workflow through `paths-ignore`.
 
-## 10. Upgrade Checks
+## 9. Upgrade Checks
 
 When changing `src/*.typ`, examples, template, themes, or scripts, run:
 
@@ -301,7 +218,7 @@ scripts/render-visuals /tmp/xwysyy-visual-current
 scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current
 ```
 
-## 11. Universe Release Staging
+## 10. Universe Release Staging
 
 The source repository is the authority for every published package version. Commit and validate release changes here before creating the `typst/packages` branch. The package copy must not receive manual fixes.
 
