@@ -14,7 +14,7 @@ PREVIEWS = {
     "preview-sky-p1-01.png": "slides-sky-1.png",
     "preview-sky-p5-05.png": "slides-sky-7.png",
     "preview-sunset-p1-01.png": "slides-sunset-1.png",
-    "preview-sunset-p5-05.png": "slides-sunset-6.png",
+    "preview-sunset-p5-05.png": "slides-sunset-5.png",
     **{f"preview-theme-{theme}-p1-01.png": f"theme-{theme}-1.png" for theme in THEMES},
 }
 
