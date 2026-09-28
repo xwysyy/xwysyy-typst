@@ -55,7 +55,7 @@ def _obj(oid, kind="card", role="explanation", frame=(0.09, 0.07, 0.82, 0.7),
     if payload is None:
         payload = (fx + 0.05, fy + 0.05, fw - 0.1, fh - 0.1)
     return {
-        "id": oid, "object_kind": kind, "semantic_role": role, "group": "g",
+        "id": oid, "object_kind": kind, "semantic_role": role,
         "frame": _box(*frame),
         "preferred": {"w": fw, "h": preferred_h if preferred_h is not None else fh},
         "payload": _box(*payload),

@@ -50,12 +50,10 @@
 #import "slides.typ": xwysyy-slide
 #import "themes.typ": _theme-state
 
-// Capture alignment references before any parameter named `top` / `bottom` /
-// `left` shadows them inside a component body.
+// Capture `top` / `left` before the parameters of the same name (duo's `top`,
+// compare's `left`) shadow them inside a component body.
 #let _atop = top
 #let _aleft = left
-#let _acenter = center
-#let _ahorizon = horizon
 
 #let _clamp(x, lo, hi) = calc.min(calc.max(x, lo), hi)
 
@@ -190,8 +188,6 @@
     (xwysyy-item: true, kind: "visual", fit: "natural", role: "main_visual", body: x, reveal-from: auto)
   } else if default-kind == "takeaway" {
     (xwysyy-item: true, kind: "takeaway", fit: "natural", role: "takeaway", body: x, reveal-from: auto)
-  } else if default-kind == "plain" {
-    (xwysyy-item: true, kind: "plain", fit: "natural", role: "text", body: x, reveal-from: auto)
   } else {
     (xwysyy-item: true, kind: "card", fit: "natural", role: "explanation", body: x, reveal-from: auto)
   }
@@ -465,9 +461,9 @@
 // Payload height is NOT clamped to the frame: overflowing content reports a
 // payload that runs past its frame, and the checker sees it.
 #let _obj(
-  id, kind, role, group,
+  id, kind, role,
   fx, fy, fw, fh,
-  pref-w: none, pref-h: none,
+  pref-h: none,
   pay-w: none, pay-h: none,
   pay-src: "measured", over-x: false,
   pad-x: 0.0, pad-y: 0.0,
@@ -488,10 +484,8 @@
     id: id,
     object_kind: kind,
     semantic_role: role,
-    group: group,
     frame: (x: fx, y: fy, w: fw, h: fh),
-    preferred: (w: if pref-w == none { fw } else { pref-w },
-                h: if pref-h == none { fh } else { pref-h }),
+    preferred: (w: fw, h: if pref-h == none { fh } else { pref-h }),
     payload: (x: px, y: py, w: pw, h: ph),
     paint: if painted { (x: fx, y: fy, w: fw, h: fh) } else { none },
     paint_fill: if painted { paint-fill } else { none },
@@ -520,9 +514,9 @@
     schema: "xwysyy-frame/v2",
     id: sid,
     step: self.subslide,
-    steps: self.at("repeat", default: 1),
+    steps: self.repeat,
     page: pos.page,
-    handout: self.at("handout", default: false),
+    handout: self.handout,
     body: (x: pos.x.pt(), y: pos.y.pt(), w: size.width.pt(), h: size.height.pt()),
     page_size: (w: page.width.pt(), h: page.height.pt()),
   )) <xwysyy-frame>]
@@ -573,17 +567,16 @@
 
 // Card container for slot rendering: the theme's rounded skyll box; `calign`
 // controls where content sits inside a fixed-height box.
-#let _card-box(cw, h, fill, body, calign: _ahorizon) = {
-  let inner = if h == auto { body } else { align(calign, body) }
-  block(width: cw, height: h, fill: fill, inset: _CARD-PAD, radius: 0.4em, inner)
+#let _card-box(cw, h, fill, body, calign: horizon) = {
+  block(width: cw, height: h, fill: fill, inset: _CARD-PAD, radius: 0.4em, align(calign, body))
 }
 
 // Render one typed item into its allocated slot.
-#let _render-item(it, w, h, fill, calign: _ahorizon) = {
+#let _render-item(it, w, h, fill, calign: horizon) = {
   if _painted(it) {
     _card-box(w, h, fill, it.body, calign: calign)
   } else {
-    block(width: w, height: h, align(_acenter + calign, it.body))
+    block(width: w, height: h, align(center + calign, it.body))
   }
 }
 
@@ -652,7 +645,7 @@
         _from(self, steps.at(1), _render-item(bi, bw, bh, cfill)))
 
       let objects = (
-        _obj(sid + ":top", ti.kind, ti.role, sid,
+        _obj(sid + ":top", ti.kind, ti.role,
           (1.0 - twn) / 2, y0 / H, twn, th / H,
           pref-h: ts.spec.pref / H,
           pay-w: if ts.stretch { none } else { ts.pay-w / W },
@@ -662,7 +655,7 @@
           halign: if ts.painted { "left" } else { "center" },
           painted: ts.painted, paint-fill: cfill.to-hex(),
           visible-from: steps.at(0)),
-        _obj(sid + ":bottom", bi.kind, bi.role, sid,
+        _obj(sid + ":bottom", bi.kind, bi.role,
           (1.0 - bwn) / 2, (y0 + th + g) / H, bwn, bh / H,
           pref-h: bs.spec.pref / H,
           pay-w: if bs.stretch { none } else { bs.pay-w / W },
@@ -740,7 +733,7 @@
         _render-item(it, cw, m.outer, cfill))
 
       let objects = (
-        _obj(sid + ":focus", it.kind, it.role, sid,
+        _obj(sid + ":focus", it.kind, it.role,
           (1.0 - wn) / 2, y, wn, hr,
           pref-h: hr,
           pay-w: m.pay-w / W, pay-h: m.pay-h / H,
@@ -820,7 +813,7 @@
         place(_atop + _aleft, dx: (W - bw) / 2, dy: cy,
           _from(self, steps.at(i), _render-item(it, bw, h, cfill)))
         let oid = sid + ":" + str(i)
-        objects.push(_obj(oid, it.kind, it.role, sid,
+        objects.push(_obj(oid, it.kind, it.role,
           (1.0 - wn) / 2, cy / H, wn, h / H,
           pref-h: specs.at(i).pref / H,
           pay-w: if s.stretch { none } else { s.pay-w / W },
@@ -899,7 +892,7 @@
         place(_atop + _aleft, dx: W * xn, dy: row.y,
           _from(self, steps.at(i), _render-item(it, cw, row.row, cfill)))
         let oid = sid + ":" + str(i)
-        objects.push(_obj(oid, it.kind, it.role, sid,
+        objects.push(_obj(oid, it.kind, it.role,
           xn, row.y / H, cwn, row.row / H,
           pref-h: s.spec.pref / H,
           pay-w: s.pay-w / W, pay-h: s.pay-h / H,
@@ -968,7 +961,7 @@
         _from(self, steps.at(1), _render-item(ri, cw, row.row, cfill, calign: _atop)))
 
       let objects = (
-        _obj(sid + ":left", li.kind, li.role, sid,
+        _obj(sid + ":left", li.kind, li.role,
           0.0, row.y / H, cwn, row.row / H,
           pref-h: ls.spec.pref / H,
           pay-w: ls.pay-w / W, pay-h: ls.pay-h / H,
@@ -977,7 +970,7 @@
           calign: "top", halign: if ls.painted { "left" } else { "center" },
           painted: ls.painted, paint-fill: cfill.to-hex(),
           visible-from: steps.at(0)),
-        _obj(sid + ":right", ri.kind, ri.role, sid,
+        _obj(sid + ":right", ri.kind, ri.role,
           cwn + gutter, row.y / H, cwn, row.row / H,
           pref-h: rs.spec.pref / H,
           pay-w: rs.pay-w / W, pay-h: rs.pay-h / H,
@@ -1074,10 +1067,10 @@
       })
       let tile(i) = {
         let s = stats.at(i)
-        align(_acenter + _ahorizon, stack(
+        align(center + horizon, stack(
           spacing: 0.2em,
-          align(_acenter, text(size: 2.6em * scales.at(i), weight: 700, fill: t.sea, s.value)),
-          align(_acenter, text(size: 0.95em, fill: t.sea.lighten(12%), s.label)),
+          align(center, text(size: 2.6em * scales.at(i), weight: 700, fill: t.sea, s.value)),
+          align(center, text(size: 0.95em, fill: t.sea.lighten(12%), s.label)),
         ))
       }
       // Payload width comes from the value and the label measured
@@ -1104,9 +1097,9 @@
         place(_atop + _aleft, dx: W * xn, dy: row.y,
           _from(self, steps.at(i),
             block(width: cw, height: row.row, fill: t.skyll, inset: _CARD-PAD,
-              radius: 0.4em, align(_ahorizon, tile(i)))))
+              radius: 0.4em, align(horizon, tile(i)))))
         let oid = sid + ":" + str(i)
-        objects.push(_obj(oid, "card", "metric", sid,
+        objects.push(_obj(oid, "card", "metric",
           xn, row.y / H, cwn, row.row / H,
           pref-h: naturals.at(i) / H,
           pay-w: calc.min(pays.at(i).w, iw) / W, pay-h: pays.at(i).h / H,
@@ -1211,7 +1204,7 @@
       let fh = alloc.heights.at(idx)
       place(_atop + _aleft, dx: (W - fw) / 2, dy: cy,
         _from(self, fig-step, _render-item(fi, fw, fh, cfill)))
-      objects.push(_obj(sid + ":figure", fi.kind, fi.role, sid,
+      objects.push(_obj(sid + ":figure", fi.kind, fi.role,
         (1.0 - fwn) / 2, cy / H, fwn, fh / H,
         pref-h: fs.spec.pref / H,
         pay-w: if fs.stretch { none } else { fs.pay-w / W },
@@ -1226,9 +1219,9 @@
         cy = cy + alloc.gaps.at(idx - 1)
         let ch = alloc.heights.at(idx)
         place(_atop + _aleft, dx: (W - fw) / 2, dy: cy,
-          _from(self, fig-step, block(width: fw, align(_acenter, cap))))
+          _from(self, fig-step, block(width: fw, align(center, cap))))
         let cm = measure(cap)
-        objects.push(_obj(sid + ":caption", "plain", "caption", sid,
+        objects.push(_obj(sid + ":caption", "plain", "caption",
           (1.0 - fwn) / 2, cy / H, fwn, ch / H,
           pref-h: ch / H,
           pay-w: calc.min(cm.width, fw) / W, pay-h: cap-m.height / H,
@@ -1245,7 +1238,7 @@
         place(_atop + _aleft, dx: (W - tw) / 2, dy: cy,
           _from(self, tk-step, _render-item(ki, tw, th, cfill)))
         let anchor = if cap != none { sid + ":caption" } else { sid + ":figure" }
-        objects.push(_obj(sid + ":takeaway", ki.kind, ki.role, sid,
+        objects.push(_obj(sid + ":takeaway", ki.kind, ki.role,
           (1.0 - twn) / 2, cy / H, twn, th / H,
           pref-h: ks.spec.pref / H,
           pay-w: ks.pay-w / W, pay-h: ks.pay-h / H,
@@ -1314,9 +1307,6 @@
       let lwn = tn.at("label-width")
       let gutter = tn.at("gutter")
       let bwn = 1.0 - lwn - gutter
-      if bwn <= 0.0 {
-        panic("sidebar-slide: label-width " + repr(lwn) + " + gutter leaves no body width")
-      }
       let lw = W * lwn
       let bw = W * bwn
       let pad = _CARD-PAD.to-absolute()
@@ -1336,7 +1326,7 @@
 
       place(_atop + _aleft, dx: 0pt, dy: row.y,
         block(width: lw, height: row.row, fill: t.sea, inset: pad, radius: 0.4em,
-          align(_ahorizon + _aleft, {
+          align(horizon + _aleft, {
             // Label text is light (paper) on the dark sea tab; inline code
             // keeps its light chip but takes dark (sea) text so it stays
             // readable instead of light-on-light.
@@ -1345,10 +1335,10 @@
           })))
       place(_atop + _aleft, dx: W * (lwn + gutter), dy: row.y,
         block(width: bw, height: row.row, fill: t.skyll, inset: pad, radius: 0.4em,
-          align(_ahorizon, body)))
+          align(horizon, body)))
 
       let objects = (
-        _obj(sid + ":label", "card", "label", sid,
+        _obj(sid + ":label", "card", "label",
           0.0, row.y / H, lwn, row.row / H,
           pref-h: lh / H,
           pay-w: calc.min(lmm.mu.width, lw - 2 * pad) / W,
@@ -1357,7 +1347,7 @@
           over-x: _overflows-x(lmm.mu, lmm.mc, lw - 2 * pad),
           pad-x: pad / W, pad-y: pad / H,
           halign: "left", painted: true, paint-fill: t.sea.to-hex()),
-        _obj(sid + ":body", "card", "content", sid,
+        _obj(sid + ":body", "card", "content",
           lwn + gutter, row.y / H, bwn, row.row / H,
           pref-h: bh / H,
           pay-w: calc.min(bmm.mu.width, bw - 2 * pad) / W,
