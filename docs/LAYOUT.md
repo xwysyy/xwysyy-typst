@@ -192,7 +192,7 @@ A narrow label tab in the dark theme color next to a wide content card: an asymm
 
 ## Telemetry Schema v4
 
-Every page exports one metadata record labelled `<xwysyy-slide-layout>`:
+Every semantic layout slide exports one metadata record labelled `<xwysyy-slide-layout>`, on its last rendered frame:
 
 ```json
 {
@@ -311,7 +311,7 @@ The pixel stage also gives the coverage checks the real total page count, which 
 scripts/xwysyy-check deck.typ --profile agent --format json
 ```
 
-Fix according to each diagnostic's `action`: `split_slide` (split the page or cut text), `change_visual_fit` (turn the figure into `visual()` with `fit: "contain"` so it fills the slot), `merge_or_enlarge_visual` (enlarge the main visual, add explanation, or merge pages), `rebalance_columns` (move a long column to its own page), `set_mode_compact` (tighten the mode), `use_layout_component` (turn a hand-written page back into a component), `shorten_title` (shorten the title), `fix_reveal_order` (show a substantive block first), `add_content` (fill empty slots with real content). Rerun after each change until no errors remain; warnings are left to human judgment. `content_clustered_*` should normally not appear, because the components already allocate space; when it does, hand-written coordinates were used, so switch back to components. `report_bug` diagnostics (frame_integrity / orphan_frame / render_telemetry_mismatch / invalid_fit_state) should not be silenced by editing content: they mean the exporter or the telemetry itself is broken.
+Fix according to each diagnostic's `action`: `split_slide` (split the page or cut text), `change_visual_fit` (wrap the figure as `visual(image(..., width: 100%, height: 100%, fit: "contain"))` so it fills the slot), `merge_or_enlarge_visual` (enlarge the main visual, add explanation, or merge pages), `rebalance_columns` (move a long column to its own page), `set_mode_compact` (tighten the mode), `use_layout_component` (turn a hand-written page back into a component), `shorten_title` (shorten the title), `fix_reveal_order` (show a substantive block first), `add_content` (fill empty slots with real content). Rerun after each change until no errors remain; warnings are left to human judgment. `content_clustered_*` should normally not appear, because the components already allocate space; when it does, hand-written coordinates were used, so switch back to components. `report_bug` diagnostics (frame_integrity / orphan_frame / render_telemetry_mismatch / invalid_fit_state) should not be silenced by editing content: they mean the exporter or the telemetry itself is broken.
 
 ## Generation Contract
 

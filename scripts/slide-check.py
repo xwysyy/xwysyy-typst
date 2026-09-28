@@ -92,7 +92,8 @@ DEFAULT_RULES: dict[str, Any] = {
     "center_y_max": 0.60,
     "clustered_blank_min": 0.30,
     # rendered-ink floors per archetype (union of paint + payload boxes);
-    # anchored on the demo's good pages, which all measure >= 0.45
+    # anchored on the demo's good pages: every non-focus good page measures
+    # >= 0.45, while focus pages keep deliberate whitespace and have their own floor
     "ink_floor": {
         "focus": 0.06,
         "duo": 0.28,
