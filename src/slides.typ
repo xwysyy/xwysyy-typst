@@ -177,7 +177,7 @@
   })
 }
 
-#let new-section-slide(self: none, body) = {
+#let new-section-slide(body) = {
   touying-slide-wrapper(self => {
     self = utils.merge-dicts(
       self,
