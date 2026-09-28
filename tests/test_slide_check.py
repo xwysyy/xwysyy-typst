@@ -909,6 +909,14 @@ class TypstIntegrationTests(unittest.TestCase):
         types = [d["type"] for d in slides["<headers>"]["diagnostics"]]
         self.assertIn("header_shrunk", types)
 
+    def test_title_slide_date_override(self):
+        proc = subprocess.run(
+            ["typst", "query", "--root", str(REPO), str(FIXTURES / "title-date-override.typ"),
+             "<date-probe>", "--field", "value"],
+            capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, msg=_process_output(proc))
+        self.assertEqual(json.loads(proc.stdout), ["local"])
+
 
 if __name__ == "__main__":
     unittest.main()

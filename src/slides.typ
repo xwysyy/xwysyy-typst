@@ -134,7 +134,8 @@
       self,
       config-page(margin: 0em),
     )
-    let info = self.info + args.named()
+    self.info = self.info + args.named()
+    let info = self.info
     let body = {
       _page-manifest("title")
       set align(center + horizon)
