@@ -244,9 +244,7 @@ $ sum_(k=0)^n binom(n, k) x^k y^(n-k) = (x + y)^n $
 
     #v(0.2em)
 
-    $ A^T $ （转置 `super-T-as-transpose`）
-
-    $ integral f(x) dif x $ （微分符号 `dif`）
+    $ integral f(x) dd(x) $ （微分 `dd`）
 
     $ pdv(f, x) quad pdv(f, x, 2) $ （偏导 `pdv`）
   ],

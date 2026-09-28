@@ -21,7 +21,7 @@
 
 | 文件 | 作用 |
 |------|------|
-| `xwysyy.typ` | facade entry，re-export `src/*.typ` 子模块（touying API 经 `src/slides.typ` 一并导出）+ 包级 `physica` import + `super-T-as-transpose` show 规则。用户写 `#import "xwysyy.typ": *` 一次拿全 API |
+| `xwysyy.typ` | facade entry，re-export `src/*.typ` 子模块（touying API 经 `src/slides.typ` 一并导出）+ 包级 `physica` import。用户写 `#import "xwysyy.typ": *` 一次拿全 API |
 | `src/themes.typ` | `themes` 字典（sky / sunset / forest / midnight / violet / graphite）+ 主题字段校验 `_resolve-theme` + 顶层色变量（`sea` / `sky` / `skyl` / `skyll` / `paper`）+ `_theme-state` + 颜色宏（`red`/`bred`/`yellow`/`byellow`） |
 | `src/elements.typ` | show-chain `xwysyy-elements` + `info` + `textbox` |
 | `src/slides.typ` | slide 入口 `xwysyy-pre` + 6 种版式（`xwysyy-slide`、`title-slide`、`outline-slide`、`new-section-slide`、`image-slide`、`end-slide`）。`outline-slide` 自动过滤 `<touying:hidden>` 标签且 >5 章自动两列，`title: auto` 按 `text.lang` 输出 `Contents` / `目录`。`frozen-counters` 默认冻结 `figure` 和 `math.equation` 计数器 |

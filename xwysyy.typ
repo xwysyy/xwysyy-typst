@@ -7,5 +7,3 @@
 #import "src/elements.typ": *
 #import "src/slides.typ": *
 #import "src/layout.typ": *
-
-#show: super-T-as-transpose
