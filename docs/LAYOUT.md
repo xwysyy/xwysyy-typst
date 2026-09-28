@@ -63,13 +63,13 @@ metric(value, label)            // stat-slide 的指标条目
 
 stretch 视觉的正确填法：占位图 `rect(width: 100%, height: 100%)`，真实图片 `image("f.png", width: 100%, height: 100%, fit: "contain")`。natural 视觉用 `image("f.png", width: 100%)`。百分比尺寸的内容**必须**包 `visual(...)`：文本槽收到测量宽度为零的内容（percent 宽媒体和 spacer 的测量签名相同）直接 panic，只有 visual 槽允许以槽宽登记 payload，且标记为 `declared`、由像素层验证。
 
-校验都发生在编译期，失败即 panic：必填槽位为 `none`；visual 内容完全渲染为空；文本槽内容无可测量宽度（spacer、空字符串）或无可测量高度（裸线条）；`grid` 少于 2 列（单块用 `stack` 或 `focus`）；`grid` / `compare` 列里放 `visual(fit: "stretch")`（行版式按自然高度排版）；`figure` 的 takeaway 槽放 stretch visual；`stat` 的条目不是 `metric(...)` 或 value / label 渲染为空；`focus` / `sidebar` 收到 `reveal-from`（它们没有展示步骤）；`sidebar` 槽位收到 typed item（它自己画卡片）；`reveal-from` 不是 `[1, 步数]` 内的整数；`tuning` 的 key 拼错、类型不对或超出允许区间；`visual` 的 `fit` 不是 `"stretch"` / `"natural"`；role 不在封闭集合内；`xwysyy-slide` 收到 `kind` 参数（豁免页只能由 `outline-slide` / `title-slide` 等自己的版式产生）；`image-slide` 没有传图。
+校验都发生在编译期，失败即 panic：必填槽位为 `none`；visual 内容完全渲染为空；文本槽内容无可测量宽度（spacer、空字符串）或无可测量高度（裸线条）；`grid` 少于 2 列（单块用 `stack` 或 `focus`）；`grid` / `compare` 列里放 `visual(fit: "stretch")`（行版式按自然高度排版）；`figure` 的 takeaway 槽放 stretch visual；`stat` 的条目不是 `metric(...)` 或 value / label 渲染为空；`focus` 收到大于 1 的 `reveal-from`（它只有一帧）；`sidebar` 槽位收到 typed item（它自己画卡片）；`reveal-from` 不是 `[1, 步数]` 内的整数；`tuning` 的 key 拼错、类型不对或超出允许区间；`visual` 的 `fit` 不是 `"stretch"` / `"natural"`；role 不在封闭集合内；`xwysyy-slide` 收到 `kind` 参数（豁免页只能由 `outline-slide` / `title-slide` 等自己的版式产生）；`image-slide` 没有传图。
 
 已知边界：槽位内容里的 `place(...)` 脱离文档流，几何遥测测不到它；`hide(...)` 保留完整布局尺寸，几何层也看不出来——两者都由像素层兜底（stray ink 与逐对象 hollow 检查）。
 
 ## 分步展示（reveal）与 `#pause` 禁令
 
-touying 的 `#pause` / 全局 `#uncover` 依赖 markup 里的 marks，进不了组件内部的 `context` / `layout` 闭包，放进组件内容里 touying 会直接 panic。带展示顺序的组件因此提供 `reveal: true`：块按语义顺序逐个 subslide 浮现。所有组件走同一个 resolver：**显式 `reveal-from` 恒优先于 `reveal: true` 的语法糖**（糖只作用于没写 `reveal-from` 的 item）。`duo` / `compare` 的第二块默认第 2 步出现，`stack` / `grid` 的第 i 块默认第 i 步出现，`figure` 的图默认第 1 步、takeaway 默认第 2 步（caption 始终跟随图）；`stat` 的 `metric(...)` 也接受 `reveal-from`。不支持展示步骤的组件（`focus` / `sidebar`）收到 `reveal-from` 会 panic，而不是静默忽略。隐藏步骤保留测量空间，所以每个 subslide 的版面完全一致。
+touying 的 `#pause` / 全局 `#uncover` 依赖 markup 里的 marks，进不了组件内部的 `context` / `layout` 闭包，放进组件内容里 touying 会直接 panic。带展示顺序的组件因此提供 `reveal: true`：块按语义顺序逐个 subslide 浮现。所有组件走同一个 resolver：**显式 `reveal-from` 恒优先于 `reveal: true` 的语法糖**（糖只作用于没写 `reveal-from` 的 item）。`duo` / `compare` 的第二块默认第 2 步出现，`stack` / `grid` 的第 i 块默认第 i 步出现，`figure` 的图默认第 1 步、takeaway 默认第 2 步（caption 始终跟随图）；`stat` 的 `metric(...)` 也接受 `reveal-from`。`focus` 只有一帧，收到大于 1 的 `reveal-from` 会 panic，而不是静默忽略；`sidebar` 只收纯内容，typed item 连同其 `reveal-from` 都会被拒绝。隐藏步骤保留测量空间，所以每个 subslide 的版面完全一致。
 
 每个实际渲染的 subslide 发一条 `<xwysyy-frame>` v2 映射（id、step、steps、物理页码、是否 handout、版心物理几何）；完整遥测记录在末帧导出一次，对象带 `visible_from`。自动 id 来自 touying 的逻辑页计数器（`"<archetype>@s<n>"`），跨 subslide 与 handout 稳定，所以每一帧都联结得回 record。checker 校验帧状态机（正常输出恰好是连续物理页上的 1..N 步；handout 只有末帧一条）并重建每个真实渲染帧：逐帧查重叠、空帧（某一步什么都不显示是 error）、稀疏帧（早期帧几乎没有内容是 `sparse_frame`，agent 下 error）。需要更复杂动画的页面不要用布局组件，退回手写 `xwysyy-slide` 加 `#pause`。
 
@@ -107,7 +107,7 @@ touying 的 `#pause` / 全局 `#uncover` 依赖 markup 里的 marks，进不了�
 
 ### focus-slide
 
-内容少时的单焦点居中页，纯内容按 `card()` 包装。填满优先的唯一例外：定格页保留对称居中留白，遥测带 `intent: "focus"`，密度由 checker 的 `low_density` 把关；内容超出安全区照样报 tight / overflow。单帧组件：`reveal-from` 与 stretch visual 都会 panic。`tuning`：`width`（0.76，[0.3, 0.95]）、`center-y`（0.46，[0.30, 0.70]）。
+内容少时的单焦点居中页，纯内容按 `card()` 包装。填满优先的唯一例外：定格页保留对称居中留白，遥测带 `intent: "focus"`，密度由 checker 的 `low_density` 把关；内容超出安全区照样报 tight / overflow。单帧组件：大于 1 的 `reveal-from` 与 stretch visual 都会 panic。`tuning`：`width`（0.76，[0.3, 0.95]）、`center-y`（0.46，[0.30, 0.70]）。
 
 ```typst
 #focus-slide(title: [一句话结论], body: [*主要结论。* 本页只讲一件事。])

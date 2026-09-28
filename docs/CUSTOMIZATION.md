@@ -67,8 +67,10 @@ After changing built-in themes, run:
 
 ```bash
 scripts/check-theme-contrast
-scripts/gen-previews --with-baseline
+scripts/gen-previews
 ```
+
+Then push, wait for the visual-regression run, and adopt its renders as the visual baseline with `scripts/adopt-baseline`.
 
 ### Theme Contrast
 
@@ -126,7 +128,7 @@ Typst web app users can pass fonts available in the web environment. Local CI us
 
 ## 4. Header And Footer
 
-Content slide header and footer are implemented in `src/slides.typ` inside `xwysyy-slide`.
+Content slide header and footer are implemented in `src/slides.typ` inside `_kinded-slide`, which the public `xwysyy-slide` wraps.
 
 The header is open: the slide title is set in `heading-font`, bold, at 1.45em, colored `sea` by default, and sits over a full-width 0.12em rule filled with a gradient running from the title color through `sky` and fading to fully transparent at 92% of the width. The page top margin is 4.35em.
 

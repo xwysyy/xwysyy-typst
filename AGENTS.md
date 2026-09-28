@@ -42,7 +42,7 @@
 | `tests/fixtures/package-entry.typ` | Universe 消费边界回归：经 `@preview/xwysyy:0.4.0` 的真实包解析器调用 `xwysyy-extras()`，由 package-shape job 用 staging 目录编译 |
 | `tests/fixtures/readme-quick-start.typ` | README 主快速开始示例的逐字镜像；测试先断言与 README code block 一致，再由 package-shape job 经真实包解析器编译 |
 | `tests/test_build_universe_package.py` | 发布 staging CLI 回归：真实临时 Git 仓库覆盖正常发布、manifest 类型与路径约束、README 契约、失败后无半成品 |
-| `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机 + rules 叶级校验）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures、页头缩放遥测） |
+| `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机 + rules 叶级校验）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures、页头缩放遥测、标题页日期覆盖） |
 | `tests/test_render_visuals.py` | 视觉渲染发布回归：成功时完整替换脚本拥有的 PNG 集，编译失败时保留上一套完整输出，无关文件不受影响 |
 | `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *` |
 | `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
@@ -105,7 +105,7 @@
 
 - **改色 / 新增主题**：普通用户直接传 theme 字典；维护内置主题时编辑 `src/themes.typ` 顶部 `themes` 字典，新增一个 key 即可。每个主题需包含 `sea`/`sky`/`skyl`/`skyll`/`paper`/`page-fill` 共 6 个必需字段，可选 `header-text` 覆盖 header 标题色，改完跑 `scripts/check-theme-contrast` 和 `scripts/gen-previews`，基线待 CI 跑完用 `scripts/adopt-baseline` 采纳。
 - **改字体 / 语言**：优先通过 `xwysyy-pre(font: ..., code-font: ..., lang: ...)` 参数设置。改默认字号才编辑 `src/slides.typ` 内 `set text(... size: 5.5mm)`。
-- **改 slide 顶部 / 底部装饰**：编辑 `src/slides.typ` 内 `xwysyy-slide` 的 `header(self)` / `footer(self)` 函数。header 是开放式（无底色块）：标题用 `config-store` 的 `heading-font`，bold、1.45em，颜色取 `header-color`（主题 `header-text` 覆盖，默认 `sea`），下方一条全宽 0.12em 细线，填充从标题色经 `sky` 向右渐隐、到 92% 宽度处完全透明的渐变；header 块 `inset` 顶部 1.1em，配套的页面顶部 margin 在 `xwysyy-pre` 的 `config-page` 里是 4.35em，两者要一起调。footer 只剩右下角页码（无背景/边框）。
+- **改 slide 顶部 / 底部装饰**：编辑 `src/slides.typ` 内 `_kinded-slide` 的 `header(self)` / `footer(self)` 函数（`xwysyy-slide` 是它的公开包装）。header 是开放式（无底色块）：标题用 `config-store` 的 `heading-font`，bold、1.45em，颜色取 `header-color`（主题 `header-text` 覆盖，默认 `sea`），下方一条全宽 0.12em 细线，填充从标题色经 `sky` 向右渐隐、到 92% 宽度处完全透明的渐变；header 块 `inset` 顶部 1.1em，配套的页面顶部 margin 在 `xwysyy-pre` 的 `config-page` 里是 4.35em，两者要一起调。footer 只剩右下角页码（无背景/边框）。
 - **新增页面版式**：在 `src/slides.typ` 里仿照 `end-slide` / `image-slide` 写一个 `touying-slide-wrapper` 即可。**必须用 `utils.merge-dicts(self, config-page(...))`，不要用 `show: touying-slides.with(...)`**——后者在 touying 0.7.x 会产生 ghost slide（参见 `title-slide` 实现）。
 - **改 slide show 规则**：编辑 `src/elements.typ` 内 `xwysyy-elements` 的 show 规则块。注意 raw 有 block: true 和 block: false 两条 show rule。
 - **`textbox` 组件**：在 `src/elements.typ` 里。浅色圆角文本框，背景色为当前主题的 `skyll`。单列直接全宽 block；多列模式内部用 `components.lazy-layout` + `components.lazy-v(1fr)` 实现等高。颜色通过 `_theme-state` 读取。

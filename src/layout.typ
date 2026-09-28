@@ -43,8 +43,8 @@
 // — hidden steps keep their measured space, so the layout is identical on
 // every subslide.  One resolver (`_steps`) serves every component and an
 // explicit `reveal-from` always wins over the `reveal: true` sugar;
-// components without reveal steps reject `reveal-from` instead of silently
-// ignoring it.
+// components without reveal steps have a single frame and reject any
+// `reveal-from` beyond step 1 instead of silently ignoring it.
 
 #import "@preview/touying:0.7.4": utils
 #import "slides.typ": xwysyy-slide
@@ -205,9 +205,10 @@
 
 // Central item validation, run up front in every component.  The constructor
 // marker is not trusted: a hand-built dictionary with an unknown kind, fit, or
-// role fails here instead of silently taking some other code path.  `stretch: false` marks slots sized by their natural
-// height; `reveal: false` marks components without reveal steps, which must
-// reject `reveal-from` instead of ignoring it.
+// role fails here instead of silently taking some other code path.
+// `stretch: false` marks slots sized by their natural height; `reveal: false`
+// marks components without reveal steps, which accept `reveal-from: 1` (their
+// single frame) and reject any later step instead of ignoring it.
 #let _validate-item(comp, slot, it, stretch: true, reveal: true) = {
   if it.at("kind", default: none) not in _KINDS {
     panic(comp + ": " + slot + " item kind must be one of " + repr(_KINDS)
@@ -692,8 +693,8 @@
 //
 // The one deliberate exception to fill-first: a focus page states a single
 // point and is allowed its symmetric whitespace.  Plain content is coerced to
-// card().  A focus page has exactly one frame: it rejects reveal-from and
-// stretch visuals (there is no free space to absorb).  Fit still honours the
+// card().  A focus page has exactly one frame: it rejects reveal-from beyond
+// step 1 and stretch visuals (there is no free space to absorb).  Fit still honours the
 // safe area: content taller than it reports tight, taller than the page
 // reports overflow.
 

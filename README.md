@@ -5,7 +5,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://typst.app"><img src="https://img.shields.io/badge/Typst-%E2%89%A5%200.14.0-239dad.svg" alt="Typst version: >= 0.14.0"></a>
   <a href="https://github.com/touying-typ/touying"><img src="https://img.shields.io/badge/touying-0.7.4-blueviolet.svg" alt="touying version: 0.7.4"></a>
-  <a href="#-themes"><img src="https://img.shields.io/badge/Themes-6%20built--in-ff69b4.svg" alt="Built-in themes"></a>
+  <a href="#themes"><img src="https://img.shields.io/badge/Themes-6%20built--in-ff69b4.svg" alt="Built-in themes"></a>
 </p>
 
 <p align="center">

@@ -166,8 +166,10 @@ After changing built-in themes, run:
 
 ```bash
 scripts/check-theme-contrast
-scripts/gen-previews --with-baseline
+scripts/gen-previews
 ```
+
+Then push, wait for the visual-regression run, and adopt its renders as the visual baseline with `scripts/adopt-baseline`.
 
 ## Tune An Existing Theme
 
