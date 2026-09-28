@@ -206,10 +206,7 @@
 
 #let end-slide(title: [Thank You!], body: none) = {
   touying-slide-wrapper(self => {
-    self = utils.merge-dicts(self, config-page(
-      fill: white,
-      margin: 2em,
-    ))
+    self = utils.merge-dicts(self, config-page(margin: 2em))
     let main-body = {
       _page-manifest("end")
       set align(center + horizon)
