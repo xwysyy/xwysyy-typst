@@ -182,13 +182,10 @@ scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current --diff-dir 
 
 The preview and visual scripts pass `--input visual-ci=true`. The visual examples use the fixed date `2026-07-10` together with Liberation Serif, Noto Serif CJK SC, and DejaVu Sans Mono, so repeated renders have stable inputs. `render-visuals` builds the complete set in a temporary sibling directory and publishes it only after every compile succeeds. Publication replaces only the PNG families owned by the script and preserves unrelated files in the target directory.
 
-The GitHub Actions workflow runs:
+The GitHub Actions workflow runs two jobs, both on Typst 0.14.0:
 
-1. Compile all examples, including handout output.
-2. Check theme contrast.
-3. Render the visual set.
-4. Compare against `tests/visual-baseline`.
-5. Upload current renders and diff images on failure.
+1. `render` compiles the example decks with default inputs before any fonts are installed, installs the deterministic fonts, compiles the examples again with `visual-ci=true` (including handout output), runs the Python regression tests, checks theme contrast, compiles the API fixtures and the missing-field error case, renders the visual set, compares it against `tests/visual-baseline`, and uploads the current renders and diff images on failure.
+2. `package-shape` stages the Universe package from `HEAD`, checks its file set, and compiles the template, the README quick start, and a `typst init` project through the package resolver.
 
 Pure documentation pull requests are ignored by the visual workflow through `paths-ignore`.
 
@@ -197,8 +194,8 @@ Pure documentation pull requests are ignored by the visual workflow through `pat
 When changing `src/*.typ`, examples, template, themes, or scripts, run:
 
 ```bash
-typst compile --root . examples/slides-sky.typ
-typst compile --root . examples/slides-sunset.typ
+typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf
+typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf
 scripts/check-theme-contrast
 scripts/render-visuals /tmp/xwysyy-visual-current
 scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current

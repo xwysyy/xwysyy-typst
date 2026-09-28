@@ -11,21 +11,6 @@ on:
     branches: ["master"]
 
 jobs:
-  minimum-compiler:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: typst-community/setup-typst@v4
-        with:
-          typst-version: 0.14.0
-
-      - name: Compile public surfaces with the minimum compiler
-        run: |
-          typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf
-          typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf
-          typst compile --root . examples/layout-demo.typ /tmp/layout-demo.pdf
-
   package-shape:
     runs-on: ubuntu-latest
     steps:
@@ -67,6 +52,12 @@ jobs:
         with:
           typst-version: 0.14.0
 
+      - name: Compile with default inputs before installing fonts
+        run: |
+          typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf
+          typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf
+          typst compile --root . examples/layout-demo.typ /tmp/layout-demo.pdf
+
       - name: Install deterministic fonts
         run: |
           sudo apt-get update
@@ -76,11 +67,11 @@ jobs:
 
       - name: Compile examples
         run: |
-          typst compile --root . --input visual-ci=true examples/slides-sky.typ
-          typst compile --root . --input visual-ci=true examples/slides-sunset.typ
-          typst compile --root . --input visual-ci=true examples/theme-preview.typ
-          typst compile --root . --input visual-ci=true --input handout=true examples/slides-sky.typ slides-sky-handout.pdf
-          typst compile --root . --input visual-ci=true examples/layout-demo.typ
+          typst compile --root . --input visual-ci=true examples/slides-sky.typ /tmp/slides-sky-ci.pdf
+          typst compile --root . --input visual-ci=true examples/slides-sunset.typ /tmp/slides-sunset-ci.pdf
+          typst compile --root . --input visual-ci=true examples/theme-preview.typ /tmp/theme-preview-ci.pdf
+          typst compile --root . --input visual-ci=true --input handout=true examples/slides-sky.typ /tmp/slides-sky-handout.pdf
+          typst compile --root . --input visual-ci=true examples/layout-demo.typ /tmp/layout-demo-ci.pdf
 
       - name: Python regression tests
         run: python3 -m unittest discover -s tests -v

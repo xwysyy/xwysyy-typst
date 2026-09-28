@@ -55,7 +55,7 @@
 | `scripts/adopt-baseline` | 从最近一次 visual-regression run 下载 `visual-current` artifact 全量覆盖视觉基线（需 gh CLI 已登录） |
 | `scripts/build-universe-package` | 从干净的已提交 Git ref 提取最小官方包白名单（manifest、`LICENSE`、README、thumbnail、`xwysyy.typ`、`src/`、`template/`），不复制开发脚本、测试或内部文档 |
 | `scripts/check-theme-contrast` | 解析 `src/themes.typ` 并检查主题对比度 |
-| `.github/workflows/visual-regression.yml` | 所有 job 用 Typst 0.14.0：编译公开入口，检查 Universe 包形状，编译示例、运行测试、检查主题对比度、渲染视觉基线并比较 |
+| `.github/workflows/visual-regression.yml` | 两个 job 都用 Typst 0.14.0：`render` 先在装字体前用默认参数编译示例，装字体后编译示例、运行测试、检查主题对比度、渲染视觉基线并比较；`package-shape` 构建 Universe 包并经包解析器编译模板、README 快速开始与 `typst init` 项目 |
 | `tests/fixtures/` | 自定义主题、目录标题、字体参数等编译验证 fixture |
 | `tests/visual-baseline/` | CI 视觉回归基线 PNG |
 | `LICENSE` | MIT，沿用 0.3.0 与上游 |
@@ -64,11 +64,11 @@
 
 完整开发纪律见 `~/.claude/rules/dev-principles.md` + `dev-protocols.md`；以下是本项目特有提醒。
 
-- **改完必编译**：任何对 `xwysyy.typ` / `src/*.typ` / 示例 / 模板脚手架的修改完成后，至少跑 `typst compile --root . examples/slides-sky.typ && typst compile --root . examples/slides-sunset.typ`。改主题、脚本或预览时还要跑 `scripts/check-theme-contrast` 与 `scripts/render-visuals /tmp/xwysyy-visual-current && scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current`。
+- **改完必编译**：任何对 `xwysyy.typ` / `src/*.typ` / 示例 / 模板脚手架的修改完成后，至少跑 `typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf && typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf`。改主题、脚本或预览时还要跑 `scripts/check-theme-contrast` 与 `scripts/render-visuals /tmp/xwysyy-visual-current && scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current`。
 - **改语义布局层必验遥测**：改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check` 后跑 `scripts/xwysyy-check examples/layout-demo.typ; python3 -m unittest discover -s tests`（demo 含故意的 bad 页，检查退出码非零属预期；CI 的 `Python regression tests` 步骤跑同一套单测，其中已含 panic fixtures、handout 覆盖率与像素真阳性）。改阈值后必须确认 demo 的 10 个 good 页仍全过、6 个 bad 页仍被捕获（阈值以真实测量的 good 页为锚校准，不要放水让 bad 页蒙混）。发版前另跑 `scripts/xwysyy-check examples/layout-demo.typ --pixels` 做像素级交叉验证。
 - **视觉基线以 CI 环境为准**：`tests/visual-baseline/` 的判定基准是 workflow 钉死的 CI 字体环境。本机多装字体时，落在示例字体栈之外的字形（含中文的行内代码、⬦ 列表标记等）走系统回退，本地 `compare-png` 会对少数页报已知差异，属正常。更新基线：视觉改动 push 后等 CI 跑完，跑 `scripts/adopt-baseline`（自动下载该 run 的 `visual-current` artifact 全量覆盖 `tests/visual-baseline`），review 后补 `test:` 提交；不要用本地渲染图当基线。
 - **许可证固定为单一 MIT**：本仓库、Universe 包和 `template/` 统一使用根目录 `LICENSE` 中的 MIT，沿用上游 `may` 与官方 0.3.0。不得引入 MIT-0、复合 SPDX 许可证、第二份许可证文件或模板目录许可特例；AI 不得以提交检查、减少署名义务或兼容性为由改变许可证。
-- **Universe 发布使用最小子集和独立分支**：`master` 是开发与发布配置的权威，保留测试、示例、QA 脚本和内部文档。每个版本从验证后的 `master` 提交创建 `universe-X.Y.Z` 分支，日常开发不在该分支继续；`scripts/build-universe-package <output> --ref universe-X.Y.Z` 只复制白名单内的发布文件，`src/` 下的运行源码整体带上。`typst/packages` PR 分支只接收构建产物，不接收 `scripts/`、`tests/`、`docs/`、示例或维护文件。管理员要求的通用修正先回写 `master`，再更新发布分支；只有官方仓库特有且无法在源仓库表达的修改才留在 PR 分支。`typst.toml` 的 `compiler` 是最低版本，修改后必须通过 workflow 的 `minimum-compiler` job。
+- **Universe 发布使用最小子集和独立分支**：`master` 是开发与发布配置的权威，保留测试、示例、QA 脚本和内部文档。每个版本从验证后的 `master` 提交创建 `universe-X.Y.Z` 分支，日常开发不在该分支继续；`scripts/build-universe-package <output> --ref universe-X.Y.Z` 只复制白名单内的发布文件，`src/` 下的运行源码整体带上。`typst/packages` PR 分支只接收构建产物，不接收 `scripts/`、`tests/`、`docs/`、示例或维护文件。管理员要求的通用修正先回写 `master`，再更新发布分支；只有官方仓库特有且无法在源仓库表达的修改才留在 PR 分支。`typst.toml` 的 `compiler` 是最低版本，必须与 workflow 各 job 的 `typst-version` 一致；`render` job 在装字体之前先用默认参数编译示例，修改后这一步必须通过。
 - **文档同步 SOP**：按改动类型查表同步文档，不再维护行号引用。
 
   | 改了什么 | 必须同步 |
