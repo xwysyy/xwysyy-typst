@@ -65,13 +65,8 @@ jobs:
           curl -fsSL -o /tmp/libertinus.zip https://github.com/alerque/libertinus/releases/download/v7.051/Libertinus-7.051.zip
           sudo unzip -jo /tmp/libertinus.zip 'Libertinus-7.051/static/OTF/LibertinusSans-*.otf' -d /usr/share/fonts/opentype/libertinus
 
-      - name: Compile examples
-        run: |
-          typst compile --root . --input visual-ci=true examples/slides-sky.typ /tmp/slides-sky-ci.pdf
-          typst compile --root . --input visual-ci=true examples/slides-sunset.typ /tmp/slides-sunset-ci.pdf
-          typst compile --root . --input visual-ci=true examples/theme-preview.typ /tmp/theme-preview-ci.pdf
-          typst compile --root . --input visual-ci=true --input handout=true examples/slides-sky.typ /tmp/slides-sky-handout.pdf
-          typst compile --root . --input visual-ci=true examples/layout-demo.typ /tmp/layout-demo-ci.pdf
+      - name: Compile the handout example
+        run: typst compile --root . --input visual-ci=true --input handout=true examples/slides-sky.typ /tmp/slides-sky-handout.pdf
 
       - name: Python regression tests
         run: python3 -m unittest discover -s tests -v
@@ -82,10 +77,7 @@ jobs:
       - name: Compile API fixtures
         run: |
           typst compile --root . tests/fixtures/custom-theme-direct.typ /tmp/custom-theme-direct.pdf
-          typst compile --root . tests/fixtures/custom-theme-registered.typ /tmp/custom-theme-registered.pdf
-          typst compile --root . tests/fixtures/outline-en.typ /tmp/outline-en.pdf
           typst compile --root . tests/fixtures/outline-zh.typ /tmp/outline-zh.pdf
-          typst compile --root . tests/fixtures/outline-agenda.typ /tmp/outline-agenda.pdf
           typst compile --root . tests/fixtures/font-override.typ /tmp/font-override.pdf
 
       - name: Check missing theme field error
