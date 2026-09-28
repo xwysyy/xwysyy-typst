@@ -1,4 +1,4 @@
-// Demo deck for the semantic layout layer (telemetry schema v3).
+// Demo deck for the semantic layout layer.
 //
 // Every slide below is produced by a semantic component: the author fills
 // typed content items and the component measures, allocates, and exports

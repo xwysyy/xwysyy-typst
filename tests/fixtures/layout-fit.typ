@@ -1,4 +1,4 @@
-// Fit-state regression fixture (allocator v3).
+// Fit-state regression fixture.
 //
 // Review findings live here as permanent regressions:
 //   * sidebar-tight — natural height between the safe area (0.84H) and the

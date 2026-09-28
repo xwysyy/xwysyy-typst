@@ -1,7 +1,7 @@
 # xwysyy-typst — AGENTS.md
 
 > AGENTS.md 是给 AI assistant 的导航地图，不是百科。
-> 本项目规模小，多数 dev-templates 的标准文档都不存在（见末尾"本项目不存在的文档"）。
+> 本项目规模小，只维护下方列出的文档（见末尾"本项目不存在的文档"）。
 
 ---
 
@@ -15,8 +15,6 @@
 
 - `docs/LAYOUT.md` — 语义布局层契约（schema v4）：typed items、声明式 sizing、fit 四态、遥测字段、checker 诊断表与 AI 生成契约。凡是生成 slide 内容或改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check`，先读它。
 
-本项目尚无 `docs/project-memo.md`（跨任务铁律 / 偏好沉淀）；当跨会话信号 >=2 条同类时再按 `~/.claude/rules/dev-protocols.md § Project Memo Protocol` 升级创建。
-
 ## 关键文件
 
 | 文件 | 作用 |
@@ -25,7 +23,7 @@
 | `src/themes.typ` | `themes` 字典（sky / sunset / forest / midnight / violet / graphite）+ 主题字段校验 `_resolve-theme` + 顶层色变量（`sea` / `sky` / `skyll` / `paper`）+ `_theme-state` + 颜色宏（`red`/`bred`/`yellow`/`byellow`） |
 | `src/elements.typ` | show-chain `xwysyy-elements` + `info` + `textbox` |
 | `src/slides.typ` | slide 入口 `xwysyy-pre` + 6 种版式（`xwysyy-slide`、`title-slide`、`outline-slide`、`new-section-slide`、`image-slide`、`end-slide`）。`outline-slide` 自动过滤 `<touying:hidden>` 标签且 >5 章自动两列，`title: auto` 按 `text.lang` 输出 `Contents` / `目录`。`frozen-counters` 默认冻结 `figure` 和 `math.equation` 计数器 |
-| `src/layout.typ` | 语义布局层 + 版面遥测 v4：`duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`，共用 `_alloc-column`/`_fit-row` 分配器（item min/pref/max/grow + gap min/pref，fit 四态 normal/compressed/tight/overflow，不变量 overflow⇒body_overflow>0；stretch 视觉硬下限 0.28H）。所有槽位收 typed items（`visual(fit: "stretch"|"natural")`/`card`/`takeaway`/`plain`，sizing 声明不推断）；必填槽位 none / 渲染为空 / grid<2 列 / stat 缺 value·label / reveal-from 越界 / tuning key·类型·区间违规一律 panic。对象带 frame/preferred/payload(二维)/paint 四框 + 逐轴 sizing；每个真实渲染 subslide 发 `<xwysyy-frame>` 映射（handout 覆盖率安全）。分步展示用 `reveal: true`（callback 式 `utils.uncover`，完整记录末帧导出）；**组件内容里禁用 `#pause`**（marks 进不了 `context`/`layout` 闭包，touying 会 panic）。**新增组件不要把 `context {}` 套在产出 slide 的调用外层**（touying 会 panic，颜色改在内容层用 `context`）。AI 生成契约见 `docs/LAYOUT.md` |
+| `src/layout.typ` | 语义布局层 + 版面遥测 v4：`duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`，共用 `_alloc-column`/`_fit-row` 分配器（item min/pref/max/grow + gap min/pref，fit 四态 normal/compressed/tight/overflow，不变量 overflow⇒body_overflow>0；stretch 视觉硬下限 0.28H）。槽位收 typed items（`visual(fit: "stretch"|"natural")`/`card`/`takeaway`/`plain`，sizing 声明不推断；stat 只收 `metric`，sidebar 只收纯内容）；必填槽位 none / 渲染为空（空 stretch 视觉由像素层 `hollow_object` 报）/ grid<2 列 / stat 缺 value·label / reveal-from 越界 / tuning key·类型·区间违规一律 panic。对象带 frame/preferred/payload(二维)/paint 四框 + 逐轴 sizing；组件每个真实渲染的 subslide 发 `<xwysyy-frame>` 映射（handout 覆盖率安全）。分步展示用 `reveal: true`（callback 式 `utils.uncover`，完整记录末帧导出）；**组件内容里禁用 `#pause`**（marks 进不了 `context`/`layout` 闭包，touying 会 panic）。**新增组件不要把 `context {}` 套在产出 slide 的调用外层**（touying 会 panic，颜色改在内容层用 `context`）。AI 生成契约见 `docs/LAYOUT.md` |
 | `examples/slides-sky.typ` | sky 主题演示 deck |
 | `examples/slides-sunset.typ` | sunset 主题演示 deck |
 | `examples/theme-preview.typ` | 可通过 `--input theme=<name>` 渲染任意内置主题的预览 deck |
@@ -38,7 +36,7 @@
 | `tests/fixtures/adversarial/` | 外部审查实锤的假绿反例（自动 id 空白首帧、空 stretch 视觉），集成测试断言它们必须 fail |
 | `tests/fixtures/readme-quick-start.typ` | README 主快速开始示例的逐字镜像；测试先断言与 README code block 一致，再由 package-shape job 经真实包解析器编译 |
 | `tests/test_build_universe_package.py` | 发布 staging CLI 回归：真实临时 Git 仓库覆盖正常发布、manifest 类型与路径约束、README 契约、失败后无半成品 |
-| `tests/test_slide_check.py` | checker 单测（合成 v4 记录逐诊断覆盖 + fail-closed 解析 + 帧状态机）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures、页头缩放遥测、标题页日期覆盖） |
+| `tests/test_slide_check.py` | checker 单测（合成 v4 记录覆盖主要诊断 + fail-closed 解析 + 帧状态机）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures、页头缩放遥测、标题页日期覆盖） |
 | `tests/test_render_visuals.py` | 视觉渲染发布回归：成功时完整替换脚本拥有的 PNG 集，编译失败时保留上一套完整输出，无关文件不受影响 |
 | `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *` |
 | `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
@@ -49,20 +47,20 @@
 | `docs/THEME-GENERATOR.md` | AI 生成主题字典提示词，默认指导用户直接传给 `theme` 参数 |
 | `scripts/slide-check.py` | 版面遥测几何引擎（schema v4，fail-closed 解析：缺字段 / 未知枚举 / 旧 schema 一律 exit 2）：并集面积覆盖指标（container/visual/payload + declared_payload）、fit 四态数值不变量、帧状态机（steps 1..N / handout 末帧 / 孤儿帧 / 重复 id 皆 error）、empty_shell / underfilled_card（只认 measured payload）、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame / sparse_frame）、每条诊断带 action、统一 severity 政策表、`--profile agent|human`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 把诊断导致的 1 变为 0，坏输入仍 exit 2）；遥测为空非零退出。仅用于开发仓库 QA |
 | `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema，随后执行几何检查和像素交叉验证（`--profile agent` 强制渲染像素）：render_telemetry_mismatch（只认当前 reveal 步可见对象的 frame）/ edge_ink 行峰值 / hollow_object（逐对象 payload 墨迹，排除自身卡片填色 `paint_fill`），页面几何来自 frame v2 遥测而非硬编码常量。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。仅用于开发仓库 QA |
-| `scripts/gen-previews` | 重新生成 README preview PNG；不写视觉基线（基线只走 `scripts/adopt-baseline`） |
+| `scripts/gen-previews` | 从已采纳的 CI 视觉基线 `tests/visual-baseline` 复制 README preview PNG（页码映射写在脚本里）；基线变化并采纳后再运行 |
 | `scripts/render-visuals` | 在目标目录旁完整渲染视觉回归 PNG staging，成功后替换脚本拥有的 PNG 集；内部传 `--input visual-ci=true` 以固定日期并使用 CI 可安装字体 |
 | `scripts/compare-png` | 无 ImageMagick 依赖的 PNG 像素比较器，可输出 diff PNG |
 | `scripts/adopt-baseline` | 从最近一次 visual-regression run 下载 `visual-current` artifact 全量覆盖视觉基线（需 gh CLI 已登录） |
 | `scripts/build-universe-package` | 从干净的已提交 Git ref 提取最小官方包白名单（manifest、`LICENSE`、README、thumbnail、`xwysyy.typ`、`src/`、`template/`），不复制开发脚本、测试或内部文档 |
 | `scripts/check-theme-contrast` | 解析 `src/themes.typ` 并检查主题对比度 |
-| `.github/workflows/visual-regression.yml` | 两个 job 都用 Typst 0.14.0：`render` 先在装字体前用默认参数编译示例，装字体后编译示例、运行测试、检查主题对比度、渲染视觉基线并比较；`package-shape` 构建 Universe 包并经包解析器编译模板、README 快速开始与 `typst init` 项目 |
+| `.github/workflows/visual-regression.yml` | 两个 job 都用 Typst 0.14.0：`render` 先在装字体前用默认参数编译示例，装字体后编译 handout 示例、运行测试、检查主题对比度、编译 API fixture、渲染视觉基线并比较；`package-shape` 构建 Universe 包并经包解析器编译模板、README 快速开始与 `typst init` 项目 |
 | `tests/fixtures/` | 自定义主题、目录标题、字体参数等编译验证 fixture |
 | `tests/visual-baseline/` | CI 视觉回归基线 PNG |
 | `LICENSE` | MIT，沿用 0.3.0 与上游 |
 
 ## 工作规则（项目层面）
 
-完整开发纪律见 `~/.claude/rules/dev-principles.md` + `dev-protocols.md`；以下是本项目特有提醒。
+完整开发纪律见 `~/.claude/rules/dev-core.md` + `verification.md`；以下是本项目特有提醒。
 
 - **改完必编译**：任何对 `xwysyy.typ` / `src/*.typ` / 示例 / 模板脚手架的修改完成后，至少跑 `typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf && typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf`。改主题、脚本或预览时还要跑 `scripts/check-theme-contrast` 与 `scripts/render-visuals /tmp/xwysyy-visual-current && scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current`。
 - **改语义布局层必验遥测**：改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check` 后跑 `scripts/xwysyy-check examples/layout-demo.typ; python3 -m unittest discover -s tests`（demo 含故意的 bad 页，检查退出码非零属预期；CI 的 `Python regression tests` 步骤跑同一套单测，其中已含 panic fixtures、handout 覆盖率与像素真阳性）。改阈值后必须确认 demo 的 10 个 good 页仍全过、6 个 bad 页仍被捕获（阈值以真实测量的 good 页为锚校准，不要放水让 bad 页蒙混）。发版前另跑 `scripts/xwysyy-check examples/layout-demo.typ --pixels` 做像素级交叉验证。
@@ -76,11 +74,11 @@
   | 新增/删除/改名公开函数 | README 组件速查 + USAGE 版式/组件章节 + AGENTS 关键文件表 |
 	  | 改主题色字段 | README 主题配色表（中英）+ USAGE 字段说明 + THEME-GENERATOR 提示词 |
 	  | 改 show rule 行为 | USAGE §7 show 规则速览 |
-	  | 改 example deck 结构 | 重新生成 preview PNG + README 预览表 |
+	  | 改 example deck 结构 | CI 基线采纳后跑 `scripts/gen-previews`（页码变了先改脚本里的映射）+ README 预览表 |
 	  | 改 CI / preview / release 脚本 | CUSTOMIZATION 维护命令 + AGENTS 关键文件表 |
 	  | 纯内部重构（不改公开 API） | 无 |
 	  | 发版 | typst.toml version + git tag |
-- **主题色变量是契约**：`themes` 字典中每套主题必含 5 个字段 `sea` / `sky` / `skyll` / `paper` / `page-fill`（`_resolve-theme` 逐一校验，缺字段 panic）；`header-text` 是可选字段，非 `none` 时覆盖内容页 open header 的标题颜色（默认 `sea`），6 套内置主题均为 `header-text: none`；`header-fill` 字段已删除，不要再写进主题字典。这些字段既是颜色定义，也通过 `config-colors` 映射到 touying 的语义槽（`neutral-dark = sea` 等）；`config-store` 还携带 `heading-font` 与 `header-color`（由 `header-text` 回退到 `sea` 解析而来）供 header 使用。改名要同步改 `xwysyy-pre` 内 `config-colors(...)` 调用，否则下游 slide 组件会拿到错误颜色。运行时通过 `_theme-state`（state）向 `textbox` 等组件传播主题色。
+- **主题色变量是契约**：`themes` 字典中每套主题必含 5 个字段 `sea` / `sky` / `skyll` / `paper` / `page-fill`（`_resolve-theme` 逐一校验，缺字段 panic）；`header-text` 是可选字段，非 `none` 时覆盖内容页 open header 的标题颜色（默认 `sea`），6 套内置主题均为 `header-text: none`。这些字段既是颜色定义，也通过 `config-colors` 映射到 touying 的语义槽（`neutral-dark = sea` 等）；`config-store` 还携带 `heading-font` 与 `header-color`（由 `header-text` 回退到 `sea` 解析而来）供 header 使用。改名要同步改 `xwysyy-pre` 内 `config-colors(...)` 调用，否则下游 slide 组件会拿到错误颜色。运行时通过 `_theme-state`（state）向 `textbox` 等组件传播主题色。
 - **函数命名前缀**：当前所有公开主题函数前缀为 `xwysyy-`（`xwysyy-pre`、`xwysyy-slide`、`xwysyy-elements`）。新增函数沿用此前缀；`title-slide` / `outline-slide` / `textbox` / `end-slide` 等通用 helper 不带前缀。
 - **typst + touying 边界 bug**：不要使用 `config-info(author: [])`（空 content），touying 会把空 content 处理成 none，并触发内部类型检查失败。空作者用 `author: " "` 绕开，不要回退到 `[]`。
 - **不要随便引入 typst package**：依赖只有 `@preview/touying:0.7.4` 与 `@preview/physica:0.9.8`。新增依赖前先评估是否可在 `src/` 子模块内手写实现。
@@ -91,14 +89,14 @@
 
 > 生成幻灯片内容时（非维护模板本身），间距和位置一律交给 `src/layout.typ` 的语义组件，不手写数值。完整说明见 `docs/LAYOUT.md`。
 
-- **禁止**：手写 `#v(...)` 制造大间距；用 `place` / 绝对坐标控制普通正文；用 `align(bottom)` 把正文推到底部；一页堆多个无约束 block 靠手感排间距；**修改任何组件的 `tuning` 字典**（数字微调属于人工层，`extra.tuned` 会记录，agent profile 下是 error）；**在布局组件内容里用 `#pause` / `#meanwhile` / 全局 `#uncover`**（touying 会 panic，分步展示改用组件的 `reveal: true`）；给 `xwysyy-slide` 传 `kind`（参数已删除，panic；豁免页只能用 `outline-slide` / `title-slide` 等专用版式）；用 spacer / 空字符串 / 裸线条 / `hide(...)` / 空 stretch 视觉填充槽位（编译期 panic 或像素层 `hollow_object` error）。
+- **禁止**：手写 `#v(...)` 制造大间距；用 `place` / 绝对坐标控制普通正文；用 `align(bottom)` 把正文推到底部；一页堆多个无约束 block 靠手感排间距；**修改任何组件的 `tuning` 字典**（数字微调属于人工层，`extra.tuned` 会记录，agent profile 下是 error）；**在布局组件内容里用 `#pause` / `#meanwhile` / 全局 `#uncover`**（touying 会 panic，分步展示改用组件的 `reveal: true`）；给 `xwysyy-slide` 传 `kind`（没有这个参数，传入即 panic；豁免页只能用 `outline-slide` / `title-slide` 等专用版式）；用 spacer / 空字符串 / 裸线条 / `hide(...)` / 空 stretch 视觉填充槽位（编译期 panic 或像素层 `hollow_object` error）。
 - **必须**：图文上下用 `duo-slide`；单一结论少内容用 `focus-slide`；多列对等信息用 `grid-slide`；多块同节奏用 `stack-slide`；左右对比用 `compare-slide`；一行关键数字用 `stat-slide`（条目用 `metric(value, label)`）；图配 caption 与结论用 `figure-slide`；窄标签配宽内容用 `sidebar-slide`（body 传纯内容不包 `textbox`）；要撑满的视觉显式写 `visual(...)`（占位 `rect(width: 100%, height: 100%)`，真实图片 `image(width: 100%, height: 100%, fit: "contain")`），固有尺寸的图用 `image(width: 100%)`；分步展示用 `reveal: true`（精确步数用 `reveal-from`，显式值恒优先；focus / sidebar 没有展示步骤）；只通过 `mode: compact | balanced | separated` 调密度。百分比尺寸的内容不包 `visual()` 会因"渲染为空 / 无可测量宽度"直接 panic，这是设计行为。
 - **反馈驱动，不靠手感**：编译后跑 `scripts/xwysyy-check <deck.typ> --profile agent`（agent profile 自动含像素交叉验证），按返回诊断的 `action` 修正（`content_overflow` / `margin_squeeze` / `underfilled_card` / `low_density` / `column_imbalance` / `semantic_pair_split` / `telemetry_gap` / `hollow_object` / `header_overflow` 等），不靠"看起来差不多"停止迭代。`report_bug` 类诊断（frame_integrity / orphan_frame / render_telemetry_mismatch / invalid_fit_state）不该靠改内容消掉。诊断含义与修法见 `docs/LAYOUT.md` 的诊断表。
 - **组件保证间距、checker 判断内容**：组件已用 `measure` + 声明式 sizing 分配器保证间距正确；checker 只报组件无法自行决定的内容级问题（太空 / 太满 / 空壳卡片 / 列失衡 / 溢出 / 漏遥测）。对称留白不是缺陷（focus 页有意如此）。
 
 ## 改主题的常见动线
 
-- **改色 / 新增主题**：普通用户直接传 theme 字典；维护内置主题时编辑 `src/themes.typ` 顶部 `themes` 字典，新增一个 key 即可。每个主题需包含 `sea`/`sky`/`skyll`/`paper`/`page-fill` 共 5 个必需字段，可选 `header-text` 覆盖 header 标题色，改完跑 `scripts/check-theme-contrast` 和 `scripts/gen-previews`，基线待 CI 跑完用 `scripts/adopt-baseline` 采纳。
+- **改色 / 新增主题**：普通用户直接传 theme 字典；维护内置主题时编辑 `src/themes.typ` 顶部 `themes` 字典，新增一个 key 即可。每个主题需包含 `sea`/`sky`/`skyll`/`paper`/`page-fill` 共 5 个必需字段，可选 `header-text` 覆盖 header 标题色，改完跑 `scripts/check-theme-contrast`；push 后等 CI 跑完用 `scripts/adopt-baseline` 采纳基线，再跑 `scripts/gen-previews` 刷新 README 预览。
 - **改字体 / 语言**：优先通过 `xwysyy-pre(font: ..., code-font: ..., lang: ...)` 参数设置。改默认字号才编辑 `src/slides.typ` 内 `set text(... size: 5.5mm)`。
 - **改 slide 顶部 / 底部装饰**：编辑 `src/slides.typ` 内 `_kinded-slide` 的 `header(self)` / `footer(self)` 函数（`xwysyy-slide` 是它的公开包装）。header 是开放式（无底色块）：标题用 `config-store` 的 `heading-font`，bold、1.45em，颜色取 `header-color`（主题 `header-text` 覆盖，默认 `sea`），下方一条全宽 0.12em 细线，填充从标题色经 `sky` 向右渐隐、到 92% 宽度处完全透明的渐变；header 块 `inset` 顶部 1.1em，配套的页面顶部 margin 在 `xwysyy-pre` 的 `config-page` 里是 4.35em，两者要一起调。footer 只剩右下角页码（无背景/边框）。
 - **新增页面版式**：在 `src/slides.typ` 里仿照 `end-slide` / `image-slide` 写一个 `touying-slide-wrapper` 即可。**必须用 `utils.merge-dicts(self, config-page(...))`，不要用 `show: touying-slides.with(...)`**——后者在 touying 0.7.x 会产生 ghost slide（参见 `title-slide` 实现）。

@@ -6,7 +6,7 @@ When AI generates slides, spacing is unreliable: content often crowds the top of
 
 This layer leaves composition to the author, because a fully automatic layout engine would make decks converge on one style and make intent hard to express. What it provides is a layout expressed as numbers that can be measured, compared, and checked. The author picks a semantic component and fills it with typed items; the component measures real sizes, allocates space according to the declared sizing, and exports normalized geometry; the checker reads that geometry and reports content-level diagnostics; the pixel stage cross-checks the real rendering against the telemetry. The AI adjusts from numeric feedback instead of guessing coordinates.
 
-Building on the honest measurement of v3, schema v4 tightens the **trust boundary** into five principles:
+Schema v4 draws the **trust boundary** with five principles:
 
 1. **Sizing is declared, not guessed.** Content that should fill its slot must be written as `visual(...)` (fit defaults to `"stretch"`); passing `none` to a required slot panics; content in a text slot (card / takeaway / plain / metric fields) must have a measurable width and height. Pure spacers, empty strings, and bare rules panic at compile time instead of being inflated into a fake payload.
 2. **A declared payload is a claim, not evidence.** The payload of a stretch slot or of percent-width media is marked `payload_source: "declared"` and does not count toward density or empty-shell checks; its evidence comes from the pixel stage's per-object ink check (the agent profile forces pixel rendering).
@@ -16,7 +16,7 @@ Building on the honest measurement of v3, schema v4 tightens the **trust boundar
 
 ## Four Parts
 
-The component layer `src/layout.typ` provides eight semantic layouts (`duo` / `focus` / `grid` / `stack` / `compare` / `stat` / `figure` / `sidebar`) that share one allocator and export `<xwysyy-slide-layout>` v4 metadata. Every slide layout (including the title and section pages) also exports one `<xwysyy-page>` page manifest; every actually rendered subslide exports one `<xwysyy-frame>` v2 mapping (including the physical geometry of that page's body area); content-page headers export `<xwysyy-header>` v2 (the title scale and whether the title fits horizontally and vertically).
+The component layer `src/layout.typ` provides eight semantic layouts (`duo` / `focus` / `grid` / `stack` / `compare` / `stat` / `figure` / `sidebar`) that share one allocator and export `<xwysyy-slide-layout>` v4 metadata. Every slide layout (including the title and section pages) also exports one `<xwysyy-page>` page manifest; every rendered subslide of a layout component exports one `<xwysyy-frame>` v2 mapping (including the physical geometry of that page's body area); content-page headers export `<xwysyy-header>` v2 (the title scale and whether the title fits horizontally and vertically).
 
 The checker `scripts/slide-check.py` reads the output of `typst query` (records are recognized by their `schema` field, so any mix of inputs works). It first validates structure (frame state machine, fit invariants, out-of-bounds objects, and escapes), then computes density, visual center, whitespace, semantic-relation gaps, and telemetry coverage, and reports the content-level problems the author has to decide. It does not fix spacing, which the components guarantee. It judges only what the components cannot decide on their own: too little content, too much content, empty-shell cards, unbalanced columns, split semantic pairs, overflow, and missing telemetry. Every diagnostic carries a machine-actionable `action` tag, and its severity comes from one shared policy table.
 
@@ -48,7 +48,7 @@ The allocator solves over each item's spec (min / preferred / max / grow) and ea
 
 ## Typed Items and Declared Sizing
 
-Every component slot accepts typed items; plain content is wrapped automatically according to the component's semantics (see each component below):
+Component slots accept typed items, and plain content is wrapped automatically according to the component's semantics (see each component below); `stat-slide` takes `metric(...)` entries and `sidebar-slide` takes plain content only:
 
 ```typst
 visual(body, fit: "stretch")    // visual block without a card; stretch = fill the allocated slot
@@ -63,7 +63,7 @@ metric(value, label)            // metric entry for stat-slide
 
 To fill a stretch visual, use a placeholder `rect(width: 100%, height: 100%)` or a real image `image("f.png", width: 100%, height: 100%, fit: "contain")`. For a natural visual, use `image("f.png", width: 100%)`. Percent-sized content **must** be wrapped in `visual(...)`: a text slot that receives content with zero measured width panics (percent-width media and spacers have the same measurement signature), and only visual slots may register a payload at slot width, marked `declared` and verified by the pixel stage.
 
-All validation happens at compile time and fails with a panic when: a required slot is `none`; visual content renders completely empty; text-slot content has no measurable width (spacers, empty strings) or no measurable height (bare rules); `grid` has fewer than 2 columns (use `stack` or `focus` for a single block); a `grid` / `compare` column holds `visual(fit: "stretch")` (row layouts are sized by natural height); the `figure` takeaway slot holds a stretch visual; a `stat` entry is not a `metric(...)` or its value / label renders empty; `focus` receives a `reveal-from` greater than 1 (it has a single frame); a `sidebar` slot receives a typed item (it draws its own cards); `reveal-from` is not an integer in `[1, step count]`; a `tuning` key is misspelled, has the wrong type, or is out of range; the `fit` of a `visual` is not `"stretch"` / `"natural"`; a role is outside the closed set; `xwysyy-slide` receives a `kind` argument (exempt pages can only come from their own layouts such as `outline-slide` / `title-slide`); `image-slide` gets no image.
+Compile-time validation panics when: a required slot is `none`; a natural visual renders completely empty (a stretch visual only declares its payload, so an empty one is caught by the pixel stage as `hollow_object`); text-slot content has no measurable width (spacers, empty strings) or no measurable height (bare rules); `grid` has fewer than 2 columns (use `stack` or `focus` for a single block); a `grid` / `compare` column holds `visual(fit: "stretch")` (row layouts are sized by natural height); the `figure` takeaway slot holds a stretch visual; a `stat` entry is not a `metric(...)` or its value / label renders empty; `focus` receives a `reveal-from` greater than 1 (it has a single frame); a `sidebar` slot receives a typed item (it draws its own cards); `reveal-from` is not an integer in `[1, step count]`; a `tuning` key is misspelled, has the wrong type, or is out of range; the `fit` of a `visual` is not `"stretch"` / `"natural"`; a role is outside the closed set; `xwysyy-slide` receives a `kind` argument (exempt pages can only come from their own layouts such as `outline-slide` / `title-slide`); `image-slide` gets no image.
 
 Known limits: `place(...)` inside slot content leaves the document flow, so geometry telemetry cannot measure it; `hide(...)` keeps its full layout size, so the geometry layer cannot see it either. The pixel stage covers both cases (stray-ink and per-object hollow checks).
 
@@ -205,7 +205,6 @@ Every semantic layout slide exports one metadata record labelled `<xwysyy-slide-
   "coordinate_system": "normalized-slide-body",
   "objects": [
     { "id": "good-duo:top", "object_kind": "visual", "semantic_role": "main_visual",
-      "group": "good-duo",
       "frame":     { "x": 0.09, "y": 0.07, "w": 0.82, "h": 0.607 },
       "preferred": { "w": 0.82, "h": 0.28 },
       "payload":   { "x": 0.09, "y": 0.07, "w": 0.82, "h": 0.607 },
@@ -233,7 +232,7 @@ The four boxes divide the work as follows. `frame` is the container the componen
 Three companion records:
 
 - `<xwysyy-page>` (`{"kind": "content|title|section|end|image|outline", "page": n}`): exempt kinds can only be produced by the corresponding layout functions, and two manifests on one physical page are an error.
-- `<xwysyy-frame>` v2, one per actually rendered subslide: `id` / `step` / `steps` / `page` / `handout`, plus the physical pt geometry of `body` (which the pixel stage uses to convert coordinates instead of relying on hard-coded template constants) and `page_size`.
+- `<xwysyy-frame>` v2, one per rendered subslide of a layout component: `id` / `step` / `steps` / `page` / `handout`, plus the physical pt geometry of `body` (which the pixel stage uses to convert coordinates instead of relying on hard-coded template constants) and `page_size`.
 - `<xwysyy-header>` v2, one per content page: the title `scale`, horizontal `fits`, the actual title `height`, and vertical `fits_v`. An explicit line break or an oversized title hits the header band and reports an error.
 
 ## Checker Diagnostics
@@ -311,7 +310,7 @@ The pixel stage also gives the coverage checks the real total page count, which 
 scripts/xwysyy-check deck.typ --profile agent --format json
 ```
 
-Fix according to each diagnostic's `action`: `split_slide` (split the page or cut text), `change_visual_fit` (wrap the figure as `visual(image(..., width: 100%, height: 100%, fit: "contain"))` so it fills the slot), `merge_or_enlarge_visual` (enlarge the main visual, add explanation, or merge pages), `rebalance_columns` (move a long column to its own page), `set_mode_compact` (tighten the mode), `use_layout_component` (turn a hand-written page back into a component), `shorten_title` (shorten the title), `fix_reveal_order` (show a substantive block first), `add_content` (fill empty slots with real content). Rerun after each change until no errors remain; warnings are left to human judgment. `content_clustered_*` should normally not appear, because the components already allocate space; when it does, hand-written coordinates were used, so switch back to components. `report_bug` diagnostics (frame_integrity / orphan_frame / render_telemetry_mismatch / invalid_fit_state) should not be silenced by editing content: they mean the exporter or the telemetry itself is broken.
+Fix according to each diagnostic's `action`: `split_slide` (split the page or cut text), `change_visual_fit` (wrap the figure as `visual(image(..., width: 100%, height: 100%, fit: "contain"))` so it fills the slot), `merge_or_enlarge_visual` (enlarge the main visual, add explanation, or merge pages), `rebalance_columns` (move a long column to its own page), `set_mode_compact` (tighten the mode), `use_layout_component` (turn a hand-written page back into a component), `shorten_title` (shorten the title), `fix_reveal_order` (show a substantive block first), `add_content` (fill empty slots with real content). Rerun after each change until no errors remain; warnings are left to human judgment. `content_clustered_*` should normally not appear, because the components already allocate space. `report_bug` diagnostics (frame_integrity / orphan_frame / render_telemetry_mismatch / invalid_fit_state) should not be silenced by editing content: they mean the exporter or the telemetry itself is broken.
 
 ## Generation Contract
 
@@ -320,5 +319,3 @@ Fix according to each diagnostic's `action`: `split_slide` (split the page or cu
 **Required**: `duo-slide` for figure-over-text structure; `focus-slide` for a single conclusion with little content; `grid-slide` for multi-column peer information; `stack-slide` for several blocks with the same rhythm; `compare-slide` for a left/right contrast; `stat-slide` for a row of key numbers (entries via `metric(value, label)`); `figure-slide` for a figure with caption and conclusion; `sidebar-slide` for a narrow label with wide content (pass plain content, do not wrap it in `textbox`); write `visual(...)` explicitly for visuals that should fill their slot, and use `image(width: 100%)` for intrinsic-size images; use `reveal: true` for stepwise reveal (`reveal-from` for exact steps; explicit values always win); adjust density only through `mode: compact | balanced | separated`; after compiling, run `scripts/xwysyy-check deck.typ --profile agent` (pixels forced on), fix according to the returned actions, and do not stop iterating because the page "looks about right".
 
 There are two audiences. AI follows the contract above: the agent profile treats every content-sufficiency diagnostic as an error and forces pixel verification. Human maintainers may tune numbers with `tuning` and use the default human profile, which treats coverage as warnings.
-
-To use the checker, clone the source repository at the matching version and run `scripts/xwysyy-check` from the repository root.

@@ -49,14 +49,7 @@ If you maintain a private fork and want named themes, edit `src/themes.typ` and 
 )
 ```
 
-After changing built-in themes, run:
-
-```bash
-scripts/check-theme-contrast
-scripts/gen-previews
-```
-
-Then push, wait for the visual-regression run, and adopt its renders as the visual baseline with `scripts/adopt-baseline`.
+After changing built-in themes, run `scripts/check-theme-contrast`. Then push, wait for the visual-regression run, adopt its renders as the visual baseline with `scripts/adopt-baseline`, and run `scripts/gen-previews` to refresh the README previews from the adopted baseline.
 
 ### Theme Contrast
 
@@ -160,17 +153,17 @@ Arrow replacements use math mode. Each rule is wrapped in a guard that skips tex
 
 ## 8. Visual Regression And Previews
 
-Regenerate README preview PNGs:
-
-```bash
-scripts/gen-previews
-```
-
 Adopt a completed GitHub Actions render as the visual baseline. Without an argument the script takes the latest visual-regression run on the current branch and refuses it unless that run rendered the local `HEAD`; pass a run id to adopt a specific run:
 
 ```bash
 scripts/adopt-baseline
 scripts/adopt-baseline <run-id>
+```
+
+The README preview PNGs in `assets/` are copies of baseline pages, so they always show the CI font environment. After adopting a baseline that changes a preview page, copy them again (the page mapping lives in the script; update it when the example decks change their page order):
+
+```bash
+scripts/gen-previews
 ```
 
 Render the visual regression set manually:
@@ -180,11 +173,11 @@ scripts/render-visuals /tmp/xwysyy-visual-current
 scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current --diff-dir /tmp/xwysyy-diffs
 ```
 
-The preview and visual scripts pass `--input visual-ci=true`. The visual examples use the fixed date `2026-07-10` together with Liberation Serif, Noto Serif CJK SC, and DejaVu Sans Mono, so repeated renders have stable inputs. `render-visuals` builds the complete set in a temporary sibling directory and publishes it only after every compile succeeds. Publication replaces only the PNG families owned by the script and preserves unrelated files in the target directory.
+`render-visuals` passes `--input visual-ci=true`. The visual examples use the fixed date `2026-07-10` together with Liberation Serif, Noto Serif CJK SC, and DejaVu Sans Mono, so repeated renders have stable inputs. `render-visuals` builds the complete set in a temporary sibling directory and publishes it only after every compile succeeds. Publication replaces only the PNG families owned by the script and preserves unrelated files in the target directory.
 
 The GitHub Actions workflow runs two jobs, both on Typst 0.14.0:
 
-1. `render` compiles the example decks with default inputs before any fonts are installed, installs the deterministic fonts, compiles the examples again with `visual-ci=true` (including handout output), runs the Python regression tests, checks theme contrast, compiles the API fixtures and the missing-field error case, renders the visual set, compares it against `tests/visual-baseline`, and uploads the current renders and diff images on failure.
+1. `render` compiles the example decks with default inputs before any fonts are installed, installs the deterministic fonts, compiles the sky deck in handout mode, runs the Python regression tests, checks theme contrast, compiles the API fixtures and the missing-field error case, renders the visual set, compares it against `tests/visual-baseline`, and uploads the current renders and diff images on failure.
 2. `package-shape` stages the Universe package from `HEAD`, checks its file set, and compiles the template, the README quick start, and a `typst init` project through the package resolver.
 
 Pure documentation pull requests are ignored by the visual workflow through `paths-ignore`.
@@ -211,10 +204,10 @@ Build a package directory from a clean committed ref:
 scripts/build-universe-package /tmp/xwysyy-universe-head --ref HEAD
 ```
 
-After the release tag is created, build the final directory from that immutable ref:
+For a release, create the `universe-X.Y.Z` branch from the validated `master` commit and build the final directory from it:
 
 ```bash
-scripts/build-universe-package /tmp/xwysyy-universe-v0.4.0 --ref v0.4.0
+scripts/build-universe-package /tmp/xwysyy-universe-X.Y.Z --ref universe-X.Y.Z
 ```
 
 The builder copies only the package files: the manifest, MIT license, English README, thumbnail, the `xwysyy.typ` entrypoint, `src/`, and `template/`. Development scripts, tests, examples, and internal documentation remain in the source repository. The builder rejects a dirty source repository, an existing output path, an output path inside this repository, malformed package metadata, and missing required files. Extraction and verification happen in a temporary sibling directory, so a failed build leaves no partial output. Its final line reports a tree SHA-256 for review.
