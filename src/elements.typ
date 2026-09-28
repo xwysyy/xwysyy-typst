@@ -11,16 +11,8 @@
   t-skyll: skyll,
   t-paper: paper,
 ) = [
-  // Bold enhancement — 1.1em + true bold weight, no stroke (stroking fills the
-  // CJK glyph counters and looks muddy). 0.03em tracking opens the run
-  // internally; 0.05em hair spacing on both sides keeps it off the neighbors
-  // (non-weak: weak spacing would swallow adjacent Latin word spaces); the
-  // 0.035em baseline drop re-centers the enlarged CJK glyphs optically.
-  #show strong: it => {
-    h(0.05em)
-    text(size: 1.1em, weight: 700, tracking: 0.03em, baseline: 0.035em, it.body)
-    h(0.05em)
-  }
+  // Bold enhancement (recipe in themes.typ `_bold-run`)
+  #show strong: it => _bold-run(it.body)
 
   // List style
   #set list(marker: (text(fill: t-sea, [❖]), text(fill: t-sky, [⬦]), text(fill: t-sky, [–])), spacing: 1.2em, indent: 0.5em, body-indent: 0.8em)

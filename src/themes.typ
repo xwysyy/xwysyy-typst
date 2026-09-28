@@ -84,15 +84,19 @@
 // Theme state for dynamic components
 #let _theme-state = state("xwysyy-theme", themes.sky)
 
-// Bold color macros share the strong recipe: 1.1em + true bold weight +
-// 0.03em internal tracking + 0.05em hair side spacing (non-weak) + 0.035em
-// baseline drop for CJK optical centering, no stroke.
-#let _bold-run(c, body) = {
+// Bold recipe shared by `strong` and the colored bold macros: 1.1em + true
+// bold weight, no stroke (stroking fills the CJK glyph counters and looks
+// muddy). 0.03em tracking opens the run internally; 0.05em hair spacing on
+// both sides keeps it off the neighbors (non-weak: weak spacing would swallow
+// adjacent Latin word spaces); the 0.035em baseline drop re-centers the
+// enlarged CJK glyphs optically.
+#let _bold-run(body, fill: none) = {
+  set text(fill: fill) if fill != none
   h(0.05em)
-  text(size: 1.1em, weight: 700, tracking: 0.03em, baseline: 0.035em, fill: c, body)
+  text(size: 1.1em, weight: 700, tracking: 0.03em, baseline: 0.035em, body)
   h(0.05em)
 }
 #let red(body) = text(fill: rgb("#9c1d11"), body)
-#let bred(body) = _bold-run(rgb("#9c1d11"), body)
+#let bred(body) = _bold-run(body, fill: rgb("#9c1d11"))
 #let yellow(body) = text(fill: rgb("#d9ad20"), body)
-#let byellow(body) = _bold-run(rgb("#d9ad20"), body)
+#let byellow(body) = _bold-run(body, fill: rgb("#d9ad20"))

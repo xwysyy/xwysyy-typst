@@ -340,9 +340,6 @@
       neutral-dark: t.sea,
       neutral-darkest: black,
     ),
-    config-methods(
-      alert: (self: none, it) => text(weight: "bold", it),
-    ),
     config-store(
       title: none,
       heading-font: heading-font,
