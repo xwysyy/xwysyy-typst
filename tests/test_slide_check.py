@@ -110,11 +110,11 @@ def _process_output(proc):
     return f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
 
 
-def _analyze(record, frames=None, profile="human", rules=None):
+def _analyze(record, frames=None, profile="human"):
     rec = sc.parse_record(record)
     raw = _frames_for(record) if frames is None else frames
     parsed = [sc.parse_frame(f) for f in raw]
-    return sc.analyze_slide(rec, rules or sc._load_rules(None), parsed, profile)
+    return sc.analyze_slide(rec, sc.DEFAULT_RULES, parsed, profile)
 
 
 class UnionAreaTests(unittest.TestCase):
@@ -398,7 +398,10 @@ class RelationTests(unittest.TestCase):
 
     def test_reversed_direction_warns(self):
         rec = self._pair((0.13, 0.60, 0.74, 0.25), (0.09, 0.07, 0.82, 0.4))
-        self.assertIn("invalid_relation_direction", _diag_types(_analyze(rec)))
+        for profile in ("human", "agent"):
+            diag = [d for d in _analyze(rec, profile=profile).diagnostics
+                    if d.type == "invalid_relation_direction"]
+            self.assertEqual([(d.severity, d.action) for d in diag], [("warning", "review_manually")])
 
     def test_crowded_suppressed_when_not_normal(self):
         rec = self._pair((0.09, 0.07, 0.82, 0.4), (0.13, 0.48, 0.74, 0.25))
@@ -649,49 +652,6 @@ class HeaderTests(unittest.TestCase):
         self.assertTrue(report.has_error)
 
 
-class RulesTests(unittest.TestCase):
-    def setUp(self):
-        temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(temporary.cleanup)
-        self.tmp = pathlib.Path(temporary.name)
-
-    def _rules(self, payload):
-        path = self.tmp / "rules.json"
-        path.write_text(json.dumps(payload), encoding="utf-8")
-        return str(path)
-
-    def test_unknown_rule_rejected(self):
-        with self.assertRaises(sc.TelemetryError):
-            sc._load_rules(self._rules({"ink_flor": {"duo": 0.1}}))
-
-    def test_valid_override_merges(self):
-        rules = sc._load_rules(self._rules({"ink_floor": {"duo": 0.05}}))
-        self.assertEqual(rules["ink_floor"]["duo"], 0.05)
-        self.assertEqual(rules["ink_floor"]["grid"], sc.DEFAULT_RULES["ink_floor"]["grid"])
-
-    def test_list_leaf_rejected(self):
-        # The review's crash case: a list where a number is expected must be
-        # a clean rule error, not a TypeError traceback.
-        with self.assertRaises(sc.TelemetryError):
-            sc._load_rules(self._rules({"ink_floor": {"duo": [1, 2]}}))
-
-    def test_bool_leaf_rejected(self):
-        with self.assertRaises(sc.TelemetryError):
-            sc._load_rules(self._rules({"ink_floor": {"duo": True}}))
-
-    def test_reversed_range_rejected(self):
-        with self.assertRaises(sc.TelemetryError):
-            sc._load_rules(self._rules({"proximity_ranges": {"tight": [0.5, 0.1]}}))
-
-    def test_range_length_enforced(self):
-        with self.assertRaises(sc.TelemetryError):
-            sc._load_rules(self._rules({"proximity_ranges": {"tight": [0.1]}}))
-
-    def test_valid_range_merges(self):
-        rules = sc._load_rules(self._rules({"proximity_ranges": {"tight": [0.02, 0.09]}}))
-        self.assertEqual(rules["proximity_ranges"]["tight"], [0.02, 0.09])
-
-
 class SplitRecordsTests(unittest.TestCase):
     def test_mixture_split_by_schema(self):
         values = [
@@ -759,12 +719,6 @@ class CliExitCodeTests(unittest.TestCase):
         proc = self._run([rec])
         self.assertEqual(proc.returncode, 2, msg=_process_output(proc))
         self.assertIn("expected", proc.stderr)
-
-    def test_broken_rules_exit_two(self):
-        rules = self._write_json("rules.json", {"nonsense": 1})
-        proc = self._run(self._payload(_rec()), "--rules", rules)
-        self.assertEqual(proc.returncode, 2, msg=_process_output(proc))
-        self.assertIn("unknown rule", proc.stderr)
 
     def test_orphan_frame_exits_one(self):
         rec = _rec()

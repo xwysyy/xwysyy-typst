@@ -334,7 +334,6 @@ def main(argv: list[str] | None = None) -> int:
                         help="forwarded to typst compile and query (repeatable)")
     parser.add_argument("--root", default=None, help="typst project root (default: auto)")
     parser.add_argument("--profile", choices=("human", "agent"), default="human")
-    parser.add_argument("--rules", default=None, help="JSON rule overrides for the geometry checker")
     parser.add_argument("--pixels", action="store_true",
                         help="render PNGs and cross-check pixels (forced with --profile agent)")
     parser.add_argument("--ppi", type=int, default=72)
@@ -364,8 +363,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.save_meta:
             pathlib.Path(args.save_meta).write_text(meta, encoding="utf-8")
 
-        rules = check._load_rules(args.rules)
-        records, frames_by_id, reports = check.check_records(buckets, rules, args.profile)
+        records, frames_by_id, reports = check.check_records(buckets, args.profile)
 
         # The pixel stage runs before coverage: it measures the page count.
         kinds = dict(check.page_entry(p) for p in buckets["pages"])

@@ -62,7 +62,6 @@ import json
 import math
 import sys
 from dataclasses import dataclass, asdict
-from pathlib import Path
 from typing import Any, Iterable
 
 SCHEMA = "xwysyy-slide-layout/v4"
@@ -202,6 +201,7 @@ ACTIONS: dict[str, str] = {
     "orphan_frame": "report_bug",
     "duplicate_slide_id": "use_unique_ids",
     "missing_relation_target": "report_bug",
+    "invalid_relation_direction": "review_manually",
     "header_shrunk": "shorten_title",
     "header_overflow": "shorten_title",
     "telemetry_gap": "use_layout_component",
@@ -255,6 +255,7 @@ SEVERITY: dict[str, tuple[str, str]] = {
     "crowded_related_pair": _WW,
     "wide_gutter": _WW,
     "weak_relation_alignment": _WW,
+    "invalid_relation_direction": _WW,
     "trapped_whitespace": _WW,
     "content_clustered_top": _WW,
     "content_clustered_bottom": _WW,
@@ -1186,71 +1187,6 @@ def header_report(headers: list[dict[str, Any]], profile: str = "human") -> Slid
 
 
 # ---------------------------------------------------------------------------
-# rules
-# ---------------------------------------------------------------------------
-
-def _rule_num(value: Any, where: str) -> None:
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
-        raise TelemetryError(f"rule {where} must be a finite number, got {value!r}")
-
-
-def _rule_range(value: Any, where: str) -> None:
-    if not isinstance(value, list) or len(value) != 2:
-        raise TelemetryError(f"rule {where} must be a two-element [lo, hi] list")
-    for v in value:
-        _rule_num(v, where)
-    lo, hi = float(value[0]), float(value[1])
-    if lo < 0 or lo > hi:
-        raise TelemetryError(f"rule {where} must satisfy 0 <= lo <= hi, got [{lo}, {hi}]")
-
-
-def _validate_rules(base: dict[str, Any], override: dict[str, Any]) -> None:
-    """Leaf-typed validation: scalar rules take finite numbers (bool is not a
-    number), table rules take numeric leaves, and proximity ranges take
-    two-element [lo, hi] lists.  Unknown keys are rejected."""
-    for k, v in override.items():
-        if k not in base:
-            raise TelemetryError(f"unknown rule {k!r}")
-        if k == "proximity_ranges":
-            if not isinstance(v, dict):
-                raise TelemetryError(f"rule {k!r} must be a table")
-            for kk, vv in v.items():
-                _rule_range(vv, f"{k}.{kk}")
-        elif isinstance(base[k], dict):
-            if not isinstance(v, dict):
-                raise TelemetryError(f"rule {k!r} must be a table")
-            for kk, vv in v.items():
-                _rule_num(vv, f"{k}.{kk}")
-        else:
-            _rule_num(v, k)
-
-
-def _load_rules(path: str | None) -> dict[str, Any]:
-    rules = json.loads(json.dumps(DEFAULT_RULES))
-    if not path:
-        return rules
-    p = Path(path)
-    if not p.exists():
-        raise TelemetryError(f"rules file does not exist: {path}")
-    if p.suffix.lower() != ".json":
-        raise TelemetryError("rules file must be .json")
-    override = json.loads(p.read_text(encoding="utf-8"))
-    if not isinstance(override, dict):
-        raise TelemetryError("rules file must contain a JSON object")
-    _validate_rules(rules, override)
-
-    def merge(base: dict[str, Any], extra: dict[str, Any]) -> dict[str, Any]:
-        for k, v in extra.items():
-            if isinstance(v, dict) and isinstance(base.get(k), dict):
-                merge(base[k], v)
-            else:
-                base[k] = v
-        return base
-
-    return merge(rules, override)
-
-
-# ---------------------------------------------------------------------------
 # output
 # ---------------------------------------------------------------------------
 
@@ -1289,13 +1225,13 @@ def _as_text(reports: list[SlideReport]) -> str:
     return "\n".join(lines) if lines else "no telemetry records found"
 
 
-def check_records(buckets: dict[str, list[dict[str, Any]]], rules: dict[str, Any],
+def check_records(buckets: dict[str, list[dict[str, Any]]],
                   profile: str) -> tuple[list[Record], dict[str, list[dict[str, Any]]], list[SlideReport]]:
     """Parse the layout records, join their frames, and run the per-slide,
     structure, and header checks (shared by both CLIs)."""
     records = [parse_record(rec) for rec in buckets["layout"]]
     frames_by_id, orphans, dup_ids = join_frames(records, buckets["frames"])
-    reports = [analyze_slide(rec, rules, frames_by_id.get(rec.id), profile) for rec in records]
+    reports = [analyze_slide(rec, DEFAULT_RULES, frames_by_id.get(rec.id), profile) for rec in records]
     structure = structure_report(orphans, dup_ids, profile)
     if structure is not None:
         reports.append(structure)
@@ -1341,15 +1277,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--profile", choices=("human", "agent"), default="human",
                         help="agent escalates content-adequacy findings to errors")
     parser.add_argument("--format", choices=("json", "text"), default="text")
-    parser.add_argument("--rules", default=None, help="optional JSON rule overrides")
     parser.add_argument("--strict", action="store_true", help="exit non-zero on any warning or error")
     parser.add_argument("--advisory", action="store_true", help="report diagnostics without failing (broken input still exits 2)")
     args = parser.parse_args(argv)
 
     try:
-        rules = _load_rules(args.rules)
         buckets = split_records(_values(_load_json(args.input)))
-        records, frames_by_id, reports = check_records(buckets, rules, args.profile)
+        records, frames_by_id, reports = check_records(buckets, args.profile)
         coverage = check_coverage(records, frames_by_id, buckets["pages"],
                                   args.profile, args.page_count)
         if coverage is not None:

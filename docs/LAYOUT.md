@@ -284,11 +284,11 @@ Severity comes from one shared policy table: structural, identity, escape, and d
 
 ¹ Raised to error under `--profile agent`.
 
-Parsing fails closed: a bbox with missing fields, paint with a negative size or without `paint_fill`, an unknown kind / role / state / payload_source, `visible_from` out of range, duplicate object ids within a record, relations that are not a list or whose kind / axis / proximity falls outside the closed set, and older schemas all exit as input errors (exit 2) and never produce a report filled with default values. A `--rules` override file is validated down to its leaves: scalars must be finite numbers (bools do not count as numbers), proximity ranges must be two-element lists with `0 <= lo <= hi`, and unknown rule names are rejected.
+Parsing fails closed: a bbox with missing fields, paint with a negative size or without `paint_fill`, an unknown kind / role / state / payload_source, `visible_from` out of range, duplicate object ids within a record, relations that are not a list or whose kind / axis / proximity falls outside the closed set, and older schemas all exit as input errors (exit 2) and never produce a report filled with default values.
 
 Exit codes: 2 for corrupt input; 1 when any error diagnostic exists (warnings count too under `--strict`); `--advisory` turns 1 into 0 but still exits 2 for corrupt input. Empty telemetry (a deck that uses no layout component at all) exits nonzero directly.
 
-Thresholds are heuristic starting values anchored on the demo's good pages (every good page passes and each bad page hits its target), and they can be overridden with `--rules rules.json`.
+Thresholds are heuristic starting values anchored on the demo's good pages (every good page passes and each bad page hits its target). They are the `DEFAULT_RULES` constants in `scripts/slide-check.py`.
 
 ## Pixel Cross-Check
 
