@@ -747,7 +747,7 @@
           painted: _painted(it), paint-fill: cfill.to-hex()),
       )
       _emit(sid, "focus", "single", here().position().page, 1, objects, (), fit,
-        (intent: "focus", tuned: tuning.len() > 0))
+        (tuned: tuning.len() > 0))
       if debug { _debug-layer(objects, W, H) }
     })
   })

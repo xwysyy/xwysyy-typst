@@ -107,7 +107,7 @@ A top/bottom semantic pair, such as a figure above its conclusion. Plain content
 
 ### focus-slide
 
-A single centered focus page for sparse content; plain content is wrapped with `card()`. It is the one exception to fill-first: the page keeps symmetric centered whitespace, the telemetry carries `intent: "focus"`, and density is guarded by the checker's `low_density`; content that exceeds the safe area is still reported as tight / overflow. As a single-frame component, it panics on a `reveal-from` greater than 1 and on stretch visuals. `tuning`: `width` (0.76, [0.3, 0.95]), `center-y` (0.46, [0.30, 0.70]).
+A single centered focus page for sparse content; plain content is wrapped with `card()`. It is the one exception to fill-first: the page keeps symmetric centered whitespace, and density is guarded by the checker's `low_density`; content that exceeds the safe area is still reported as tight / overflow. As a single-frame component, it panics on a `reveal-from` greater than 1 and on stretch visuals. `tuning`: `width` (0.76, [0.3, 0.95]), `center-y` (0.46, [0.30, 0.70]).
 
 ```typst
 #focus-slide(title: [One-line conclusion], body: [*Main conclusion.* This page makes one point.])
@@ -288,7 +288,7 @@ Parsing fails closed: a bbox with missing fields, paint with a negative size or 
 
 Exit codes: 2 for corrupt input; 1 when any error diagnostic exists (warnings count too under `--strict`); `--advisory` turns 1 into 0 but still exits 2 for corrupt input. Empty telemetry (a deck that uses no layout component at all) exits nonzero directly.
 
-Thresholds are heuristic starting values anchored on the demo's good pages (every good page passes and each bad page hits its target), and they can be overridden with `--rules rules.json`. `--dump-features features.json` exports a flat per-page metric vector so that thresholds can later be calibrated from the distribution of past high-quality decks (use quantiles rather than means, and give focus its own distribution); do not reuse corpora sampled before the metrics themselves were corrected.
+Thresholds are heuristic starting values anchored on the demo's good pages (every good page passes and each bad page hits its target), and they can be overridden with `--rules rules.json`.
 
 ## Pixel Cross-Check
 

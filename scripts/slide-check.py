@@ -1289,20 +1289,6 @@ def _as_text(reports: list[SlideReport]) -> str:
     return "\n".join(lines) if lines else "no telemetry records found"
 
 
-def _features(reports: list[SlideReport]) -> list[dict[str, Any]]:
-    out = []
-    for r in reports:
-        if r.archetype in ("coverage", "header", "structure", "pixels"):
-            continue
-        flat: dict[str, Any] = {"id": r.id, "archetype": r.archetype}
-        for k, v in r.metrics.items():
-            if isinstance(v, (int, float)):
-                flat[k] = v
-        flat["diagnostics"] = sorted({d.type for d in r.diagnostics})
-        out.append(flat)
-    return out
-
-
 def check_records(buckets: dict[str, list[dict[str, Any]]], rules: dict[str, Any],
                   profile: str) -> tuple[list[Record], dict[str, list[dict[str, Any]]], list[SlideReport]]:
     """Parse the layout records, join their frames, and run the per-slide,
@@ -1337,10 +1323,6 @@ def finish(prog: str, records: list[Record], reports: list[SlideReport], args: A
               "any layout component", file=sys.stderr)
         return 0 if args.advisory else 1
 
-    if args.dump_features:
-        Path(args.dump_features).write_text(
-            json.dumps(_features(reports), ensure_ascii=False, indent=2), encoding="utf-8")
-
     print(_as_json(reports) if args.format == "json" else _as_text(reports))
 
     if args.advisory:
@@ -1360,8 +1342,6 @@ def main(argv: list[str] | None = None) -> int:
                         help="agent escalates content-adequacy findings to errors")
     parser.add_argument("--format", choices=("json", "text"), default="text")
     parser.add_argument("--rules", default=None, help="optional JSON rule overrides")
-    parser.add_argument("--dump-features", default=None, metavar="PATH",
-                        help="write flat per-slide feature vectors (for threshold calibration corpora)")
     parser.add_argument("--strict", action="store_true", help="exit non-zero on any warning or error")
     parser.add_argument("--advisory", action="store_true", help="report diagnostics without failing (broken input still exits 2)")
     args = parser.parse_args(argv)

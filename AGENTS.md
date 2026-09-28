@@ -47,7 +47,7 @@
 | `docs/USAGE.md` | 完整 API 参考：slide 入口、版式与组件 |
 | `docs/CUSTOMIZATION.md` | 自定义指南 + 配合 touying 0.7.x 高级特性 |
 | `docs/THEME-GENERATOR.md` | AI 生成主题字典提示词，默认指导用户直接传给 `theme` 参数 |
-| `scripts/slide-check.py` | 版面遥测几何引擎（schema v4，fail-closed 解析：缺字段 / 未知枚举 / 旧 schema 一律 exit 2）：并集面积覆盖指标（container/visual/payload + declared_payload）、fit 四态数值不变量、帧状态机（steps 1..N / handout 末帧 / 孤儿帧 / 重复 id 皆 error）、empty_shell / underfilled_card（只认 measured payload）、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame / sparse_frame）、rules 叶级校验、每条诊断带 action、统一 severity 政策表、`--profile agent|human`、`--dump-features`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 把诊断导致的 1 变为 0，坏输入仍 exit 2）；遥测为空非零退出。仅用于开发仓库 QA |
+| `scripts/slide-check.py` | 版面遥测几何引擎（schema v4，fail-closed 解析：缺字段 / 未知枚举 / 旧 schema 一律 exit 2）：并集面积覆盖指标（container/visual/payload + declared_payload）、fit 四态数值不变量、帧状态机（steps 1..N / handout 末帧 / 孤儿帧 / 重复 id 皆 error）、empty_shell / underfilled_card（只认 measured payload）、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame / sparse_frame）、rules 叶级校验、每条诊断带 action、统一 severity 政策表、`--profile agent|human`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 把诊断导致的 1 变为 0，坏输入仍 exit 2）；遥测为空非零退出。仅用于开发仓库 QA |
 | `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema，随后执行几何检查和像素交叉验证（`--profile agent` 强制渲染像素）：render_telemetry_mismatch（只认当前 reveal 步可见对象的 frame）/ edge_ink 行峰值 / hollow_object（逐对象 payload 墨迹，排除自身卡片填色 `paint_fill`），页面几何来自 frame v2 遥测而非硬编码常量。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。仅用于开发仓库 QA |
 | `scripts/gen-previews` | 重新生成 README preview PNG；不写视觉基线（基线只走 `scripts/adopt-baseline`） |
 | `scripts/render-visuals` | 在目标目录旁完整渲染视觉回归 PNG staging，成功后替换脚本拥有的 PNG 集；内部传 `--input visual-ci=true` 以固定日期并使用 CI 可安装字体 |

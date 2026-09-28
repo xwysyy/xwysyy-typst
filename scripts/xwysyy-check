@@ -338,7 +338,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pixels", action="store_true",
                         help="render PNGs and cross-check pixels (forced with --profile agent)")
     parser.add_argument("--ppi", type=int, default=72)
-    parser.add_argument("--dump-features", default=None, metavar="PATH")
     parser.add_argument("--save-meta", default=None, metavar="PATH",
                         help="also write the merged metadata query JSON here")
     parser.add_argument("--format", choices=("json", "text"), default="text")
