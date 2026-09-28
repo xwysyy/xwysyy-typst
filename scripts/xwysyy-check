@@ -31,8 +31,8 @@ are errors everywhere; hollow objects and edge ink escalate to errors in the
 agent profile.
 
 Exit codes: 2 broken input/compile, 1 any error (or any warning with
-``--strict``), 0 otherwise (always 0 with ``--advisory``).  Standard library
-only.
+``--strict``), 0 otherwise; ``--advisory`` turns 1 into 0 but keeps 2.
+Standard library only.
 """
 
 from __future__ import annotations
@@ -53,6 +53,15 @@ REPO = SCRIPTS.parent
 # They are emitted only by their dedicated slide functions (not spoofable
 # through xwysyy-slide, which has no kind parameter).
 FULL_BLEED_KINDS = {"title", "section", "end", "image"}
+
+# Pixel thresholds.
+EDGE_BAND = 0.012        # edge band width as a fraction of the page
+EDGE_MAX = 0.05          # max ink share inside an edge band before it is flagged
+EDGE_PEAK_MAX = 0.35     # max sliding-window row ink inside a side band (thin escapes)
+STRAY_MAX = 0.002        # max body ink outside all visible telemetry frames
+OBJECT_INK_MIN = 0.01    # min ink share inside a claimed payload box (hollow objects)
+OBJECT_AREA_MIN = 0.01   # payload area below which the hollow check is skipped (noise floor)
+INK_TOLERANCE = 24       # summed RGB distance from the background that counts as ink
 
 
 def _load(name: str, path: pathlib.Path):
@@ -240,7 +249,7 @@ def analyze_page(path: pathlib.Path, ppi: int, band_frac: float, tolerance: int,
 
 def pixel_report(deck: pathlib.Path, root: pathlib.Path, input_flags: list[str],
                  records: list[Any], frames_by_id: dict[str, list[dict[str, Any]]],
-                 kinds: dict[int, str], args, profile: str) -> tuple[Any, int]:
+                 kinds: dict[int, str], ppi: int, profile: str) -> tuple[Any, int]:
     """Render the deck and cross-check pixels against telemetry.  Returns the
     pixel SlideReport and the physical page count."""
     diagnostics = []
@@ -267,13 +276,13 @@ def pixel_report(deck: pathlib.Path, root: pathlib.Path, input_flags: list[str],
     with tempfile.TemporaryDirectory() as tmp:
         target = pathlib.Path(tmp) / "page-{0p}.png"
         _run(["typst", "compile", "--root", str(root)] + input_flags
-             + [str(deck), str(target), "--format", "png", "--ppi", str(args.ppi)])
+             + [str(deck), str(target), "--format", "png", "--ppi", str(ppi)])
         pages = sorted(pathlib.Path(tmp).glob("page-*.png"))
         if not pages:
             raise RuntimeError("no pages rendered")
         page_stats = []
         for n, page in enumerate(pages, start=1):
-            rep = analyze_page(page, args.ppi, args.band, args.tolerance,
+            rep = analyze_page(page, ppi, EDGE_BAND, INK_TOLERANCE,
                                geometry.get(n), boxes_by_page.get(n, []),
                                hollow_by_page.get(n, []))
             rep["page"] = n
@@ -282,9 +291,9 @@ def pixel_report(deck: pathlib.Path, root: pathlib.Path, input_flags: list[str],
             page_stats.append(rep)
             if exempt:
                 continue
-            flagged = [side for side, share in rep["edge_ink"].items() if share > args.edge_max]
+            flagged = [side for side, share in rep["edge_ink"].items() if share > EDGE_MAX]
             for side, peak in rep["edge_row_peak"].items():
-                if side not in flagged and peak > args.edge_peak_max:
+                if side not in flagged and peak > EDGE_PEAK_MAX:
                     flagged.append(side)
             if flagged:
                 diagnostics.append(check._diag(
@@ -293,7 +302,7 @@ def pixel_report(deck: pathlib.Path, root: pathlib.Path, input_flags: list[str],
                     {"page": n, "edge_ink": check._round(rep["edge_ink"]),
                      "edge_row_peak": check._round(rep["edge_row_peak"])},
                     "Content reaches the page edge: a wide line/URL escaped its wrapper, or the block is clipped."))
-            if n in boxes_by_page and rep["stray_ink"] > args.stray_max:
+            if n in boxes_by_page and rep["stray_ink"] > STRAY_MAX:
                 diagnostics.append(check._diag(
                     profile, "render_telemetry_mismatch",
                     f"Page {n} renders ink outside every visible telemetry frame.",
@@ -301,14 +310,14 @@ def pixel_report(deck: pathlib.Path, root: pathlib.Path, input_flags: list[str],
                     "Content escaped its allocated frame (or shows up before its reveal step); "
                     "the telemetry no longer describes the render."))
             for oink in rep["object_ink"]:
-                if oink["payload_area"] >= args.object_area_min and oink["ink_share"] < args.object_ink_min:
+                if oink["payload_area"] >= OBJECT_AREA_MIN and oink["ink_share"] < OBJECT_INK_MIN:
                     diagnostics.append(check._diag(
                         profile, "hollow_object",
                         f"Object {oink['id']} claims a payload but renders almost no ink inside it.",
                         {"page": n, "object_id": oink["id"],
                          "payload_area": round(oink["payload_area"], 4),
                          "ink_share": round(oink["ink_share"], 4),
-                         "floor": args.object_ink_min},
+                         "floor": OBJECT_INK_MIN},
                         "The payload claim has no pixel evidence: fill the slot with real content."))
         metrics["pages"] = [
             {"page": r["page"], "page_ink": round(r["page_ink"], 4),
@@ -325,30 +334,16 @@ def main(argv: list[str] | None = None) -> int:
                         help="forwarded to typst compile and query (repeatable)")
     parser.add_argument("--root", default=None, help="typst project root (default: auto)")
     parser.add_argument("--profile", choices=("human", "agent"), default="human")
-    parser.add_argument("--rules", default=None, help="JSON/TOML rule overrides for the geometry checker")
+    parser.add_argument("--rules", default=None, help="JSON rule overrides for the geometry checker")
     parser.add_argument("--pixels", action="store_true",
                         help="render PNGs and cross-check pixels (forced with --profile agent)")
     parser.add_argument("--ppi", type=int, default=72)
-    parser.add_argument("--band", type=float, default=0.012,
-                        help="edge band width as a fraction of the page (default 0.012)")
-    parser.add_argument("--edge-max", type=float, default=0.05,
-                        help="max ink share inside an edge band before it is flagged")
-    parser.add_argument("--edge-peak-max", type=float, default=0.35,
-                        help="max sliding-window row ink inside a side band (thin escapes)")
-    parser.add_argument("--stray-max", type=float, default=0.002,
-                        help="max body ink outside all visible telemetry frames")
-    parser.add_argument("--object-ink-min", type=float, default=0.01,
-                        help="min ink share inside a claimed payload box (hollow objects)")
-    parser.add_argument("--object-area-min", type=float, default=0.01,
-                        help="payload area below which the hollow check is skipped (noise floor)")
-    parser.add_argument("--tolerance", type=int, default=24,
-                        help="summed RGB distance from the background that counts as ink")
     parser.add_argument("--dump-features", default=None, metavar="PATH")
     parser.add_argument("--save-meta", default=None, metavar="PATH",
                         help="also write the merged metadata query JSON here")
     parser.add_argument("--format", choices=("json", "text"), default="text")
     parser.add_argument("--strict", action="store_true", help="exit non-zero on any warning or error")
-    parser.add_argument("--advisory", action="store_true", help="always exit zero (report only)")
+    parser.add_argument("--advisory", action="store_true", help="report diagnostics without failing (broken input still exits 2)")
     args = parser.parse_args(argv)
 
     # Geometry alone cannot verify declared (stretch) payloads, so the agent
@@ -371,50 +366,26 @@ def main(argv: list[str] | None = None) -> int:
             pathlib.Path(args.save_meta).write_text(meta, encoding="utf-8")
 
         rules = check._load_rules(args.rules)
-        records = [check.parse_record(rec) for rec in buckets["layout"]]
-        frames_by_id, orphans, dup_ids = check.join_frames(records, buckets["frames"])
-        reports = [check.analyze_slide(rec, rules, frames_by_id.get(rec.id), args.profile)
-                   for rec in records]
-        structure = check.structure_report(orphans, dup_ids, args.profile)
-        if structure is not None:
-            reports.append(structure)
-        if buckets["headers"]:
-            reports.append(check.header_report(buckets["headers"], args.profile))
+        records, frames_by_id, reports = check.check_records(buckets, rules, args.profile)
 
-        kinds = {p["page"]: str(p.get("kind", "content")) for p in buckets["pages"]
-                 if isinstance(p.get("page"), int)}
+        # The pixel stage runs before coverage: it measures the page count.
+        kinds = dict(check.page_entry(p) for p in buckets["pages"])
         page_count = None
         if args.pixels:
             pixels, page_count = pixel_report(deck, root, input_flags, records,
-                                              frames_by_id, kinds, args, args.profile)
+                                              frames_by_id, kinds, args.ppi, args.profile)
         else:
             pixels = None
-        if buckets["pages"] or records:
-            joined = [f for fs in frames_by_id.values() for f in fs]
-            reports.append(check.coverage_report(records, joined, buckets["pages"],
-                                                 args.profile, page_count))
+        coverage = check.check_coverage(records, frames_by_id, buckets["pages"],
+                                        args.profile, page_count)
+        if coverage is not None:
+            reports.append(coverage)
         if pixels is not None:
             reports.append(pixels)
     except (RuntimeError, OSError, json.JSONDecodeError, check.TelemetryError) as exc:
         print(f"xwysyy-check: {exc}", file=sys.stderr)
         return 2
-
-    if not records:
-        print("xwysyy-check: no telemetry records found — the deck does not use "
-              "any layout component", file=sys.stderr)
-        return 0 if args.advisory else 1
-
-    if args.dump_features:
-        pathlib.Path(args.dump_features).write_text(
-            json.dumps(check._features(reports), ensure_ascii=False, indent=2), encoding="utf-8")
-
-    print(check._as_json(reports) if args.format == "json" else check._as_text(reports))
-
-    if args.advisory:
-        return 0
-    if args.strict:
-        return 1 if any(r.has_problem for r in reports) else 0
-    return 1 if any(r.has_error for r in reports) else 0
+    return check.finish("xwysyy-check", records, reports, args)
 
 
 if __name__ == "__main__":

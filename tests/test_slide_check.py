@@ -179,6 +179,11 @@ class FailClosedParsingTests(unittest.TestCase):
         rec["objects"][0]["visible_from"] = 3
         self._bad(rec)
 
+    def test_visible_from_required(self):
+        rec = _rec()
+        del rec["objects"][0]["visible_from"]
+        self._bad(rec)
+
     def test_bool_is_not_a_number(self):
         rec = _rec()
         rec["objects"][0]["frame"]["w"] = True
@@ -609,6 +614,11 @@ class CoverageTests(unittest.TestCase):
         self.assertIn("manifest_duplicate", _diag_types(report))
         self.assertTrue(report.has_error)
 
+    def test_manifest_kind_required(self):
+        pages = [{"schema": sc.PAGE_SCHEMA, "page": 1}]
+        with self.assertRaises(sc.TelemetryError):
+            self._cov([_rec(page=1)], [], pages, page_count=1)
+
     def test_agent_profile_escalates(self):
         records = [_rec(page=2)]
         pages = self._pages(["content", "content"])
@@ -732,7 +742,7 @@ class CliExitCodeTests(unittest.TestCase):
         self.assertEqual(normal.returncode, 0, msg=_process_output(normal))
         self.assertEqual(strict.returncode, 1, msg=_process_output(strict))
 
-    def test_advisory_always_zero(self):
+    def test_advisory_ignores_diagnostics(self):
         rec = _rec(fit=_fit("overflow", required=1.2, body_overflow=0.2))
         proc = self._run(self._payload(rec), "--advisory")
         self.assertEqual(proc.returncode, 0, msg=_process_output(proc))

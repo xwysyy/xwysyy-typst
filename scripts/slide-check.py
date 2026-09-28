@@ -50,8 +50,8 @@ must not skip the layer, leave pages sparse, or touch the manual tuning
 knobs).  Structural findings are errors in both profiles.
 
 Exit codes: 2 broken input, 1 any error diagnostic (or any warning with
-``--strict``), 0 otherwise (always 0 with ``--advisory``).  Empty telemetry
-exits 1: a deck that uses no layout component must not pass silently.
+``--strict``), 0 otherwise; ``--advisory`` turns 1 into 0 but keeps 2.  Empty
+telemetry exits 1: a deck that uses no layout component must not pass silently.
 Standard library only.
 """
 
@@ -136,7 +136,6 @@ DEFAULT_RULES: dict[str, Any] = {
         "compact": [0.03, 0.12],
         "medium": [0.07, 0.20],
         "loose": [0.16, 0.30],
-        "independent": [0.24, 0.46],
         "gutter": [0.02, 0.20],
     },
     "relation_center_delta_max": 0.10,
@@ -202,9 +201,7 @@ ACTIONS: dict[str, str] = {
     "frame_integrity": "report_bug",
     "orphan_frame": "report_bug",
     "duplicate_slide_id": "use_unique_ids",
-    "duplicate_object_id": "use_unique_ids",
     "missing_relation_target": "report_bug",
-    "empty_slide": "add_content",
     "header_shrunk": "shorten_title",
     "header_overflow": "shorten_title",
     "telemetry_gap": "use_layout_component",
@@ -237,7 +234,6 @@ SEVERITY: dict[str, tuple[str, str]] = {
     "frame_integrity": _EE,
     "orphan_frame": _EE,
     "duplicate_slide_id": _EE,
-    "duplicate_object_id": _EE,
     "missing_relation_target": _EE,
     "semantic_pair_split": _EE,
     "header_overflow": _EE,
@@ -245,7 +241,6 @@ SEVERITY: dict[str, tuple[str, str]] = {
     "render_telemetry_mismatch": _EE,
     "hollow_object": _WE,
     "edge_ink": _WE,
-    "empty_slide": _WE,
     "telemetry_gap": _WE,
     "manifest_gap": _WE,
     "page_count_unknown": _WE,
@@ -429,11 +424,11 @@ def _num(value: Any, field_name: str) -> float:
     return f
 
 
-def _int(value: Any, field_name: str, minimum: int = 1) -> int:
+def _int(value: Any, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise TelemetryError(f"{field_name} must be an integer, got {value!r}")
-    if value < minimum:
-        raise TelemetryError(f"{field_name} must be >= {minimum}, got {value}")
+    if value < 1:
+        raise TelemetryError(f"{field_name} must be >= 1, got {value}")
     return value
 
 
@@ -455,7 +450,7 @@ def _enum(value: Any, allowed: set[str], field_name: str) -> str:
     return value
 
 
-def _bbox(value: Any, field_name: str, non_negative: bool = True) -> BBox:
+def _bbox(value: Any, field_name: str) -> BBox:
     if not isinstance(value, dict):
         raise TelemetryError(f"{field_name} must be a dict with x/y/w/h")
     for key in ("x", "y", "w", "h"):
@@ -463,7 +458,7 @@ def _bbox(value: Any, field_name: str, non_negative: bool = True) -> BBox:
             raise TelemetryError(f"{field_name} is missing {key!r}")
     box = BBox(_num(value["x"], f"{field_name}.x"), _num(value["y"], f"{field_name}.y"),
                _num(value["w"], f"{field_name}.w"), _num(value["h"], f"{field_name}.h"))
-    if non_negative and (box.w < 0 or box.h < 0):
+    if box.w < 0 or box.h < 0:
         raise TelemetryError(f"{field_name} has a negative size")
     return box
 
@@ -498,7 +493,7 @@ def _parse_obj(obj: Any, frame_count: int, where: str) -> Obj:
         raise TelemetryError(f"{where}[{oid}].sizing must be a dict with x/y")
     sx = _enum(sizing.get("x"), {"natural", "stretch"}, f"{where}[{oid}].sizing.x")
     sy = _enum(sizing.get("y"), {"natural", "stretch"}, f"{where}[{oid}].sizing.y")
-    vf = _int(obj.get("visible_from", 1), f"{where}[{oid}].visible_from")
+    vf = _int(obj.get("visible_from"), f"{where}[{oid}].visible_from")
     if vf > frame_count:
         raise TelemetryError(f"{where}[{oid}].visible_from = {vf} exceeds frame_count = {frame_count}")
     return Obj(raw=obj, frame=frame, payload=payload, paint=paint, paint_fill=paint_fill,
@@ -535,7 +530,6 @@ def _parse_relation(rel: Any, where: str) -> dict[str, Any]:
 
 @dataclass
 class Record:
-    raw: dict[str, Any]
     id: str
     archetype: str
     page: int
@@ -576,7 +570,7 @@ def parse_record(rec: dict[str, Any]) -> Record:
     extra = rec.get("extra")
     if not isinstance(extra, dict):
         raise TelemetryError(f"{where}.extra must be a dict")
-    return Record(raw=rec, id=rid, archetype=archetype, page=page,
+    return Record(id=rid, archetype=archetype, page=page,
                   frame_count=frame_count, objects=objects, relations=relations,
                   fit=fit, extra=extra)
 
@@ -1099,6 +1093,13 @@ def structure_report(orphans: list[dict[str, Any]], dup_ids: set[str],
     return SlideReport("<deck>", "structure", {}, diagnostics)
 
 
+def page_entry(p: dict[str, Any]) -> tuple[int, str]:
+    page = p.get("page")
+    if not isinstance(page, int) or isinstance(page, bool):
+        raise TelemetryError(f"page manifest without an integer page: {p!r}")
+    return page, _str(p.get("kind"), f"page manifest {page}.kind")
+
+
 def coverage_report(records: list[Record], joined_frames: list[dict[str, Any]],
                     pages: list[dict[str, Any]], profile: str = "human",
                     page_count: int | None = None) -> SlideReport:
@@ -1114,10 +1115,7 @@ def coverage_report(records: list[Record], joined_frames: list[dict[str, Any]],
     diagnostics: list[Diagnostic] = []
     manifest_pages: dict[int, str] = {}
     for p in pages:
-        page = p.get("page")
-        kind = str(p.get("kind", "content"))
-        if not isinstance(page, int) or isinstance(page, bool):
-            raise TelemetryError(f"page manifest without an integer page: {p!r}")
+        page, kind = page_entry(p)
         if page in manifest_pages:
             diagnostics.append(_diag(profile, "manifest_duplicate",
                                      "Two page manifests land on one physical page.",
@@ -1234,15 +1232,11 @@ def _load_rules(path: str | None) -> dict[str, Any]:
     p = Path(path)
     if not p.exists():
         raise TelemetryError(f"rules file does not exist: {path}")
-    if p.suffix.lower() == ".json":
-        override = json.loads(p.read_text(encoding="utf-8"))
-    elif p.suffix.lower() == ".toml":
-        import tomllib
-        override = tomllib.loads(p.read_text(encoding="utf-8"))
-    else:
-        raise TelemetryError("rules file must be .json or .toml")
+    if p.suffix.lower() != ".json":
+        raise TelemetryError("rules file must be .json")
+    override = json.loads(p.read_text(encoding="utf-8"))
     if not isinstance(override, dict):
-        raise TelemetryError("rules file must contain a table/object")
+        raise TelemetryError("rules file must contain a JSON object")
     _validate_rules(rules, override)
 
     def merge(base: dict[str, Any], extra: dict[str, Any]) -> dict[str, Any]:
@@ -1309,55 +1303,37 @@ def _features(reports: list[SlideReport]) -> list[dict[str, Any]]:
     return out
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("input", nargs="?", default="-",
-                        help="JSON file or '-' for stdin; may contain any mixture of xwysyy schemas")
-    parser.add_argument("--pages", default=None, help="additional page-manifest JSON")
-    parser.add_argument("--frames", default=None, help="additional frame-mapping JSON")
-    parser.add_argument("--headers", default=None, help="additional header-telemetry JSON")
-    parser.add_argument("--page-count", type=int, default=None,
-                        help="total physical page count (for manifest completeness)")
-    parser.add_argument("--profile", choices=("human", "agent"), default="human",
-                        help="agent escalates content-adequacy findings to errors")
-    parser.add_argument("--format", choices=("json", "text"), default="text")
-    parser.add_argument("--rules", default=None, help="optional JSON/TOML rule overrides")
-    parser.add_argument("--dump-features", default=None, metavar="PATH",
-                        help="write flat per-slide feature vectors (for threshold calibration corpora)")
-    parser.add_argument("--strict", action="store_true", help="exit non-zero on any warning or error")
-    parser.add_argument("--advisory", action="store_true", help="always exit zero (report only)")
-    args = parser.parse_args(argv)
+def check_records(buckets: dict[str, list[dict[str, Any]]], rules: dict[str, Any],
+                  profile: str) -> tuple[list[Record], dict[str, list[dict[str, Any]]], list[SlideReport]]:
+    """Parse the layout records, join their frames, and run the per-slide,
+    structure, and header checks (shared by both CLIs)."""
+    records = [parse_record(rec) for rec in buckets["layout"]]
+    frames_by_id, orphans, dup_ids = join_frames(records, buckets["frames"])
+    reports = [analyze_slide(rec, rules, frames_by_id.get(rec.id), profile) for rec in records]
+    structure = structure_report(orphans, dup_ids, profile)
+    if structure is not None:
+        reports.append(structure)
+    if buckets["headers"]:
+        reports.append(header_report(buckets["headers"], profile))
+    return records, frames_by_id, reports
 
-    try:
-        rules = _load_rules(args.rules)
-        buckets = split_records(_values(_load_json(args.input)))
-        for flag in (args.pages, args.frames, args.headers):
-            if flag:
-                extra = split_records(_values(_load_json(flag)))
-                for k in buckets:
-                    buckets[k].extend(extra[k])
-        records = [parse_record(rec) for rec in buckets["layout"]]
-        frames_by_id, orphans, dup_ids = join_frames(records, buckets["frames"])
-        reports = [analyze_slide(rec, rules, frames_by_id.get(rec.id), args.profile)
-                   for rec in records]
-        structure = structure_report(orphans, dup_ids, args.profile)
-        if structure is not None:
-            reports.append(structure)
-        if buckets["headers"]:
-            reports.append(header_report(buckets["headers"], args.profile))
-        if buckets["pages"] or records:
-            joined = [f for fs in frames_by_id.values() for f in fs]
-            reports.append(coverage_report(records, joined, buckets["pages"],
-                                           args.profile, args.page_count))
-    except (OSError, json.JSONDecodeError, TelemetryError) as exc:
-        print(f"slide-check: {exc}", file=sys.stderr)
-        return 2
 
+def check_coverage(records: list[Record], frames_by_id: dict[str, list[dict[str, Any]]],
+                   pages: list[dict[str, Any]], profile: str,
+                   page_count: int | None) -> SlideReport | None:
+    if not (pages or records):
+        return None
+    joined = [f for fs in frames_by_id.values() for f in fs]
+    return coverage_report(records, joined, pages, profile, page_count)
+
+
+def finish(prog: str, records: list[Record], reports: list[SlideReport], args: Any) -> int:
+    """Print the reports and apply the exit policy (shared by both CLIs)."""
     # Empty telemetry means the deck does not use any layout component, so
     # there is nothing to guard — that must fail loudly, or a deck that
     # bypasses the layer entirely would pass every check.
     if not records:
-        print("slide-check: no telemetry records found — the deck does not use "
+        print(f"{prog}: no telemetry records found — the deck does not use "
               "any layout component", file=sys.stderr)
         return 0 if args.advisory else 1
 
@@ -1372,6 +1348,36 @@ def main(argv: list[str] | None = None) -> int:
     if args.strict:
         return 1 if any(r.has_problem for r in reports) else 0
     return 1 if any(r.has_error for r in reports) else 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("input", nargs="?", default="-",
+                        help="JSON file or '-' for stdin; may contain any mixture of xwysyy schemas")
+    parser.add_argument("--page-count", type=int, default=None,
+                        help="total physical page count (for manifest completeness)")
+    parser.add_argument("--profile", choices=("human", "agent"), default="human",
+                        help="agent escalates content-adequacy findings to errors")
+    parser.add_argument("--format", choices=("json", "text"), default="text")
+    parser.add_argument("--rules", default=None, help="optional JSON rule overrides")
+    parser.add_argument("--dump-features", default=None, metavar="PATH",
+                        help="write flat per-slide feature vectors (for threshold calibration corpora)")
+    parser.add_argument("--strict", action="store_true", help="exit non-zero on any warning or error")
+    parser.add_argument("--advisory", action="store_true", help="report diagnostics without failing (broken input still exits 2)")
+    args = parser.parse_args(argv)
+
+    try:
+        rules = _load_rules(args.rules)
+        buckets = split_records(_values(_load_json(args.input)))
+        records, frames_by_id, reports = check_records(buckets, rules, args.profile)
+        coverage = check_coverage(records, frames_by_id, buckets["pages"],
+                                  args.profile, args.page_count)
+        if coverage is not None:
+            reports.append(coverage)
+    except (OSError, json.JSONDecodeError, TelemetryError) as exc:
+        print(f"slide-check: {exc}", file=sys.stderr)
+        return 2
+    return finish("slide-check", records, reports, args)
 
 
 if __name__ == "__main__":
