@@ -401,6 +401,12 @@
   (mu: mu, mc: mc)
 }
 
+// Horizontal-overflow evidence.  Unbreakable content wider than its slot
+// cannot wrap: the constrained height (`mc`) stays at the unconstrained
+// height (`mu`) while the natural width exceeds the slot width `w`.  Wrapped
+// text is clamped honestly instead.
+#let _overflows-x(mu, mc, w) = mu.width > w + _EPS-L and mc.height <= mu.height + _EPS-L
+
 // Measure a natural item for a slot of width `w`.  Returns the outer size the
 // allocator uses (including card padding), the 2-D payload flow bbox, the
 // payload source, and horizontal-overflow evidence.
@@ -418,10 +424,7 @@
     pay-h: m.mc.height,
     pad: pad,
     src: if fallback { "declared" } else { "measured" },
-    // Unbreakable content wider than its slot cannot wrap: the constrained
-    // height stays at the unconstrained height while the natural width
-    // exceeds the slot.  Wrapped text is clamped honestly instead.
-    over-x: m.mu.width > iw + _EPS-L and m.mc.height <= m.mu.height + _EPS-L,
+    over-x: _overflows-x(m.mu, m.mc, iw),
   )
 }
 
@@ -1088,7 +1091,7 @@
         (
           w: calc.max(vm.width, lm.width),
           h: measure(block(width: iw, tile(i))).height,
-          over-x: vm.width > iw + _EPS-L and vc.height <= vm.height + _EPS-L,
+          over-x: _overflows-x(vm, vc, iw),
         )
       })
       let naturals = pays.map(p => p.h + 2 * pad)
@@ -1230,7 +1233,7 @@
           pref-h: ch / H,
           pay-w: calc.min(cm.width, fw) / W, pay-h: cap-m.height / H,
           pay-src: "measured",
-          over-x: cm.width > fw + _EPS-L and cap-m.height <= cm.height + _EPS-L,
+          over-x: _overflows-x(cm, cap-m, fw),
           visible-from: fig-step))
         relations.push(_rel(sid + ":figure", sid + ":caption", "caption", "vertical", "tight"))
         cy = cy + ch
@@ -1351,7 +1354,7 @@
           pay-w: calc.min(lmm.mu.width, lw - 2 * pad) / W,
           pay-h: lmm.mc.height / H,
           pay-src: "measured",
-          over-x: lmm.mu.width > lw - 2 * pad + _EPS-L and lmm.mc.height <= lmm.mu.height + _EPS-L,
+          over-x: _overflows-x(lmm.mu, lmm.mc, lw - 2 * pad),
           pad-x: pad / W, pad-y: pad / H,
           halign: "left", painted: true, paint-fill: t.sea.to-hex()),
         _obj(sid + ":body", "card", "content", sid,
@@ -1360,7 +1363,7 @@
           pay-w: calc.min(bmm.mu.width, bw - 2 * pad) / W,
           pay-h: bmm.mc.height / H,
           pay-src: "measured",
-          over-x: bmm.mu.width > bw - 2 * pad + _EPS-L and bmm.mc.height <= bmm.mu.height + _EPS-L,
+          over-x: _overflows-x(bmm.mu, bmm.mc, bw - 2 * pad),
           pad-x: pad / W, pad-y: pad / H,
           halign: "left", painted: true, paint-fill: t.skyll.to-hex()),
       )
