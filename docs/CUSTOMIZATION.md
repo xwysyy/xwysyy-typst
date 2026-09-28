@@ -61,7 +61,7 @@ scripts/check-theme-contrast /tmp/themes-candidate.typ
 ```
 
 - `paper` on `sea`
-- header title on page fill (`header-text` falling back to `sea`, against `page-fill` falling back to white)
+- header title (`sea`) on `page-fill` (falling back to white)
 
 Each contrast ratio must be at least 4.5:1. The script requires the parsed fields `sea`, `paper`, and `page-fill`.
 
@@ -109,7 +109,7 @@ Typst web app users can pass fonts available in the web environment. Local CI us
 
 Content slide header and footer are the `header(self)` and `footer(self)` functions of `_kinded-slide` in `src/slides.typ`, which the public `xwysyy-slide` wraps. Edit them there; the source is the reference.
 
-The header is open: the slide title is set in `heading-font`, bold, at 1.45em, colored `sea` by default, and sits over a full-width 0.12em rule filled with a gradient running from the title color through `sky` and fading to fully transparent at 92% of the width. The optional theme field `header-text` overrides the title color.
+The header is open: the slide title is set in `heading-font`, bold, at 1.45em, colored `sea`, and sits over a full-width 0.12em rule filled with a gradient running from the title color through `sky` and fading to fully transparent at 92% of the width.
 
 The header block has a 1.1em top inset, and the page top margin set in `xwysyy-pre` is 4.35em; change the two together. Because the margin is fixed, a long title shrinks to fit on one line, down to 0.65 of its size. The header exports the applied scale and whether the title fits horizontally and vertically as `<xwysyy-header>` telemetry, which the layout checker reports as `header_shrunk` / `header_overflow`; a customized header should keep emitting it.
 

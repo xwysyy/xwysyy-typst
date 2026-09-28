@@ -75,12 +75,10 @@ def main():
         sea = parse_color(fields["sea"])
         paper = parse_color(fields["paper"])
         page_fill = parse_color(fields["page-fill"], fallback=(255, 255, 255))
-        # `header-text` is an optional override of the open-header title color
-        header_color = parse_color(fields.get("header-text", "none"), fallback=sea)
 
         checks = (
             ("paper on sea", contrast(paper, sea)),
-            ("header title on page fill", contrast(header_color, page_fill)),
+            ("header title on page fill", contrast(sea, page_fill)),
         )
         for label, ratio in checks:
             if ratio < MIN_CONTRAST:

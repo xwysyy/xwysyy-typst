@@ -50,7 +50,7 @@
             }
             let styled(s) = text(
               font: self.store.heading-font,
-              fill: self.store.header-color,
+              fill: self.colors.neutral-dark,
               weight: "bold",
               size: 1.45em * s,
               title-body,
@@ -82,7 +82,7 @@
             height: 0.12em,
             radius: (left: 0.06em),
             fill: gradient.linear(
-              (self.store.header-color, 0%),
+              (self.colors.neutral-dark, 0%),
               (self.colors.primary, 42%),
               (self.colors.primary.transparentize(100%), 92%),
               (self.colors.primary.transparentize(100%), 100%),
@@ -343,10 +343,6 @@
     config-store(
       title: none,
       heading-font: heading-font,
-      header-color: {
-        let override = t.at("header-text", default: none)
-        if override != none { override } else { t.sea }
-      },
     ),
     config-page(
       fill: t.page-fill,

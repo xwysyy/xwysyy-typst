@@ -6,7 +6,6 @@
     sky: rgb("#bdd0f1"),
     skyll: rgb("#f4f9ff"),
     paper: rgb("#f5f6f8"),
-    header-text: none,
     page-fill: white,
   ),
   sunset: (
@@ -14,7 +13,6 @@
     sky: rgb("#D8A6A2"),
     skyll: rgb("#FFF8F6"),
     paper: rgb("#f5f6f8"),
-    header-text: none,
     page-fill: rgb("#fffefd"),
   ),
   forest: (
@@ -22,7 +20,6 @@
     sky: rgb("#a8d5ba"),
     skyll: rgb("#f5fbf7"),
     paper: rgb("#f7faf8"),
-    header-text: none,
     page-fill: white,
   ),
   midnight: (
@@ -30,7 +27,6 @@
     sky: rgb("#8fa8d8"),
     skyll: rgb("#f7faff"),
     paper: rgb("#f7f8fb"),
-    header-text: none,
     page-fill: white,
   ),
   violet: (
@@ -38,7 +34,6 @@
     sky: rgb("#c7b7e8"),
     skyll: rgb("#faf7ff"),
     paper: rgb("#f8f6fb"),
-    header-text: none,
     page-fill: white,
   ),
   graphite: (
@@ -46,12 +41,10 @@
     sky: rgb("#b9c0c9"),
     skyll: rgb("#f8f9fa"),
     paper: rgb("#f7f7f5"),
-    header-text: none,
     page-fill: white,
   ),
 )
 
-// `header-text` is optional: it overrides the open-header title color (default sea).
 #let _theme-required-fields = (
   "sea",
   "sky",

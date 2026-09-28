@@ -5,7 +5,6 @@
   sky: rgb("#a8d5ba"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-text: none,
 )
 
 #show: xwysyy-pre.with(theme: broken-theme)

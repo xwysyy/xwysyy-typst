@@ -114,7 +114,6 @@ typst compile main.typ
   sky: rgb("#a8d5ba"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-text: none,
   page-fill: white,
 )
 
@@ -124,7 +123,7 @@ typst compile main.typ
 )
 ```
 
-主题必须提供 5 个字段，`header-text` 可选：
+主题必须提供以下 5 个字段：
 
 | 字段 | 用途 |
 |------|------|
@@ -132,7 +131,6 @@ typst compile main.typ
 | `sky` | 强调色，也是 header 分隔线的淡出端 |
 | `skyll` | 代码块、表格数据行和 textbox 底色 |
 | `paper` | 深色背景上的文字 |
-| `header-text` | 可选，覆盖 header 标题颜色，`none` 回退到 `sea` |
 | `page-fill` | slide 页面背景 |
 
 ## 组件速查

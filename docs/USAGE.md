@@ -114,7 +114,7 @@ Direct dictionary:
 #show: xwysyy-pre.with(theme: forest, ...)
 ```
 
-The dictionary must include all five fields: `sea`, `sky`, `skyll`, `paper`, and `page-fill`. An optional `header-text` field overrides the header title color; when it is absent or `none`, the title uses `sea`. All built-in themes ship `header-text: none`.
+The dictionary must include all five fields: `sea`, `sky`, `skyll`, `paper`, and `page-fill`.
 
 If a field is missing, compilation fails with the missing field name.
 

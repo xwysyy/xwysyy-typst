@@ -114,7 +114,6 @@ Pass a custom dictionary directly:
   sky: rgb("#a8d5ba"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-text: none,
   page-fill: white,
 )
 
@@ -124,7 +123,7 @@ Pass a custom dictionary directly:
 )
 ```
 
-Five fields are required; `header-text` is optional:
+All five fields are required:
 
 | Field | Purpose |
 |-------|---------|
@@ -132,7 +131,6 @@ Five fields are required; `header-text` is optional:
 | `sky` | Accent color, also the fade-out end of the header rule |
 | `skyll` | Code block, table row, and textbox fill |
 | `paper` | Text on dark backgrounds |
-| `header-text` | Optional header title color override, `none` falls back to `sea` |
 | `page-fill` | Slide page background |
 
 ## Component Reference

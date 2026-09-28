@@ -30,23 +30,22 @@ Return a complete Typst dictionary named with an English lowercase name:
 )
 ```
 
-These five fields are required. You may add an optional `header-text` field: when it is not `none`, it overrides the header title color; the default title color is `sea`.
+These five fields are required.
 
 ## Fields
 
 | Field | Visual Role |
 |------|-------------|
-| `sea` | Main dark color: default header title color, table header, links, outline badges |
+| `sea` | Main dark color: header title, table header, links, outline badges |
 | `sky` | Accent color: header rule gradient tail |
 | `skyll` | Lightest component fill: code blocks, zebra rows, textboxes |
 | `paper` | Text on dark backgrounds |
 | `page-fill` | Slide page background |
-| `header-text` (optional) | Header title color override; `none` falls back to `sea` |
 
 ## Hard Constraints
 
 1. `paper` on `sea` must satisfy WCAG AA contrast, at least 4.5:1.
-2. The header title color (`header-text` falling back to `sea`) on `page-fill` must satisfy WCAG AA contrast, at least 4.5:1.
+2. `sea` (the header title color) on `page-fill` must satisfy WCAG AA contrast, at least 4.5:1.
 3. `sea`, `sky`, and `skyll` should form a clear dark-to-light ramp.
 4. `page-fill` must be visually separable from `skyll`, so code blocks and textboxes are visible.
 5. Keep color temperature coherent. Warm main colors should use warm light backgrounds; cold main colors should use cold light backgrounds.
@@ -61,7 +60,6 @@ sky:
   sky: rgb("#bdd0f1"),
   skyll: rgb("#f4f9ff"),
   paper: rgb("#f5f6f8"),
-  header-text: none,
   page-fill: white,
 )
 ```
@@ -74,7 +72,6 @@ sunset:
   sky: rgb("#D8A6A2"),
   skyll: rgb("#FFF8F6"),
   paper: rgb("#f5f6f8"),
-  header-text: none,
   page-fill: rgb("#fffefd"),
 )
 ```
@@ -87,7 +84,6 @@ forest:
   sky: rgb("#a8d5ba"),
   skyll: rgb("#f5fbf7"),
   paper: rgb("#f7faf8"),
-  header-text: none,
   page-fill: white,
 )
 ```
