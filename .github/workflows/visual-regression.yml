@@ -25,7 +25,6 @@ jobs:
           typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf
           typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf
           typst compile --root . examples/layout-demo.typ /tmp/layout-demo.pdf
-          typst compile --root . tests/fixtures/extras-entry.typ /tmp/extras-entry.pdf
 
   package-shape:
     runs-on: ubuntu-latest
@@ -42,7 +41,6 @@ jobs:
           scripts/build-universe-package /tmp/xwysyy-package-path/preview/xwysyy/0.4.0 --ref HEAD
           test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/LICENSE
           test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/xwysyy.typ
-          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/xwysyy-extras.typ
           test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/src/layout.typ
           test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/template/main.typ
           test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/scripts
@@ -52,9 +50,7 @@ jobs:
 
       - name: Compile through the package resolver
         run: |
-          typst compile --root . --package-path /tmp/xwysyy-package-path --deps /tmp/xwysyy-core-deps.json template/main.typ /tmp/xwysyy-template.pdf
-          python3 -c 'import json; paths = json.load(open("/tmp/xwysyy-core-deps.json"))["inputs"]; forbidden = [p for p in paths if "xwysyy-extras.typ" in p or "/src/extras.typ" in p or "/preview/cetz/" in p or "/preview/fletcher/" in p or "/preview/theorion/" in p]; assert not forbidden, forbidden'
-          typst compile --root . --package-path /tmp/xwysyy-package-path tests/fixtures/package-entry.typ /tmp/xwysyy-package-entry.pdf
+          typst compile --root . --package-path /tmp/xwysyy-package-path template/main.typ /tmp/xwysyy-template.pdf
           typst compile --root . --package-path /tmp/xwysyy-package-path tests/fixtures/readme-quick-start.typ /tmp/xwysyy-readme-quick-start.pdf
 
       - name: Initialize and check the packaged template
@@ -100,7 +96,6 @@ jobs:
           typst compile --root . tests/fixtures/outline-zh.typ /tmp/outline-zh.pdf
           typst compile --root . tests/fixtures/outline-agenda.typ /tmp/outline-agenda.pdf
           typst compile --root . tests/fixtures/font-override.typ /tmp/font-override.pdf
-          typst compile --root . tests/fixtures/extras-entry.typ /tmp/extras-entry.pdf
 
       - name: Check missing theme field error
         run: |

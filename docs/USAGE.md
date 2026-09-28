@@ -24,19 +24,10 @@ Local development examples in this repository use a relative import:
 #import "../xwysyy.typ": *
 ```
 
-Core dependencies are downloaded by Typst:
+Dependencies are downloaded by Typst:
 
 - `@preview/touying:0.7.4`
 - `@preview/physica:0.9.8`
-
-Optional drawing and theorem integrations load through `xwysyy-extras()`:
-
-```typst
-#import "@preview/xwysyy:0.4.0": *
-#import xwysyy-extras(): *
-```
-
-The loader imports `xwysyy-extras.typ` only when called. A core import does not resolve the optional `cetz`, `fletcher`, or `theorion` packages.
 
 ## 2. Slide Entry: `xwysyy-pre`
 
@@ -69,6 +60,17 @@ The loader imports `xwysyy-extras.typ` only when called. A core import does not 
 | `lang` | `"en"` | Typst text language |
 | `..args` | none | Extra touying configs such as `config-info(...)` or `config-common(...)` |
 | `body` | required | Deck content |
+
+`xwysyy-pre` freezes `counter(figure)` and `counter(math.equation)`, so reveal subslides do not advance figure and equation numbers. Passing `config-common(frozen-counters: ...)` replaces that list; include both counters when you add your own:
+
+```typst
+#show: xwysyy-pre.with(
+  config-common(frozen-counters: (
+    counter(figure), counter(math.equation), my-counter,
+  )),
+  ...
+)
+```
 
 ### Example
 
@@ -328,37 +330,11 @@ The query output is JSON with page overlays and note text.
 | Arrow string rules | `->`, `=>`, `<=>`, and related patterns render as math arrows; text already set in the `code-font` first family is skipped, so code content stays literal |
 | `set table` and `show table.cell` | Seamless `sea` header row with bold `paper` text, zebra body rows (`skyll` on even rows), and `table.hline` defaulting to `0.5pt + sea.lighten(30%)` |
 
-## 8. Optional Extras
-
-The same loader API works during local development:
-
-```typst
-#import "../xwysyy.typ": xwysyy-extras
-#import xwysyy-extras(): *
-```
-
-The extras module wraps:
-
-- `cetz-canvas` with touying reducer support
-- `fletcher-diagram` with touying reducer support
-- theorion environments such as `definition`, `theorem`, `lemma`, `proof`, and `remark`
-
-When passing custom `frozen-counters`, include the defaults:
-
-```typst
-#show: xwysyy-pre.with(
-  config-common(frozen-counters: (
-    counter(figure), counter(math.equation), theorem-counter,
-  )),
-  ...
-)
-```
-
-## 9. API Index
+## 8. API Index
 
 | Category | API |
 |----------|-----|
-| Entries | `xwysyy-pre`, `xwysyy-extras()` |
+| Entry | `xwysyy-pre` |
 | Slide layouts | `title-slide`, `outline-slide`, `xwysyy-slide`, `new-section-slide`, `image-slide`, `end-slide` |
 | Semantic layout components | `duo-slide`, `focus-slide`, `grid-slide`, `stack-slide`, `compare-slide`, `stat-slide`, `figure-slide`, `sidebar-slide` |
 | Layout items | `visual`, `card`, `takeaway`, `plain`, `metric` |

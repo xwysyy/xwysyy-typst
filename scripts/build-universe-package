@@ -22,7 +22,6 @@ PACKAGE_PATHS = (
     "typst.toml",
     "thumbnail.png",
     "xwysyy.typ",
-    "xwysyy-extras.typ",
     "src",
     "template",
 )
@@ -191,8 +190,6 @@ def verify_output(
             )
 
     readme = (output / "README.md").read_text(encoding="utf-8")
-    if "#import xwysyy-extras(): *" not in readme:
-        raise BuildError("README.md must document the xwysyy-extras() loader import")
     if "[MIT](./LICENSE)" not in readme:
         raise BuildError("README.md must link to the MIT license")
     for pattern, description in FORBIDDEN_README:

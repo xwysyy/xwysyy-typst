@@ -159,14 +159,6 @@ typst compile main.typ
 | 文本框 | `textbox` | `#textbox[内容]` 或 `#textbox([列 1], [列 2])` |
 | 标红 | `red` / `bred` | `#red[文字]` / `#bred[粗体标红]` |
 | 标黄 | `yellow` / `byellow` | `#yellow[文字]` / `#byellow[粗体标黄]` |
-| 可选扩展加载器 | `xwysyy-extras()` | 按需加载 cetz、fletcher、theorion 集成 |
-
-只有调用 `xwysyy-extras()` 时才会加载绘图与定理环境，因此核心导入仍保持较小的依赖集合：
-
-```typst
-#import "@preview/xwysyy:0.4.0": *
-#import xwysyy-extras(): *
-```
 
 版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain` / `metric`），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v4 遥测（每对象带分配框、自然外框、区分测量与声明来源的二维 payload 框、卡片色块框与填色）。分步展示用组件的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见[版式指南](https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/docs/LAYOUT.md)。
 

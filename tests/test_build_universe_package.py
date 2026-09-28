@@ -33,7 +33,6 @@ VALID_README = """\
 
 ```typst
 #import "@preview/xwysyy:0.4.0": *
-#import xwysyy-extras(): *
 ```
 
 ## License
@@ -42,7 +41,7 @@ VALID_README = """\
 """
 
 PACKAGE_SUBPATH_README = (
-    VALID_README + '#import "@preview/xwysyy:0.4.0/xwysyy-extras.typ": *\n'
+    VALID_README + '#import "@preview/xwysyy:0.4.0/src/layout.typ": *\n'
 )
 
 
@@ -64,7 +63,6 @@ class BuildUniversePackageTests(unittest.TestCase):
             "typst.toml": VALID_MANIFEST,
             "thumbnail.png": b"PNG",
             "xwysyy.typ": "",
-            "xwysyy-extras.typ": "",
             "src/main.typ": "",
             "template/main.typ": '#import "@preview/xwysyy:0.4.0": *\n',
         }
@@ -130,7 +128,6 @@ class BuildUniversePackageTests(unittest.TestCase):
         self.assertIn("built @preview/xwysyy:0.4.0", result.stdout)
         self.assertIn("tree-sha256:", result.stdout)
         self.assertTrue((self.output / "xwysyy.typ").is_file())
-        self.assertTrue((self.output / "xwysyy-extras.typ").is_file())
         files = {
             path.relative_to(self.output).as_posix()
             for path in self.output.rglob("*")
@@ -145,7 +142,6 @@ class BuildUniversePackageTests(unittest.TestCase):
                 "template/main.typ",
                 "thumbnail.png",
                 "typst.toml",
-                "xwysyy-extras.typ",
                 "xwysyy.typ",
             },
         )

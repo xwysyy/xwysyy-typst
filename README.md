@@ -159,14 +159,6 @@ Six fields are required; `header-text` is optional:
 | Text box | `textbox` | `#textbox[Content]` or `#textbox([Col 1], [Col 2])` |
 | Highlight | `red` / `bred` | `#red[text]` / `#bred[bold red]` |
 | Highlight | `yellow` / `byellow` | `#yellow[text]` / `#byellow[bold yellow]` |
-| Extensions loader | `xwysyy-extras()` | lazily loads cetz, fletcher, and theorion integrations |
-
-Optional drawing and theorem integrations load only when `xwysyy-extras()` is called, so the core import keeps its smaller dependency set:
-
-```typst
-#import "@preview/xwysyy:0.4.0": *
-#import xwysyy-extras(): *
-```
 
 The layout components (`duo-slide`, `focus-slide`, `grid-slide`, `stack-slide`, `compare-slide`, `stat-slide`, `figure-slide`, `sidebar-slide`) take typed content items (`visual` / `card` / `takeaway` / `plain` / `metric`) with declared sizing, measure every block, distribute space fill-first, and export `<xwysyy-slide-layout>` v4 telemetry (allocated frame, natural preferred size, 2-D payload bbox with a measured/declared source, and paint box + fill per object). For stepwise reveal use the components' `reveal: true` parameter instead of `#pause`, which cannot appear inside the components (touying panics). See the [layout guide](https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/docs/LAYOUT.md).
 
