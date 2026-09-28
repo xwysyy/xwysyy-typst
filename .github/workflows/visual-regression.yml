@@ -70,7 +70,7 @@ jobs:
 
       - uses: typst-community/setup-typst@v4
         with:
-          typst-version: 0.14.2
+          typst-version: 0.14.0
 
       - name: Install deterministic fonts
         run: |

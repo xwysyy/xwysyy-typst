@@ -46,8 +46,7 @@
 | `tests/test_render_visuals.py` | 视觉渲染发布回归：成功时完整替换脚本拥有的 PNG 集，编译失败时保留上一套完整输出，无关文件不受影响 |
 | `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *` |
 | `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
-| `typst.toml` | 包清单：name/version/entrypoint/template/exclude，发版时同步 CHANGELOG |
-| `CHANGELOG.md` | 版本变更记录，遵循 Keep a Changelog 格式 |
+| `typst.toml` | 包清单：name/version/entrypoint/template/exclude |
 | `README.md` | 用户视角文档：用法、组件参考、主题系统、兼容性 |
 | `docs/USAGE.md` | 完整 API 参考：slide 入口、版式与组件 |
 | `docs/CUSTOMIZATION.md` | 自定义指南 + 配合 touying 0.7.x 高级特性 |
@@ -60,7 +59,7 @@
 | `scripts/adopt-baseline` | 从最近一次 visual-regression run 下载 `visual-current` artifact 全量覆盖视觉基线（需 gh CLI 已登录） |
 | `scripts/build-universe-package` | 从干净的已提交 Git ref 提取最小官方包白名单；目录结构沿用 0.3.0，仅新增 `src/layout.typ`，不复制开发脚本、测试或内部文档 |
 | `scripts/check-theme-contrast` | 解析 `src/themes.typ` 并检查主题对比度 |
-| `.github/workflows/visual-regression.yml` | 用 Typst 0.14.0 编译公开入口，检查 Universe 包形状，并在 0.14.2 环境编译示例、运行测试、检查主题对比度、渲染视觉基线并比较 |
+| `.github/workflows/visual-regression.yml` | 所有 job 用 Typst 0.14.0：编译公开入口，检查 Universe 包形状，编译示例、运行测试、检查主题对比度、渲染视觉基线并比较 |
 | `tests/fixtures/` | 自定义主题、目录标题、字体参数等编译验证 fixture |
 | `tests/visual-baseline/` | CI 视觉回归基线 PNG |
 | `LICENSE` | MIT，沿用 0.3.0 与上游 |
@@ -84,7 +83,7 @@
 	  | 改 example deck 结构 | 重新生成 preview PNG + README 预览表 |
 	  | 改 CI / preview / release 脚本 | CUSTOMIZATION 维护命令 + AGENTS 关键文件表 |
 	  | 纯内部重构（不改公开 API） | 无 |
-	  | 发版 | CHANGELOG.md + typst.toml version + git tag |
+	  | 发版 | typst.toml version + git tag |
 - **主题色变量是契约**：`themes` 字典中每套主题必含 6 个字段 `sea` / `sky` / `skyl` / `skyll` / `paper` / `page-fill`（`_resolve-theme` 逐一校验，缺字段 panic）；`header-text` 是可选字段，非 `none` 时覆盖内容页 open header 的标题颜色（默认 `sea`），6 套内置主题均为 `header-text: none`；`header-fill` 字段已删除，不要再写进主题字典。这些字段既是颜色定义，也通过 `config-colors` 映射到 touying 的语义槽（`neutral-dark = sea` 等）；`config-store` 还携带 `heading-font` 与 `header-color`（由 `header-text` 回退到 `sea` 解析而来）供 header 使用。改名要同步改 `xwysyy-pre` 内 `config-colors(...)` 调用，否则下游 slide 组件会拿到错误颜色。运行时通过 `_theme-state`（state）向 `textbox` 等组件传播主题色。
 - **函数命名前缀**：当前所有公开主题函数前缀为 `xwysyy-`（`xwysyy-pre`、`xwysyy-slide`、`xwysyy-elements`、`xwysyy-extras`）。新增函数沿用此前缀；`title-slide` / `outline-slide` / `textbox` / `end-slide` 等通用 helper 不带前缀。
 - **typst + touying 边界 bug**：不要使用 `config-info(author: [])`（空 content），touying 会把空 content 处理成 none，并触发内部类型检查失败。空作者用 `author: " "` 绕开，不要回退到 `[]`。
