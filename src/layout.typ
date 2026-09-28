@@ -136,7 +136,7 @@
 }
 
 // ---------------------------------------------------------------------------
-// typed items (declared sizing; every component slot takes them)
+// typed items (declared sizing; sidebar slots take plain content instead)
 // ---------------------------------------------------------------------------
 //
 // `visual(...)` marks the slide's visual payload: never carded, and with

@@ -158,7 +158,7 @@ typst compile main.typ
 | 标红 | `red` / `bred` | `#red[文字]` / `#bred[粗体标红]` |
 | 标黄 | `yellow` / `byellow` | `#yellow[文字]` / `#byellow[粗体标黄]` |
 
-版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain` / `metric`），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v4 遥测（每对象带分配框、自然外框、区分测量与声明来源的二维 payload 框、卡片色块框与填色）。分步展示用组件的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见[版式指南](https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/docs/LAYOUT.md)。
+版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain`，`stat-slide` 的条目用 `metric`；`sidebar-slide` 只收纯内容），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v4 遥测（每对象带分配框、自然外框、区分测量与声明来源的二维 payload 框、卡片色块框与填色）。分步展示用多块组件（`focus-slide` 和 `sidebar-slide` 之外）的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见[版式指南](https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/docs/LAYOUT.md)。
 
 ## Handout 与讲者备注
 
