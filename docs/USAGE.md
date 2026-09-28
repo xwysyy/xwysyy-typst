@@ -360,6 +360,8 @@ When passing custom `frozen-counters`, include the defaults:
 |----------|-----|
 | Entries | `xwysyy-pre`, `xwysyy-extras()` |
 | Slide layouts | `title-slide`, `outline-slide`, `xwysyy-slide`, `new-section-slide`, `image-slide`, `end-slide` |
+| Semantic layout components | `duo-slide`, `focus-slide`, `grid-slide`, `stack-slide`, `compare-slide`, `stat-slide`, `figure-slide`, `sidebar-slide` |
+| Layout items | `visual`, `card`, `takeaway`, `plain`, `metric` |
 | Components | `textbox`, `info` |
 | Highlight macros | `red`, `bred`, `yellow`, `byellow` |
 | Theme values | `themes`, `sea`, `sky`, `skyl`, `skyll`, `paper` |
