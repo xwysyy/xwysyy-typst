@@ -49,7 +49,6 @@
   - 嵌套子项 A
   - 嵌套子项 B
     - 三级嵌套
-    - 三级嵌套
 - 无序列表第三项
 
 #v(0.3em)
@@ -257,7 +256,7 @@ $ sum_(k=0)^n binom(n, k) x^k y^(n-k) = (x + y)^n $
 #v(0.4em)
 
 #info[项目名称][xwysyy-typst]
-#info[技术栈][Typst + touying 0.7.4]
+#info[技术栈][Typst + touying 0.8.0]
 #info[字体][Times New Roman + Noto Serif CJK SC]
 #info[许可证][MIT]
 
