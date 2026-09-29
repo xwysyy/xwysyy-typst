@@ -7,7 +7,7 @@ This document lists the public APIs exported by `xwysyy.typ`. Quick setup is in 
 Create a new deck:
 
 ```bash
-typst init @preview/xwysyy:0.4.0 my-talk
+typst init @preview/xwysyy:0.5.0 my-talk
 cd my-talk
 typst compile main.typ
 ```
@@ -15,7 +15,7 @@ typst compile main.typ
 Import the package in an existing project:
 
 ```typst
-#import "@preview/xwysyy:0.4.0": *
+#import "@preview/xwysyy:0.5.0": *
 ```
 
 Local development examples in this repository use a relative import:

@@ -5,6 +5,7 @@ on:
     paths-ignore:
       - "README.md"
       - "README-zh.md"
+      - "CHANGELOG.md"
       - "AGENTS.md"
       - "docs/**"
   push:
@@ -23,15 +24,15 @@ jobs:
       - name: Build the Universe package directory
         run: |
           mkdir -p /tmp/xwysyy-package-path/preview/xwysyy
-          scripts/build-universe-package /tmp/xwysyy-package-path/preview/xwysyy/0.4.0 --ref HEAD
-          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/LICENSE
-          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/xwysyy.typ
-          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/src/layout.typ
-          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/template/main.typ
-          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/scripts
-          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/docs
-          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/examples
-          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.4.0/tests
+          scripts/build-universe-package /tmp/xwysyy-package-path/preview/xwysyy/0.5.0 --ref HEAD
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.5.0/LICENSE
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.5.0/xwysyy.typ
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.5.0/src/layout.typ
+          test -f /tmp/xwysyy-package-path/preview/xwysyy/0.5.0/template/main.typ
+          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.5.0/scripts
+          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.5.0/docs
+          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.5.0/examples
+          test ! -e /tmp/xwysyy-package-path/preview/xwysyy/0.5.0/tests
 
       - name: Compile through the package resolver
         run: |
@@ -40,7 +41,7 @@ jobs:
 
       - name: Initialize and check the packaged template
         run: |
-          typst init --package-path /tmp/xwysyy-package-path @preview/xwysyy:0.4.0 /tmp/xwysyy-init
+          typst init --package-path /tmp/xwysyy-package-path @preview/xwysyy:0.5.0 /tmp/xwysyy-init
           typst compile --root /tmp/xwysyy-init --package-path /tmp/xwysyy-package-path /tmp/xwysyy-init/main.typ /tmp/xwysyy-init.pdf
 
   render:

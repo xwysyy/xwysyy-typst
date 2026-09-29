@@ -38,9 +38,10 @@
 | `tests/test_build_universe_package.py` | Release staging CLI regression tests: a real temporary Git repository covers a normal release, manifest type and path constraints, the README contract, and no partial output after a failure |
 | `tests/test_slide_check.py` | Checker unit tests (synthetic v4 records covering the main diagnostics + fail-closed parsing + the frame state machine) + real-compile integration tests (demo verdicts, fit states, handout coverage, pixel true positives, adversarial regressions, panic fixtures, header shrink telemetry, title-slide date override) |
 | `tests/test_render_visuals.py` | Visual render publishing regression tests: on success the script-owned PNG set is replaced in full, on compile failure the previous complete output is kept, and unrelated files are left untouched |
-| `template/main.typ` | Universe template scaffold entry, using `#import "@preview/xwysyy:0.4.0": *` |
+| `template/main.typ` | Universe template scaffold entry, using `#import "@preview/xwysyy:0.5.0": *` |
 | `thumbnail.png` | Universe template thumbnail, rendered from the first page of `template/main.typ` |
-| `typst.toml` | Package manifest: name/version/entrypoint/template/exclude |
+| `typst.toml` | Package manifest: name/version/entrypoint/template/exclude; sync `CHANGELOG.md` on release |
+| `CHANGELOG.md` | Version change log in Keep a Changelog format |
 | `README.md` | User-facing documentation: usage, component reference, theme system, compatibility |
 | `docs/USAGE.md` | Full API reference: slide entry, layouts, and components |
 | `docs/CUSTOMIZATION.md` | Customization guide + advanced features with touying 0.7.x |
@@ -77,7 +78,7 @@ The full development discipline is in `~/.claude/rules/dev-core.md` + `verificat
   | Example deck structure | After the CI baseline is adopted, run `scripts/gen-previews` (update the page mapping in the script first if page numbers changed) + README Preview table |
   | CI / preview / release scripts | CUSTOMIZATION maintenance commands + AGENTS Key files table |
   | Pure internal refactor (no public API change) | None |
-  | Release | `typst.toml` version + git tag |
+  | Release | `CHANGELOG.md` + `typst.toml` version + git tag |
 - **Theme color variables are a contract**: Every theme in the `themes` dictionary must have the 5 fields `sea` / `sky` / `skyll` / `paper` / `page-fill` (`_resolve-theme` checks each one and panics on a missing field). These fields are color definitions and are also mapped to touying's semantic slots through `config-colors` (`neutral-dark = sea`, etc.); `config-store` also carries `heading-font` for the header. When renaming a field, update the `config-colors(...)` call inside `xwysyy-pre` as well, otherwise downstream slide components get the wrong colors. At runtime, theme colors propagate to components such as `textbox` through `_theme-state` (a state).
 - **Function name prefix**: All current public theme functions use the `xwysyy-` prefix (`xwysyy-pre`, `xwysyy-slide`, `xwysyy-elements`). New functions keep this prefix; general helpers such as `title-slide` / `outline-slide` / `textbox` / `end-slide` have no prefix.
 - **typst + touying edge-case bug**: Do not use `config-info(author: [])` (empty content); touying turns empty content into none and fails an internal type check. For an empty author, work around it with `author: " "`; do not fall back to `[]`.

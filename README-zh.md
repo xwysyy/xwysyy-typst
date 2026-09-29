@@ -9,14 +9,14 @@
 </p>
 
 <p align="center">
-  <b>中文</b> | <a href="https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/README.md">English</a>
+  <b>中文</b> | <a href="https://github.com/xwysyy/xwysyy-typst/blob/v0.5.0/README.md">English</a>
 </p>
 
 `xwysyy` 是基于 [touying](https://github.com/touying-typ/touying) 的学术演示模板。它支持 slide、handout、讲者备注和 pdfpc 元数据。视觉主题派生自 [Carlos-Mero/may](https://github.com/Carlos-Mero/may)，许可证为 MIT。
 
 ## 特性
 
-- 支持 Universe 模板：`typst init @preview/xwysyy:0.4.0` 直接生成可编译 deck。
+- 支持 Universe 模板：`typst init @preview/xwysyy:0.5.0` 直接生成可编译 deck。
 - 内置 6 套主题：`sky`、`sunset`、`forest`、`midnight`、`violet`、`graphite`。
 - `theme` 可直接接收自定义配色字典，用户不需要 fork 包源码。
 - `xwysyy-pre` 接受 `font`、`code-font`、`lang` 参数，另有 `heading-font` 控制 header 标题字体。
@@ -25,34 +25,34 @@
 
 ## 预览
 
-渲染预览由[固定标签下的源码示例](https://github.com/xwysyy/xwysyy-typst/tree/v0.4.0/examples)生成。
+渲染预览由[固定标签下的源码示例](https://github.com/xwysyy/xwysyy-typst/tree/v0.5.0/examples)生成。
 
 ### 主题
 
 | sky | sunset | forest |
 |:---:|:---:|:---:|
-| ![Sky theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-theme-sky-p1-01.png) | ![Sunset theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-theme-sunset-p1-01.png) | ![Forest theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-theme-forest-p1-01.png) |
+| ![Sky theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-theme-sky-p1-01.png) | ![Sunset theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-theme-sunset-p1-01.png) | ![Forest theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-theme-forest-p1-01.png) |
 
 | midnight | violet | graphite |
 |:---:|:---:|:---:|
-| ![Midnight theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-theme-midnight-p1-01.png) | ![Violet theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-theme-violet-p1-01.png) | ![Graphite theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-theme-graphite-p1-01.png) |
+| ![Midnight theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-theme-midnight-p1-01.png) | ![Violet theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-theme-violet-p1-01.png) | ![Graphite theme cover](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-theme-graphite-p1-01.png) |
 
 ### 组件页
 
 | Sky 封面 | Sky 组件 |
 |:---:|:---:|
-| ![Sky theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-sky-p1-01.png) | ![Sky theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-sky-p5-05.png) |
+| ![Sky theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-sky-p1-01.png) | ![Sky theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-sky-p5-05.png) |
 
 | Sunset 封面 | Sunset 组件 |
 |:---:|:---:|
-| ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-sunset-p1-01.png) | ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.4.0/assets/preview-sunset-p5-05.png) |
+| ![Sunset theme cover slide](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-sunset-p1-01.png) | ![Sunset theme textbox components](https://raw.githubusercontent.com/xwysyy/xwysyy-typst/v0.5.0/assets/preview-sunset-p5-05.png) |
 
 ## 快速开始
 
 从 Universe 模板创建新项目：
 
 ```bash
-typst init @preview/xwysyy:0.4.0 my-talk
+typst init @preview/xwysyy:0.5.0 my-talk
 cd my-talk
 typst compile main.typ
 ```
@@ -60,7 +60,7 @@ typst compile main.typ
 在已有项目中引入包：
 
 ```typst
-#import "@preview/xwysyy:0.4.0": *
+#import "@preview/xwysyy:0.5.0": *
 
 #show: xwysyy-pre.with(
   theme: "sunset",
@@ -156,7 +156,7 @@ typst compile main.typ
 | 标红 | `red` / `bred` | `#red[文字]` / `#bred[粗体标红]` |
 | 标黄 | `yellow` / `byellow` | `#yellow[文字]` / `#byellow[粗体标黄]` |
 
-版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain`，`stat-slide` 的条目用 `metric`；`sidebar-slide` 只收纯内容），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v4 遥测（每对象带分配框、自然外框、区分测量与声明来源的二维 payload 框、卡片色块框与填色）。分步展示用多块组件（`focus-slide` 和 `sidebar-slide` 之外）的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见[版式指南](https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/docs/LAYOUT.md)。
+版式组件（`duo-slide`、`focus-slide`、`grid-slide`、`stack-slide`、`compare-slide`、`stat-slide`、`figure-slide`、`sidebar-slide`）接受声明了 sizing 的 typed item（`visual` / `card` / `takeaway` / `plain`，`stat-slide` 的条目用 `metric`；`sidebar-slide` 只收纯内容），编译期测量每个块、填满优先分配空间，并导出 `<xwysyy-slide-layout>` v4 遥测（每对象带分配框、自然外框、区分测量与声明来源的二维 payload 框、卡片色块框与填色）。分步展示用多块组件（`focus-slide` 和 `sidebar-slide` 之外）的 `reveal: true`，不要在组件内容里写 `#pause`（touying 会 panic）。详见[版式指南](https://github.com/xwysyy/xwysyy-typst/blob/v0.5.0/docs/LAYOUT.md)。
 
 ## Handout 与讲者备注
 
@@ -198,7 +198,7 @@ typst query main.typ --field value --one "<pdfpc-file>" > slides.pdfpc
 - 默认本地字体：Times New Roman、Noto Serif CJK SC、Libertinus Sans、Noto Sans CJK SC、Maple Mono、Noto Sans Mono CJK SC
 - Typst 网页端可通过 `font:`、`heading-font:` 和 `code-font:` 传入网页端可用字体
 
-完整 API 见 [docs/USAGE.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/docs/USAGE.md)。自定义指南见 [docs/CUSTOMIZATION.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/docs/CUSTOMIZATION.md)。配色生成器见 [docs/THEME-GENERATOR.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.4.0/docs/THEME-GENERATOR.md)。
+完整 API 见 [docs/USAGE.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.5.0/docs/USAGE.md)。自定义指南见 [docs/CUSTOMIZATION.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.5.0/docs/CUSTOMIZATION.md)。配色生成器见 [docs/THEME-GENERATOR.md](https://github.com/xwysyy/xwysyy-typst/blob/v0.5.0/docs/THEME-GENERATOR.md)。
 
 ## 致谢
 

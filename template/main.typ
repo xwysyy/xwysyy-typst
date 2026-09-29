@@ -1,4 +1,4 @@
-#import "@preview/xwysyy:0.4.0": *
+#import "@preview/xwysyy:0.5.0": *
 
 #show: xwysyy-pre.with(
   theme: "sky",
@@ -19,7 +19,7 @@
 
 == One Minute Setup
 
-Use `typst init @preview/xwysyy:0.4.0` to create this deck, then edit `main.typ`.
+Use `typst init @preview/xwysyy:0.5.0` to create this deck, then edit `main.typ`.
 
 #textbox(
   [*Reusable components*

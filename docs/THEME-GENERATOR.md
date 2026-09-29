@@ -101,7 +101,7 @@ forest:
 Paste the dictionary into your deck:
 
 ```typst
-#import "@preview/xwysyy:0.4.0": *
+#import "@preview/xwysyy:0.5.0": *
 
 #let forest = (
   sea: rgb("#1f5d45"),
