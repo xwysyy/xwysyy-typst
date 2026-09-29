@@ -330,7 +330,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("deck", help="deck .typ file")
     parser.add_argument("--input", action="append", default=[], metavar="k=v",
-                        help="forwarded to typst compile and query (repeatable)")
+                        help="forwarded to typst compile and eval (repeatable)")
     parser.add_argument("--root", default=None, help="typst project root (default: auto)")
     parser.add_argument("--profile", choices=("human", "agent"), default="human")
     parser.add_argument("--pixels", action="store_true",
