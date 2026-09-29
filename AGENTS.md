@@ -1,118 +1,118 @@
 # xwysyy-typst — AGENTS.md
 
-> AGENTS.md 是给 AI assistant 的导航地图，不是百科。
-> 本项目规模小，只维护下方列出的文档（见末尾"本项目不存在的文档"）。
+> AGENTS.md is a navigation map for AI assistants, not an encyclopedia.
+> This project is small and maintains only the documents listed below (see "Documents this project does not have" at the end).
 
 ---
 
-## 项目本质
+## What this project is
 
-- 单仓个人 typst slide 模板 + Universe template + 示例（6 套 slide 主题 + 语义布局层）
-- 单人维护，有 GitHub Actions 视觉回归，无 contributor
-- 主题文件 `xwysyy.typ` 派生自 [Carlos-Mero/may](https://github.com/Carlos-Mero/may)（MIT），整体改名为 `xwysyy-*` 前缀
+- A single-repo personal Typst slide template + Universe template + examples (6 slide themes + a semantic layout layer)
+- Maintained by one person, with GitHub Actions visual regression and no contributors
+- The theme file `xwysyy.typ` is derived from [Carlos-Mero/may](https://github.com/Carlos-Mero/may) (MIT) and renamed throughout to the `xwysyy-*` prefix
 
-## 必读
+## Required reading
 
-- `docs/LAYOUT.md` — 语义布局层契约（schema v4）：typed items、声明式 sizing、fit 四态、遥测字段、checker 诊断表与 AI 生成契约。凡是生成 slide 内容或改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check`，先读它。
+- `docs/LAYOUT.md` — the semantic layout layer contract (schema v4): typed items, declarative sizing, the four fit states, telemetry fields, the checker diagnostic table, and the AI generation contract. Read it first whenever you generate slide content or change `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check`.
 
-## 关键文件
+## Key files
 
-| 文件 | 作用 |
-|------|------|
-| `xwysyy.typ` | facade entry，re-export `src/*.typ` 子模块（touying API 经 `src/slides.typ` 一并导出）+ 包级 `physica` import。用户写 `#import "xwysyy.typ": *` 一次拿全 API |
-| `src/themes.typ` | `themes` 字典（sky / sunset / forest / midnight / violet / graphite）+ 主题字段校验 `_resolve-theme` + 顶层色变量（`sea` / `sky` / `skyll` / `paper`）+ `_theme-state` + 颜色宏（`red`/`bred`/`yellow`/`byellow`） |
-| `src/elements.typ` | show-chain `xwysyy-elements` + `info` + `textbox` |
-| `src/slides.typ` | slide 入口 `xwysyy-pre` + 6 种版式（`xwysyy-slide`、`title-slide`、`outline-slide`、`new-section-slide`、`image-slide`、`end-slide`）。`outline-slide` 自动过滤 `<touying:hidden>` 标签且 >5 章自动两列，`title: auto` 按 `text.lang` 输出 `Contents` / `目录`。`frozen-counters` 默认冻结 `figure` 和 `math.equation` 计数器 |
-| `src/layout.typ` | 语义布局层 + 版面遥测 v4：`duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`，共用 `_alloc-column`/`_fit-row` 分配器（item min/pref/max/grow + gap min/pref，fit 四态 normal/compressed/tight/overflow，不变量 overflow⇒body_overflow>0；stretch 视觉硬下限 0.28H）。槽位收 typed items（`visual(fit: "stretch"|"natural")`/`card`/`takeaway`/`plain`，sizing 声明不推断；stat 只收 `metric`，sidebar 只收纯内容）；必填槽位 none / 渲染为空（空 stretch 视觉由像素层 `hollow_object` 报）/ grid<2 列 / stat 缺 value·label / reveal-from 越界 / tuning key·类型·区间违规一律 panic。对象带 frame/preferred/payload(二维)/paint 四框 + 逐轴 sizing；组件每个真实渲染的 subslide 发 `<xwysyy-frame>` 映射（handout 覆盖率安全）。分步展示用 `reveal: true`（callback 式 `utils.uncover`，完整记录末帧导出）；**组件内容里禁用 `#pause`**（marks 进不了 `context`/`layout` 闭包，touying 会 panic）。**新增组件不要把 `context {}` 套在产出 slide 的调用外层**（touying 会 panic，颜色改在内容层用 `context`）。AI 生成契约见 `docs/LAYOUT.md` |
-| `examples/slides-sky.typ` | sky 主题演示 deck |
-| `examples/slides-sunset.typ` | sunset 主题演示 deck |
-| `examples/theme-preview.typ` | 可通过 `--input theme=<name>` 渲染任意内置主题的预览 deck |
-| `examples/layout-demo.typ` | 语义布局层演示：10 个 good 样例（8 组件 + 纯文本 stack + reveal）+ 6 个 checker 应捕获的 bad 样例（低密度 / 小图 / 列失衡 / 空壳卡片 / 双重溢出） |
-| `docs/LAYOUT.md` | 语义布局层设计文档 + 组件 API + 遥测 schema v4 + checker 诊断表 + AI 生成契约；保留在开发仓库，Universe README 链接对应版本标签 |
-| `tests/fixtures/layout-fit.typ` | fit 态回归 fixture：sidebar tight 窗口、stretch 视觉饿死型 overflow（不变量 body_overflow>0）、间隙压缩型 compressed |
-| `tests/fixtures/layout-handout.typ` | handout 覆盖率回归：手写页在 handout 折叠后仍须报 telemetry_gap（靠 `<xwysyy-frame>` 真实页码） |
-| `tests/fixtures/layout-pixel.typ` | 像素交叉验证真阳性：place 逃逸出 frame（render_telemetry_mismatch）与贴边细长 token（edge_ink 行峰值） |
-| `tests/fixtures/panic/` | 17 个必须编译失败的反例：必填槽位、空内容、spacer / 裸线条、单列 grid、tuning key/区间、reveal-from、metric 缺失/为空、kind 参数、visual fit、role 白名单、focus reveal、takeaway stretch、sidebar typed item、image-slide 无图 |
-| `tests/fixtures/adversarial/` | 外部审查实锤的假绿反例（自动 id 空白首帧、空 stretch 视觉），集成测试断言它们必须 fail |
-| `tests/fixtures/readme-quick-start.typ` | README 主快速开始示例的逐字镜像；测试先断言与 README code block 一致，再由 package-shape job 经真实包解析器编译 |
-| `tests/test_build_universe_package.py` | 发布 staging CLI 回归：真实临时 Git 仓库覆盖正常发布、manifest 类型与路径约束、README 契约、失败后无半成品 |
-| `tests/test_slide_check.py` | checker 单测（合成 v4 记录覆盖主要诊断 + fail-closed 解析 + 帧状态机）+ 真编译集成测试（demo 判定、fit 态、handout 覆盖率、像素真阳性、对抗回归、panic fixtures、页头缩放遥测、标题页日期覆盖） |
-| `tests/test_render_visuals.py` | 视觉渲染发布回归：成功时完整替换脚本拥有的 PNG 集，编译失败时保留上一套完整输出，无关文件不受影响 |
-| `template/main.typ` | Universe template 脚手架入口，使用 `#import "@preview/xwysyy:0.4.0": *` |
-| `thumbnail.png` | Universe template thumbnail，由 `template/main.typ` 首页渲染生成 |
-| `typst.toml` | 包清单：name/version/entrypoint/template/exclude |
-| `README.md` | 用户视角文档：用法、组件参考、主题系统、兼容性 |
-| `docs/USAGE.md` | 完整 API 参考：slide 入口、版式与组件 |
-| `docs/CUSTOMIZATION.md` | 自定义指南 + 配合 touying 0.7.x 高级特性 |
-| `docs/THEME-GENERATOR.md` | AI 生成主题字典提示词，默认指导用户直接传给 `theme` 参数 |
-| `scripts/slide-check.py` | 版面遥测几何引擎（schema v4，fail-closed 解析：缺字段 / 未知枚举 / 旧 schema 一律 exit 2）：并集面积覆盖指标（container/visual/payload + declared_payload）、fit 四态数值不变量、帧状态机（steps 1..N / handout 末帧 / 孤儿帧 / 重复 id 皆 error）、empty_shell / underfilled_card（只认 measured payload）、二维碰撞 + 有向关系、逐真实渲染帧检查（empty_frame / sparse_frame）、每条诊断带 action、统一 severity 政策表、`--profile agent|human`。默认 error 非零退出（`--strict` warning 也非零，`--advisory` 把诊断导致的 1 变为 0，坏输入仍 exit 2）；遥测为空非零退出。仅用于开发仓库 QA |
-| `scripts/xwysyy-check` | 统一 QA CLI：一次 `typst query "metadata"` 拿全四种 schema，随后执行几何检查和像素交叉验证（`--profile agent` 强制渲染像素）：render_telemetry_mismatch（只认当前 reveal 步可见对象的 frame）/ edge_ink 行峰值 / hollow_object（逐对象 payload 墨迹，排除自身卡片填色 `paint_fill`），页面几何来自 frame v2 遥测而非硬编码常量。`scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`。仅用于开发仓库 QA |
-| `scripts/gen-previews` | 从已采纳的 CI 视觉基线 `tests/visual-baseline` 复制 README preview PNG（页码映射写在脚本里）；基线变化并采纳后再运行 |
-| `scripts/render-visuals` | 在目标目录旁完整渲染视觉回归 PNG staging，成功后替换脚本拥有的 PNG 集；内部传 `--input visual-ci=true` 以固定日期并使用 CI 可安装字体 |
-| `scripts/compare-png` | 无 ImageMagick 依赖的 PNG 像素比较器，可输出 diff PNG |
-| `scripts/adopt-baseline` | 从最近一次 visual-regression run 下载 `visual-current` artifact 全量覆盖视觉基线（需 gh CLI 已登录） |
-| `scripts/build-universe-package` | 从干净的已提交 Git ref 提取最小官方包白名单（manifest、`LICENSE`、README、thumbnail、`xwysyy.typ`、`src/`、`template/`），不复制开发脚本、测试或内部文档 |
-| `scripts/check-theme-contrast` | 解析 `src/themes.typ` 并检查主题对比度 |
-| `.github/workflows/visual-regression.yml` | 两个 job 都用 Typst 0.14.0：`render` 先在装字体前用默认参数编译示例，装字体后编译 handout 示例、运行测试、检查主题对比度、编译 API fixture、渲染视觉基线并比较；`package-shape` 构建 Universe 包并经包解析器编译模板、README 快速开始与 `typst init` 项目 |
-| `tests/fixtures/` | 自定义主题、目录标题、字体参数等编译验证 fixture |
-| `tests/visual-baseline/` | CI 视觉回归基线 PNG |
-| `LICENSE` | MIT，沿用 0.3.0 与上游 |
+| File | Purpose |
+|------|---------|
+| `xwysyy.typ` | Facade entry: re-exports the `src/*.typ` submodules (the touying API is exported along with them through `src/slides.typ`) + a package-level `physica` import. Users write `#import "xwysyy.typ": *` once to get the whole API |
+| `src/themes.typ` | `themes` dictionary (sky / sunset / forest / midnight / violet / graphite) + theme field validation `_resolve-theme` + top-level color variables (`sea` / `sky` / `skyll` / `paper`) + `_theme-state` + color macros (`red`/`bred`/`yellow`/`byellow`) |
+| `src/elements.typ` | Show chain `xwysyy-elements` + `info` + `textbox` |
+| `src/slides.typ` | Slide entry `xwysyy-pre` + 6 layouts (`xwysyy-slide`, `title-slide`, `outline-slide`, `new-section-slide`, `image-slide`, `end-slide`). `outline-slide` automatically filters out `<touying:hidden>` labels and switches to two columns when there are more than 5 sections; `title: auto` outputs `Contents` / `目录` according to `text.lang`. `frozen-counters` freezes the `figure` and `math.equation` counters by default |
+| `src/layout.typ` | Semantic layout layer + layout telemetry v4: `duo-slide` / `focus-slide` / `grid-slide` / `stack-slide` / `compare-slide` / `stat-slide` / `figure-slide` / `sidebar-slide`, sharing the `_alloc-column`/`_fit-row` allocators (item min/pref/max/grow + gap min/pref; four fit states normal/compressed/tight/overflow; invariant overflow⇒body_overflow>0; hard visual floor of 0.28H for stretch visuals). Slots take typed items (`visual(fit: "stretch"|"natural")`/`card`/`takeaway`/`plain`; sizing is declared, not inferred; stat takes only `metric`, sidebar takes only plain content). A required slot that is none or renders empty (an empty stretch visual is reported by the pixel layer as `hollow_object`), a grid with fewer than 2 columns, a stat entry missing value or label, an out-of-range reveal-from, and tuning key/type/range violations all panic. Every object carries four boxes (frame/preferred/payload (2D)/paint) + per-axis sizing; components emit an `<xwysyy-frame>` mapping for every subslide that is actually rendered (safe for handout coverage). Stepwise reveal uses `reveal: true` (callback-style `utils.uncover`; the full record is exported on the last frame); **`#pause` is forbidden inside component content** (marks cannot enter `context`/`layout` closures, and touying panics). **When adding a component, do not wrap `context {}` around the call that produces the slide** (touying panics; apply colors with `context` at the content level instead). See `docs/LAYOUT.md` for the AI generation contract |
+| `examples/slides-sky.typ` | Demo deck for the sky theme |
+| `examples/slides-sunset.typ` | Demo deck for the sunset theme |
+| `examples/theme-preview.typ` | Preview deck that renders any built-in theme via `--input theme=<name>` |
+| `examples/layout-demo.typ` | Semantic layout layer demo: 10 good samples (8 components + a text-only stack + reveal) + 6 bad samples the checker must catch (low density / small figure / column imbalance / empty-shell card / double overflow) |
+| `docs/LAYOUT.md` | Semantic layout layer design doc + component API + telemetry schema v4 + checker diagnostic table + AI generation contract; kept in the development repository, and the Universe README links to the matching version tag |
+| `tests/fixtures/layout-fit.typ` | Fit-state regression fixture: sidebar tight window, overflow from a starved stretch visual (invariant body_overflow>0), compressed from gap compression |
+| `tests/fixtures/layout-handout.typ` | Handout coverage regression: a hand-written page must still report telemetry_gap after handout folding (relies on the real page numbers in `<xwysyy-frame>`) |
+| `tests/fixtures/layout-pixel.typ` | Pixel cross-validation true positives: `place` escaping its frame (render_telemetry_mismatch) and a thin token hugging the edge (edge_ink row peak) |
+| `tests/fixtures/panic/` | 17 counterexamples that must fail to compile: required slot, empty content, spacer / bare rule, single-column grid, tuning key/range, reveal-from, missing/empty metric, the kind parameter, visual fit, role allowlist, focus reveal, takeaway stretch, sidebar typed item, image-slide without an image |
+| `tests/fixtures/adversarial/` | False-green counterexamples confirmed by external review (blank first frame with an auto id, empty stretch visual); integration tests assert that they must fail |
+| `tests/fixtures/readme-quick-start.typ` | Verbatim mirror of the main README quick-start example; tests first assert that it matches the README code block, then the package-shape job compiles it through the real package resolver |
+| `tests/test_build_universe_package.py` | Release staging CLI regression tests: a real temporary Git repository covers a normal release, manifest type and path constraints, the README contract, and no partial output after a failure |
+| `tests/test_slide_check.py` | Checker unit tests (synthetic v4 records covering the main diagnostics + fail-closed parsing + the frame state machine) + real-compile integration tests (demo verdicts, fit states, handout coverage, pixel true positives, adversarial regressions, panic fixtures, header shrink telemetry, title-slide date override) |
+| `tests/test_render_visuals.py` | Visual render publishing regression tests: on success the script-owned PNG set is replaced in full, on compile failure the previous complete output is kept, and unrelated files are left untouched |
+| `template/main.typ` | Universe template scaffold entry, using `#import "@preview/xwysyy:0.4.0": *` |
+| `thumbnail.png` | Universe template thumbnail, rendered from the first page of `template/main.typ` |
+| `typst.toml` | Package manifest: name/version/entrypoint/template/exclude |
+| `README.md` | User-facing documentation: usage, component reference, theme system, compatibility |
+| `docs/USAGE.md` | Full API reference: slide entry, layouts, and components |
+| `docs/CUSTOMIZATION.md` | Customization guide + advanced features with touying 0.7.x |
+| `docs/THEME-GENERATOR.md` | Prompt for AI-generated theme dictionaries; by default it tells users to pass the result directly to the `theme` parameter |
+| `scripts/slide-check.py` | Layout telemetry geometry engine (schema v4; fail-closed parsing: missing fields / unknown enum values / old schemas all exit 2): union-area coverage metrics (container/visual/payload + declared_payload), numeric invariants for the four fit states, frame state machine (steps 1..N / handout last frame / orphan frames / duplicate ids are all errors), empty_shell / underfilled_card (only measured payload counts), 2D collisions + directed relations, per-rendered-frame checks (empty_frame / sparse_frame), an action on every diagnostic, a unified severity policy table, `--profile agent|human`. By default errors give a nonzero exit (`--strict` also makes warnings nonzero; `--advisory` turns a diagnostic-caused 1 into 0, while bad input still exits 2); empty telemetry exits nonzero. For development-repository QA only |
+| `scripts/xwysyy-check` | Unified QA CLI: a single `typst query "metadata"` fetches all four schemas, then it runs the geometry checks and pixel cross-validation (`--profile agent` forces pixel rendering): render_telemetry_mismatch (only counts frames of objects visible at the current reveal step) / edge_ink row peak / hollow_object (per-object payload ink, excluding the object's own card fill `paint_fill`); page geometry comes from frame v2 telemetry rather than hard-coded constants. `scripts/xwysyy-check <deck.typ> [--input k=v] [--profile agent] [--pixels]`. For development-repository QA only |
+| `scripts/gen-previews` | Copies the README preview PNGs from the adopted CI visual baseline `tests/visual-baseline` (the page mapping lives in the script); run it after a baseline change has been adopted |
+| `scripts/render-visuals` | Renders the complete visual regression PNG set into a staging directory beside the target directory and replaces the script-owned PNG set after success; internally passes `--input visual-ci=true` to fix the date and use fonts that CI can install |
+| `scripts/compare-png` | PNG pixel comparator with no ImageMagick dependency; can write diff PNGs |
+| `scripts/adopt-baseline` | Downloads the `visual-current` artifact from the latest visual-regression run and overwrites the visual baseline in full (requires a logged-in gh CLI) |
+| `scripts/build-universe-package` | Extracts the minimal official package allowlist (manifest, `LICENSE`, README, thumbnail, `xwysyy.typ`, `src/`, `template/`) from a clean committed Git ref; does not copy development scripts, tests, or internal docs |
+| `scripts/check-theme-contrast` | Parses `src/themes.typ` and checks theme contrast |
+| `.github/workflows/visual-regression.yml` | Both jobs use Typst 0.14.0: `render` first compiles the examples with default inputs before installing fonts, then installs fonts, compiles the handout example, runs the tests, checks theme contrast, compiles the API fixtures, renders the visual baseline, and compares it; `package-shape` builds the Universe package and compiles the template, the README quick start, and a `typst init` project through the package resolver |
+| `tests/fixtures/` | Compile-check fixtures for custom themes, outline titles, font parameters, and more |
+| `tests/visual-baseline/` | CI visual regression baseline PNGs |
+| `LICENSE` | MIT, carried over from 0.3.0 and upstream |
 
-## 工作规则（项目层面）
+## Working rules (project level)
 
-完整开发纪律见 `~/.claude/rules/dev-core.md` + `verification.md`；以下是本项目特有提醒。
+The full development discipline is in `~/.claude/rules/dev-core.md` + `verification.md`; below are reminders specific to this project.
 
-- **改完必编译**：任何对 `xwysyy.typ` / `src/*.typ` / 示例 / 模板脚手架的修改完成后，至少跑 `typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf && typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf`。改主题、脚本或预览时还要跑 `scripts/check-theme-contrast` 与 `scripts/render-visuals /tmp/xwysyy-visual-current && scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current`。
-- **改语义布局层必验遥测**：改 `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check` 后跑 `scripts/xwysyy-check examples/layout-demo.typ; python3 -m unittest discover -s tests`（demo 含故意的 bad 页，检查退出码非零属预期；CI 的 `Python regression tests` 步骤跑同一套单测，其中已含 panic fixtures、handout 覆盖率与像素真阳性）。改阈值后必须确认 demo 的 10 个 good 页仍全过、6 个 bad 页仍被捕获（阈值以真实测量的 good 页为锚校准，不要放水让 bad 页蒙混）。发版前另跑 `scripts/xwysyy-check examples/layout-demo.typ --pixels` 做像素级交叉验证。
-- **视觉基线以 CI 环境为准**：`tests/visual-baseline/` 的判定基准是 workflow 钉死的 CI 字体环境。本机多装字体时，落在示例字体栈之外的字形（含中文的行内代码、⬦ 列表标记等）走系统回退，本地 `compare-png` 会对少数页报已知差异，属正常。更新基线：视觉改动 push 后等 CI 跑完，跑 `scripts/adopt-baseline`（自动下载该 run 的 `visual-current` artifact 全量覆盖 `tests/visual-baseline`），review 后补 `test:` 提交；不要用本地渲染图当基线。
-- **许可证固定为单一 MIT**：本仓库、Universe 包和 `template/` 统一使用根目录 `LICENSE` 中的 MIT，沿用上游 `may` 与官方 0.3.0。不得引入 MIT-0、复合 SPDX 许可证、第二份许可证文件或模板目录许可特例；AI 不得以提交检查、减少署名义务或兼容性为由改变许可证。
-- **Universe 发布使用最小子集和独立分支**：`master` 是开发与发布配置的权威，保留测试、示例、QA 脚本和内部文档。每个版本从验证后的 `master` 提交创建 `universe-X.Y.Z` 分支，日常开发不在该分支继续；`scripts/build-universe-package <output> --ref universe-X.Y.Z` 只复制白名单内的发布文件，`src/` 下的运行源码整体带上。`typst/packages` PR 分支只接收构建产物，不接收 `scripts/`、`tests/`、`docs/`、示例或维护文件。管理员要求的通用修正先回写 `master`，再更新发布分支；只有官方仓库特有且无法在源仓库表达的修改才留在 PR 分支。`typst.toml` 的 `compiler` 是最低版本，必须与 workflow 各 job 的 `typst-version` 一致；`render` job 在装字体之前先用默认参数编译示例，修改后这一步必须通过。
-- **文档同步 SOP**：按改动类型查表同步文档，不再维护行号引用。
+- **Compile after every change**: After any change to `xwysyy.typ` / `src/*.typ` / examples / the template scaffold, run at least `typst compile --root . examples/slides-sky.typ /tmp/slides-sky.pdf && typst compile --root . examples/slides-sunset.typ /tmp/slides-sunset.pdf`. When changing themes, scripts, or previews, also run `scripts/check-theme-contrast` and `scripts/render-visuals /tmp/xwysyy-visual-current && scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current`.
+- **Verify telemetry after changing the semantic layout layer**: After changing `src/layout.typ` / `scripts/slide-check.py` / `scripts/xwysyy-check`, run `scripts/xwysyy-check examples/layout-demo.typ; python3 -m unittest discover -s tests` (the demo contains intentional bad pages, so a nonzero checker exit is expected; the CI `Python regression tests` step runs the same unit tests, which already include the panic fixtures, handout coverage, and pixel true positives). After changing thresholds, confirm that all 10 good pages of the demo still pass and all 6 bad pages are still caught (calibrate thresholds against real measurements of the good pages; do not loosen them to let bad pages slip through). Before a release, also run `scripts/xwysyy-check examples/layout-demo.typ --pixels` for pixel-level cross-validation.
+- **The CI environment is the reference for visual baselines**: `tests/visual-baseline/` is judged against the CI font environment pinned by the workflow. When the local machine has extra fonts installed, glyphs outside the example font stacks (inline code containing Chinese, the ⬦ list marker, and so on) go through system font fallback, so a local `compare-png` reports known differences on a few pages; this is normal. To update the baseline: after pushing a visual change, wait for CI to finish, run `scripts/adopt-baseline` (it downloads that run's `visual-current` artifact and overwrites `tests/visual-baseline` in full), review the result, then add a `test:` commit; do not use local renders as the baseline.
+- **The license is a single MIT license**: This repository, the Universe package, and `template/` all use the MIT license in the root `LICENSE`, carried over from upstream `may` and the official 0.3.0. Do not introduce MIT-0, a compound SPDX license, a second license file, or a license exception for the template directory; AI must not change the license on the grounds of submission checks, reducing attribution obligations, or compatibility.
+- **Universe releases use a minimal subset and a dedicated branch**: `master` is the authority for development and release configuration and keeps tests, examples, QA scripts, and internal docs. For each version, create a `universe-X.Y.Z` branch from the validated `master` commit; day-to-day development does not continue on that branch. `scripts/build-universe-package <output> --ref universe-X.Y.Z` copies only the allowlisted release files and takes the runtime sources under `src/` as a whole. The `typst/packages` PR branch receives only build output, not `scripts/`, `tests/`, `docs/`, examples, or maintenance files. General fixes requested by the package maintainers go into `master` first, then the release branch is updated; only changes that are specific to the official repository and cannot be expressed in the source repository stay on the PR branch. The `compiler` field in `typst.toml` is the minimum version and must match the `typst-version` of every workflow job; the `render` job compiles the examples with default inputs before installing fonts, and this step must pass after any change.
+- **Documentation sync SOP**: Look up the type of change in the table and sync the listed docs; line-number references are no longer maintained.
 
-  | 改了什么 | 必须同步 |
-  |---------|---------|
-  | 新增/删除/改名公开函数 | README 组件速查 + USAGE 版式/组件章节 + AGENTS 关键文件表 |
-	  | 改主题色字段 | README 主题配色表（中英）+ USAGE 字段说明 + THEME-GENERATOR 提示词 |
-	  | 改 show rule 行为 | USAGE §7 show 规则速览 |
-	  | 改 example deck 结构 | CI 基线采纳后跑 `scripts/gen-previews`（页码变了先改脚本里的映射）+ README 预览表 |
-	  | 改 CI / preview / release 脚本 | CUSTOMIZATION 维护命令 + AGENTS 关键文件表 |
-	  | 纯内部重构（不改公开 API） | 无 |
-	  | 发版 | typst.toml version + git tag |
-- **主题色变量是契约**：`themes` 字典中每套主题必含 5 个字段 `sea` / `sky` / `skyll` / `paper` / `page-fill`（`_resolve-theme` 逐一校验，缺字段 panic）。这些字段既是颜色定义，也通过 `config-colors` 映射到 touying 的语义槽（`neutral-dark = sea` 等）；`config-store` 还携带 `heading-font` 供 header 使用。改名要同步改 `xwysyy-pre` 内 `config-colors(...)` 调用，否则下游 slide 组件会拿到错误颜色。运行时通过 `_theme-state`（state）向 `textbox` 等组件传播主题色。
-- **函数命名前缀**：当前所有公开主题函数前缀为 `xwysyy-`（`xwysyy-pre`、`xwysyy-slide`、`xwysyy-elements`）。新增函数沿用此前缀；`title-slide` / `outline-slide` / `textbox` / `end-slide` 等通用 helper 不带前缀。
-- **typst + touying 边界 bug**：不要使用 `config-info(author: [])`（空 content），touying 会把空 content 处理成 none，并触发内部类型检查失败。空作者用 `author: " "` 绕开，不要回退到 `[]`。
-- **不要随便引入 typst package**：依赖只有 `@preview/touying:0.7.4` 与 `@preview/physica:0.9.8`。新增依赖前先评估是否可在 `src/` 子模块内手写实现。
-- **inline code 与 block code 分开处理**：`xwysyy-elements` 中 `raw.where(block: true)` 用 `block(width: 100%)` 全宽显示，`raw.where(block: false)` 用 `box(inset: (x: 0.3em), outset: (y: 0.2em))` 内联显示（竖向留白用 `outset` 画，不参与 baseline/行高布局）。修改代码样式时需同步改两处。
-- **箭头 show rule 用 math 模式**：箭头替换（`->` -> `$->$` 等）必须用 `$...$` 进入 math 模式才能渲染为箭头符号。不要用 `math.limits(it)`（只管上下标位置，不做符号转换）。长箭头（`-->`、`==>`）的 show rule 必须定义在短箭头（`->`、`=>`）之前，否则短规则会先截取。
+  | What changed | Must sync |
+  |--------------|-----------|
+  | Add / remove / rename a public function | README Component Reference + USAGE layout / component sections + AGENTS Key files table |
+  | Theme color fields | Theme field table in both `README.md` and `README-zh.md` + USAGE field description + THEME-GENERATOR prompt |
+  | Show rule behavior | USAGE §7 Show Rules |
+  | Example deck structure | After the CI baseline is adopted, run `scripts/gen-previews` (update the page mapping in the script first if page numbers changed) + README Preview table |
+  | CI / preview / release scripts | CUSTOMIZATION maintenance commands + AGENTS Key files table |
+  | Pure internal refactor (no public API change) | None |
+  | Release | `typst.toml` version + git tag |
+- **Theme color variables are a contract**: Every theme in the `themes` dictionary must have the 5 fields `sea` / `sky` / `skyll` / `paper` / `page-fill` (`_resolve-theme` checks each one and panics on a missing field). These fields are color definitions and are also mapped to touying's semantic slots through `config-colors` (`neutral-dark = sea`, etc.); `config-store` also carries `heading-font` for the header. When renaming a field, update the `config-colors(...)` call inside `xwysyy-pre` as well, otherwise downstream slide components get the wrong colors. At runtime, theme colors propagate to components such as `textbox` through `_theme-state` (a state).
+- **Function name prefix**: All current public theme functions use the `xwysyy-` prefix (`xwysyy-pre`, `xwysyy-slide`, `xwysyy-elements`). New functions keep this prefix; general helpers such as `title-slide` / `outline-slide` / `textbox` / `end-slide` have no prefix.
+- **typst + touying edge-case bug**: Do not use `config-info(author: [])` (empty content); touying turns empty content into none and fails an internal type check. For an empty author, work around it with `author: " "`; do not fall back to `[]`.
+- **Do not add typst packages casually**: The only dependencies are `@preview/touying:0.7.4` and `@preview/physica:0.9.8`. Before adding a dependency, first evaluate whether it can be written by hand inside a `src/` submodule.
+- **Inline code and block code are handled separately**: In `xwysyy-elements`, `raw.where(block: true)` is shown full-width with `block(width: 100%)`, and `raw.where(block: false)` is shown inline with `box(inset: (x: 0.3em), outset: (y: 0.2em))` (the vertical padding is drawn with `outset` and does not take part in baseline / line-height layout). When changing code styling, update both places.
+- **Arrow show rules use math mode**: Arrow replacement (`->` -> `$->$`, etc.) must enter math mode with `$...$` to render as arrow symbols. Do not use `math.limits(it)` (it only controls sub/superscript placement and does no symbol conversion). The show rules for long arrows (`-->`, `==>`) must be defined before those for short arrows (`->`, `=>`), otherwise the short rules match first.
 
-## AI 生成排版契约（语义布局层）
+## AI generation layout contract (semantic layout layer)
 
-> 生成幻灯片内容时（非维护模板本身），间距和位置一律交给 `src/layout.typ` 的语义组件，不手写数值。完整说明见 `docs/LAYOUT.md`。
+> When generating slide content (as opposed to maintaining the template itself), leave all spacing and positioning to the semantic components in `src/layout.typ` and do not hand-write values. See `docs/LAYOUT.md` for the full description.
 
-- **禁止**：手写 `#v(...)` 制造大间距；用 `place` / 绝对坐标控制普通正文；用 `align(bottom)` 把正文推到底部；一页堆多个无约束 block 靠手感排间距；**修改任何组件的 `tuning` 字典**（数字微调属于人工层，`extra.tuned` 会记录，agent profile 下是 error）；**在布局组件内容里用 `#pause` / `#meanwhile` / 全局 `#uncover`**（touying 会 panic，分步展示改用组件的 `reveal: true`）；给 `xwysyy-slide` 传 `kind`（没有这个参数，传入即 panic；豁免页只能用 `outline-slide` / `title-slide` 等专用版式）；用 spacer / 空字符串 / 裸线条 / `hide(...)` / 空 stretch 视觉填充槽位（编译期 panic 或像素层 `hollow_object` error）。
-- **必须**：图文上下用 `duo-slide`；单一结论少内容用 `focus-slide`；多列对等信息用 `grid-slide`；多块同节奏用 `stack-slide`；左右对比用 `compare-slide`；一行关键数字用 `stat-slide`（条目用 `metric(value, label)`）；图配 caption 与结论用 `figure-slide`；窄标签配宽内容用 `sidebar-slide`（body 传纯内容不包 `textbox`）；要撑满的视觉显式写 `visual(...)`（占位 `rect(width: 100%, height: 100%)`，真实图片 `image(width: 100%, height: 100%, fit: "contain")`），固有尺寸的图用 `image(width: 100%)`；分步展示用 `reveal: true`（精确步数用 `reveal-from`，显式值恒优先；focus / sidebar 没有展示步骤）；只通过 `mode: compact | balanced | separated` 调密度。百分比尺寸的内容不包 `visual()` 会因"渲染为空 / 无可测量宽度"直接 panic，这是设计行为。
-- **反馈驱动，不靠手感**：编译后跑 `scripts/xwysyy-check <deck.typ> --profile agent`（agent profile 自动含像素交叉验证），按返回诊断的 `action` 修正（`content_overflow` / `margin_squeeze` / `underfilled_card` / `low_density` / `column_imbalance` / `semantic_pair_split` / `telemetry_gap` / `hollow_object` / `header_overflow` 等），不靠"看起来差不多"停止迭代。`report_bug` 类诊断（frame_integrity / orphan_frame / render_telemetry_mismatch / invalid_fit_state）不该靠改内容消掉。诊断含义与修法见 `docs/LAYOUT.md` 的诊断表。
-- **组件保证间距、checker 判断内容**：组件已用 `measure` + 声明式 sizing 分配器保证间距正确；checker 只报组件无法自行决定的内容级问题（太空 / 太满 / 空壳卡片 / 列失衡 / 溢出 / 漏遥测）。对称留白不是缺陷（focus 页有意如此）。
+- **Forbidden**: hand-written `#v(...)` to create large gaps; `place` / absolute coordinates to position ordinary body text; `align(bottom)` to push body text to the bottom; stacking several unconstrained blocks on one page and spacing them by feel; **changing any component's `tuning` dictionary** (numeric fine-tuning belongs to the human layer; `extra.tuned` records it, and it is an error under the agent profile); **using `#pause` / `#meanwhile` / global `#uncover` inside layout component content** (touying panics; use the component's `reveal: true` for stepwise reveal instead); passing `kind` to `xwysyy-slide` (it is not a parameter and panics if passed; exempt pages must use dedicated layouts such as `outline-slide` / `title-slide`); filling slots with spacers / empty strings / bare rules / `hide(...)` / empty stretch visuals (compile-time panic or a pixel-layer `hollow_object` error).
+- **Required**: `duo-slide` for figure-over-text structure; `focus-slide` for a single conclusion with little content; `grid-slide` for multi-column peer information; `stack-slide` for several blocks with the same rhythm; `compare-slide` for a left/right contrast; `stat-slide` for a row of key numbers (entries via `metric(value, label)`); `figure-slide` for a figure with caption and conclusion; `sidebar-slide` for a narrow label with wide content (pass plain content as the body, do not wrap it in `textbox`); write `visual(...)` explicitly for visuals that should fill their slot (placeholder `rect(width: 100%, height: 100%)`, real image `image(width: 100%, height: 100%, fit: "contain")`), and use `image(width: 100%)` for intrinsic-size images; use `reveal: true` for stepwise reveal (`reveal-from` for exact steps; explicit values always win; focus / sidebar have no reveal steps); adjust density only through `mode: compact | balanced | separated`. Percentage-sized content that is not wrapped in `visual()` panics directly because it "renders empty / has no measurable width"; this is by design.
+- **Feedback-driven, not by feel**: After compiling, run `scripts/xwysyy-check <deck.typ> --profile agent` (the agent profile includes pixel cross-validation automatically) and fix according to the `action` of each returned diagnostic (`content_overflow` / `margin_squeeze` / `underfilled_card` / `low_density` / `column_imbalance` / `semantic_pair_split` / `telemetry_gap` / `hollow_object` / `header_overflow`, etc.); do not stop iterating because the page "looks about right". `report_bug` diagnostics (frame_integrity / orphan_frame / render_telemetry_mismatch / invalid_fit_state) must not be silenced by editing content. See the diagnostic table in `docs/LAYOUT.md` for what each diagnostic means and how to fix it.
+- **Components guarantee spacing; the checker judges content**: Components already use `measure` + the declarative sizing allocator to guarantee correct spacing; the checker only reports content-level problems that components cannot decide on their own (too empty / too full / empty-shell cards / column imbalance / overflow / missing telemetry). Symmetric whitespace is not a defect (focus pages are intentionally like this).
 
-## 改主题的常见动线
+## Common paths for theme changes
 
-- **改色 / 新增主题**：普通用户直接传 theme 字典；维护内置主题时编辑 `src/themes.typ` 顶部 `themes` 字典，新增一个 key 即可。每个主题需包含 `sea`/`sky`/`skyll`/`paper`/`page-fill` 共 5 个必需字段，改完跑 `scripts/check-theme-contrast`；push 后等 CI 跑完用 `scripts/adopt-baseline` 采纳基线，再跑 `scripts/gen-previews` 刷新 README 预览。
-- **改字体 / 语言**：优先通过 `xwysyy-pre(font: ..., code-font: ..., lang: ...)` 参数设置。改默认字号才编辑 `src/slides.typ` 内 `set text(... size: 5.5mm)`。
-- **改 slide 顶部 / 底部装饰**：编辑 `src/slides.typ` 内 `_kinded-slide` 的 `header(self)` / `footer(self)` 函数（`xwysyy-slide` 是它的公开包装）。header 是开放式（无底色块）：标题用 `config-store` 的 `heading-font`，bold、1.45em，颜色取 `sea`（touying 的 `neutral-dark`），下方一条全宽 0.12em 细线，填充从标题色经 `sky` 向右渐隐、到 92% 宽度处完全透明的渐变；header 块 `inset` 顶部 1.1em，配套的页面顶部 margin 在 `xwysyy-pre` 的 `config-page` 里是 4.35em，两者要一起调。footer 只剩右下角页码（无背景/边框）。
-- **新增页面版式**：在 `src/slides.typ` 里仿照 `end-slide` / `image-slide` 写一个 `touying-slide-wrapper` 即可。**必须用 `utils.merge-dicts(self, config-page(...))`，不要用 `show: touying-slides.with(...)`**——后者在 touying 0.7.x 会产生 ghost slide（参见 `title-slide` 实现）。
-- **改 slide show 规则**：编辑 `src/elements.typ` 内 `xwysyy-elements` 的 show 规则块。注意 raw 有 block: true 和 block: false 两条 show rule。
-- **`textbox` 组件**：在 `src/elements.typ` 里。浅色圆角文本框，背景色为当前主题的 `skyll`。单列直接全宽 block；多列模式内部用 `components.lazy-layout` + `components.lazy-v(1fr)` 实现等高。颜色通过 `_theme-state` 读取。
+- **Change colors / add a theme**: Ordinary users pass a theme dictionary directly; to maintain the built-in themes, edit the `themes` dictionary at the top of `src/themes.typ` and add a key. Each theme needs all 5 required fields `sea`/`sky`/`skyll`/`paper`/`page-fill`; after the change, run `scripts/check-theme-contrast`; after pushing, wait for CI to finish, adopt the baseline with `scripts/adopt-baseline`, then run `scripts/gen-previews` to refresh the README previews.
+- **Change fonts / language**: Prefer the `xwysyy-pre(font: ..., code-font: ..., lang: ...)` parameters. Edit `set text(... size: 5.5mm)` in `src/slides.typ` only to change the default font size.
+- **Change slide header / footer decoration**: Edit the `header(self)` / `footer(self)` functions of `_kinded-slide` in `src/slides.typ` (`xwysyy-slide` is its public wrapper). The header is open (no background block): the title uses `heading-font` from `config-store`, bold, 1.45em, colored `sea` (touying's `neutral-dark`); below it is a full-width 0.12em rule filled with a gradient that runs from the title color through `sky` and fades to fully transparent at 92% of the width. The header block has a top `inset` of 1.1em, and the matching top page margin is 4.35em in `config-page` inside `xwysyy-pre`; adjust the two together. The footer only has the page number in the bottom-right corner (no background or border).
+- **Add a page layout**: In `src/slides.typ`, write a `touying-slide-wrapper` modeled on `end-slide` / `image-slide`. **You must use `utils.merge-dicts(self, config-page(...))`, not `show: touying-slides.with(...)`**, because the latter produces a ghost slide in touying 0.7.x (see the `title-slide` implementation).
+- **Change slide show rules**: Edit the show rule block of `xwysyy-elements` in `src/elements.typ`. Note that raw has two show rules, one for block: true and one for block: false.
+- **`textbox` component**: In `src/elements.typ`. A light rounded text box whose background is the current theme's `skyll`. Single-column mode is a plain full-width block; multi-column mode uses `components.lazy-layout` + `components.lazy-v(1fr)` internally to give the columns equal height. Colors are read through `_theme-state`.
 
-## 本项目不存在的文档（防止 AI 强行创建）
+## Documents this project does not have (to keep AI from creating them)
 
-- 没有 `docs/spec.md` — 模板没有"功能需求"，无外部契约
-- 没有 `docs/implementation-plan.md` — 没有多步开发任务
-- 没有 `docs/feature-flow.md` — 模板就是一组 show 规则集合
-- 没有 `docs/architecture.md` — 小型 facade + src 子模块结构
-- 没有 `docs/iteration-notes.md` — 单人维护，`git log` 即历史
+- No `docs/spec.md` — the template has no "functional requirements" and no external contract
+- No `docs/implementation-plan.md` — there are no multi-step development tasks
+- No `docs/feature-flow.md` — the template is a collection of show rules
+- No `docs/architecture.md` — a small facade + `src` submodule structure
+- No `docs/iteration-notes.md` — single maintainer; `git log` is the history
 
-> `docs/USAGE.md` 和 `docs/CUSTOMIZATION.md` 已存在（见上方"关键文件"表），是用户文档，不在此清单。
+> `docs/USAGE.md` and `docs/CUSTOMIZATION.md` exist (see the "Key files" table above); they are user docs and are not on this list.
 
-## 上游 / 致谢
+## Upstream / acknowledgements
 
-主题派生自 [Carlos-Mero/may](https://github.com/Carlos-Mero/may)（MIT），底层基于 [touying](https://github.com/touying-typ/touying)。
+The theme is derived from [Carlos-Mero/may](https://github.com/Carlos-Mero/may) (MIT) and built on [touying](https://github.com/touying-typ/touying).
