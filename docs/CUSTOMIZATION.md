@@ -129,7 +129,7 @@ New slide layouts should follow the existing pattern:
 })
 ```
 
-Use `utils.merge-dicts(self, config-page(...))` inside the wrapper. This avoids ghost slides in touying 0.7.x.
+Use `utils.merge-dicts(self, config-page(...))` inside the wrapper. This avoids ghost slides in touying 0.8.
 
 ## 6. Show Rules
 
@@ -175,7 +175,7 @@ scripts/compare-png tests/visual-baseline /tmp/xwysyy-visual-current --diff-dir 
 
 `render-visuals` passes `--input visual-ci=true`. The visual examples use the fixed date `2026-07-10` together with Liberation Serif, Noto Serif CJK SC, and DejaVu Sans Mono, so repeated renders have stable inputs. `render-visuals` builds the complete set in a temporary sibling directory and publishes it only after every compile succeeds. Publication replaces only the PNG families owned by the script and preserves unrelated files in the target directory.
 
-The GitHub Actions workflow runs two jobs, both on Typst 0.14.0:
+The GitHub Actions workflow runs two jobs, both on Typst 0.15.0:
 
 1. `render` compiles the example decks with default inputs before any fonts are installed, installs the deterministic fonts, compiles the sky deck in handout mode, runs the Python regression tests, checks theme contrast, compiles the API fixtures and the missing-field error case, renders the visual set, compares it against `tests/visual-baseline`, and uploads the current renders and diff images on failure.
 2. `package-shape` stages the Universe package from `HEAD`, checks its file set, and compiles the template, the README quick start, and a `typst init` project through the package resolver.

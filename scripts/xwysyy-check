@@ -6,7 +6,7 @@
 
 Pipeline:
 
-  1. one ``typst query deck "metadata"`` collects every xwysyy schema at once
+  1. one ``typst eval`` of ``query(metadata)`` collects every xwysyy schema at once
      (layout records, page manifests, per-subslide frame mappings, header
      telemetry); parsing is fail-closed (schema v4);
   2. the geometry checker (scripts/slide-check.py, imported as a library)
@@ -355,8 +355,9 @@ def main(argv: list[str] | None = None) -> int:
         input_flags += ["--input", kv]
 
     try:
-        meta = _run(["typst", "query", "--root", str(root)] + input_flags
-                    + [str(deck), "metadata", "--field", "value"])
+        meta = _run(["typst", "eval", "--root", str(root)] + input_flags
+                    + ["--in", str(deck), "--format", "json",
+                       "query(metadata).map(m => m.value)"])
         values = check._values(json.loads(meta))
         buckets = check.split_records(values)
         if args.save_meta:

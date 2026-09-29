@@ -19,7 +19,7 @@ version = "0.4.0"
 entrypoint = "xwysyy.typ"
 license = "MIT"
 disciplines = ["computer-science"]
-compiler = "0.14.0"
+compiler = "0.15.0"
 exclude = []
 
 [template]
@@ -215,13 +215,13 @@ class BuildUniversePackageTests(unittest.TestCase):
     def test_compiler_field_is_the_tested_minimum(self) -> None:
         self.commit_file(
             "typst.toml",
-            VALID_MANIFEST.replace('compiler = "0.14.0"', 'compiler = "0.14.2"'),
+            VALID_MANIFEST.replace('compiler = "0.15.0"', 'compiler = "0.15.1"'),
         )
 
         result = self.build()
 
         self.assertEqual(result.returncode, 2, process_output(result))
-        self.assertIn("compiler must be the tested minimum 0.14.0", result.stderr)
+        self.assertIn("compiler must be the tested minimum 0.15.0", result.stderr)
         self.assertFalse(self.output.exists())
 
     def test_failed_verification_leaves_no_partial_output(self) -> None:

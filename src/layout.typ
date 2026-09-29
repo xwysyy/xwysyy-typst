@@ -46,7 +46,7 @@
 // components without reveal steps have a single frame and reject any
 // `reveal-from` beyond step 1 instead of silently ignoring it.
 
-#import "@preview/touying:0.7.4": utils
+#import "@preview/touying:0.8.0": utils
 #import "slides.typ": xwysyy-slide
 #import "themes.typ": _theme-state
 
@@ -365,7 +365,7 @@
 // measurement
 // ---------------------------------------------------------------------------
 
-// Content signatures (verified against typst 0.14 `measure`):
+// Content signatures (verified against typst 0.15 `measure`):
 //   * `v(...)` and an empty string have zero unconstrained WIDTH;
 //   * a bare horizontal rule has zero constrained HEIGHT;
 //   * percent-width media (`image(width: 100%)`) measures exactly like a

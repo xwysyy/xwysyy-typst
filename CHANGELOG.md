@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Requires Typst 0.15.0 and touying 0.8.0
 - Themes require five color fields: `sea`, `sky`, `skyll`, `paper`, and `page-fill`
 - `end-slide` uses the theme's page fill instead of white
 
@@ -40,7 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Content pages use an open header and a page-number-only footer
 - Themes use six required color fields with optional `header-text`
 - Bold text, tables, inline code, and code-font fallbacks have updated styling
-- Typst 0.14.0 is the minimum compiler version
 
 ### Removed
 

@@ -3,8 +3,8 @@
 <p align="center">
   <a href="https://typst.app/universe/package/xwysyy"><img src="https://img.shields.io/badge/Typst%20Universe-available-239dad.svg" alt="Typst Universe"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://typst.app"><img src="https://img.shields.io/badge/Typst-%E2%89%A5%200.14.0-239dad.svg" alt="Typst version: >= 0.14.0"></a>
-  <a href="https://github.com/touying-typ/touying"><img src="https://img.shields.io/badge/touying-0.7.4-blueviolet.svg" alt="touying version: 0.7.4"></a>
+  <a href="https://typst.app"><img src="https://img.shields.io/badge/Typst-%E2%89%A5%200.15.0-239dad.svg" alt="Typst version: >= 0.15.0"></a>
+  <a href="https://github.com/touying-typ/touying"><img src="https://img.shields.io/badge/touying-0.8.0-blueviolet.svg" alt="touying version: 0.8.0"></a>
   <a href="#themes"><img src="https://img.shields.io/badge/Themes-6%20built--in-ff69b4.svg" alt="Built-in themes"></a>
 </p>
 
@@ -187,13 +187,13 @@ Speaker notes are available because `xwysyy.typ` re-exports touying:
 Export pdfpc metadata:
 
 ```bash
-typst query main.typ --field value --one "<pdfpc-file>" > slides.pdfpc
+typst eval --in main.typ --format json 'query(<pdfpc-file>).first().value' > slides.pdfpc
 ```
 
 ## Requirements
 
-- Typst >= 0.14.0
-- touying 0.7.4, downloaded on first compile
+- Typst >= 0.15.0
+- touying 0.8.0, downloaded on first compile
 - physica 0.9.8, downloaded on first compile
 - Default local fonts: Times New Roman, Noto Serif CJK SC, Libertinus Sans, Noto Sans CJK SC, Maple Mono, and Noto Sans Mono CJK SC
 - Typst web app users can pass web-available fonts with `font:`, `heading-font:`, and `code-font:`

@@ -39,9 +39,9 @@ and ``visible_from``.  Reveal frames arrive as ``<xwysyy-frame>`` v2
 mappings — one per physically rendered subslide, with the physical body
 geometry in pt.
 
-Input: JSON from ``typst query`` — either one merged ``metadata`` query or
-separate ``<xwysyy-slide-layout>`` / ``<xwysyy-page>`` / ``<xwysyy-frame>`` /
-``<xwysyy-header>`` queries.  Records are recognised by their ``schema``
+Input: JSON from ``typst eval`` of ``query(...)`` — either one merged
+``metadata`` query or separate ``<xwysyy-slide-layout>`` / ``<xwysyy-page>`` /
+``<xwysyy-frame>`` / ``<xwysyy-header>`` queries.  Records are recognised by their ``schema``
 field, so any input file may contain any mixture.
 
 Profiles: ``--profile human`` (default) keeps content-adequacy findings as
@@ -612,12 +612,12 @@ def _load_json(path: str | None) -> Any:
 
 
 def _values(raw: Any) -> list[dict[str, Any]]:
-    """Flatten a typst query result (array of elements or of values) into
+    """Flatten a metadata query result (array of elements or of values) into
     the value dicts."""
     if isinstance(raw, dict):
         raw = [raw]
     if not isinstance(raw, list):
-        raise TelemetryError("input must be a typst query JSON array")
+        raise TelemetryError("input must be a JSON array of metadata query results")
     out = []
     for item in raw:
         value = item.get("value") if isinstance(item, dict) and "value" in item else item

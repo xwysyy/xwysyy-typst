@@ -875,8 +875,8 @@ class TypstIntegrationTests(unittest.TestCase):
 
     def test_title_slide_date_override(self):
         proc = subprocess.run(
-            ["typst", "query", "--root", str(REPO), str(FIXTURES / "title-date-override.typ"),
-             "<date-probe>", "--field", "value"],
+            ["typst", "eval", "--root", str(REPO), "--in", str(FIXTURES / "title-date-override.typ"),
+             "--format", "json", "query(<date-probe>).map(m => m.value)"],
             capture_output=True, text=True)
         self.assertEqual(proc.returncode, 0, msg=_process_output(proc))
         self.assertEqual(json.loads(proc.stdout), ["local"])

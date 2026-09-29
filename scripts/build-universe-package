@@ -27,7 +27,7 @@ PACKAGE_PATHS = (
 )
 FORBIDDEN_README = (
     (
-        r"(?m)^[ \t]*(?:\$[ \t]+)?typst (?:compile|query)[^\n]*\bexamples/",
+        r"(?m)^[ \t]*(?:\$[ \t]+)?typst (?:compile|query|eval)[^\n]*\bexamples/",
         "repo-only example command",
     ),
     (r"\bscripts/", "package-local script reference"),
@@ -101,8 +101,8 @@ def validate_manifest(
         raise BuildError("typst.toml package license must be MIT")
     if package.get("disciplines") != ["computer-science"]:
         raise BuildError("typst.toml disciplines must be computer-science")
-    if package.get("compiler") != "0.14.0":
-        raise BuildError("typst.toml compiler must be the tested minimum 0.14.0")
+    if package.get("compiler") != "0.15.0":
+        raise BuildError("typst.toml compiler must be the tested minimum 0.15.0")
     if package.get("exclude") != []:
         raise BuildError("typst.toml exclude must be empty")
     version = package.get("version")

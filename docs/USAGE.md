@@ -26,7 +26,7 @@ Local development examples in this repository use a relative import:
 
 Dependencies are downloaded by Typst:
 
-- `@preview/touying:0.7.4`
+- `@preview/touying:0.8.0`
 - `@preview/physica:0.9.8`
 
 ## 2. Slide Entry: `xwysyy-pre`
@@ -307,10 +307,10 @@ Show notes on a second screen:
 Export pdfpc metadata:
 
 ```bash
-typst query --root . examples/slides-sky.typ --field value --one "<pdfpc-file>" > slides-sky.pdfpc
+typst eval --root . --in examples/slides-sky.typ --format json 'query(<pdfpc-file>).first().value' > slides-sky.pdfpc
 ```
 
-The query output is JSON with page overlays and note text.
+The output is JSON with page overlays and note text.
 
 ## 7. Show Rules
 
